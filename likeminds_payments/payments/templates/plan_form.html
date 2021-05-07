@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generate Subscription Plans</title>
+  </head>
+  <body>
+    {% if plan %}
+    <h1>Subscription plan created successfully</h1>
+    <h4>
+      Link: <a>https://payment.likeminds.community/?plan_id={{plan.plan_id}}</a>
+    </h4>
+    {% endif %}
+
+    <form action="" method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <input type="submit" value="submit">
+    </form>
+  </body>
+</html>

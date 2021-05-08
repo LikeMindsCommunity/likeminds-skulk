@@ -21,3 +21,4 @@ class OrdersManager(metaclass=abc.ABCMeta):
         verify a specific payment
         """
         raise NotImplementedError
+        

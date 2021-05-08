@@ -1,5 +1,4 @@
 from .base import *
-import razorpay
 
 DEBUG = True
 
@@ -19,4 +18,5 @@ APPEND_SLASH = False
 
 ALLOWED_HOSTS = [os.getenv("DEVELOPMENT_ALLOWED_HOST_1"), os.getenv("DEVELOPMENT_ALLOWED_HOST_2")]
 
-RAZORPAY_CLIENT = razorpay.Client(auth=(os.getenv("RAZORPAY_KEY"), os.getenv("RAZORPAY_SECRET")))
+RAZORPAY_KEY = os.getenv("RAZORPAY_KEY")
+RAZORPAY_SECRET = os.getenv("RAZORPAY_SECRET")

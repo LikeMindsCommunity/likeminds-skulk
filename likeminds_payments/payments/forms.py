@@ -15,3 +15,4 @@ class PlanForm(forms.Form):
     community_join_link = forms.URLField()
     community_manager_mail = forms.CharField(max_length=200)
     community_buddy_mail = forms.CharField(max_length=200)
+    

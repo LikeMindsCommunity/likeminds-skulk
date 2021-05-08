@@ -55,4 +55,5 @@ class Plans(models.Model):
         instance.community_buddy_mail = create_info['community_buddy_mail']
         instance.plan_id = str(uuid.uuid4())
         instance.save()
+        
         return instance

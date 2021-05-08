@@ -4,5 +4,5 @@ from payments.plans.plans_view_impl import CreatePlanView
 app_name = "plans"
 
 urlpatterns = [
-    path('', CreatePlanView.as_view(), name="create_plan")
+    path('create/', CreatePlanView.as_view(), name="create_plan")
 ]

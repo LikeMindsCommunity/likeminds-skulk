@@ -10,3 +10,4 @@ class RequestUtilities:
             request_body = {}
 
         return request_body
+        

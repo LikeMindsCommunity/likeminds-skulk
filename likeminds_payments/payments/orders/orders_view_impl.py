@@ -41,20 +41,10 @@ class VerifyOrderView(APIView):
 
         request_body = RequestUtilities.load_request_body(request)
 
-        if not request_body:
-            return JsonResponse({'error_message': 'invalid request body'}, status=status_codes.HTTP_400_BAD_REQUEST)
-        
-        if 'razorpay_order_id' not in request_body or not request_body['razorpay_order_id']:
-            return JsonResponse({'error_message': 'send razorpay_order_id'}, status=status_codes.HTTP_400_BAD_REQUEST)
-        
-        if 'razorpay_payment_id' not in request_body or not request_body['razorpay_payment_id']:
-            return JsonResponse({'error_message': 'send razorpay_payment_id'}, status=status_codes.HTTP_400_BAD_REQUEST)
-        
-        if 'razorpay_signature' not in request_body or not request_body['razorpay_signature']:
-            return JsonResponse({'error_message': 'send razorpay_signature'}, status=status_codes.HTTP_400_BAD_REQUEST)
+        validated_request_body = OrdersViewHelper.request_body_validator(request_body)
 
-        if order_id != request_body['razorpay_order_id']:
-            return JsonResponse({'error_message': 'invalid order_id in url'}, status=status_codes.HTTP_400_BAD_REQUEST)
+        if 'error_message' in validated_request_body:
+            return JsonResponse({'error_message': validated_request_body['error_message']}, status=status_codes.HTTP_400_BAD_REQUEST)        
 
         orders_manager = OrdersImpl()
         response_data = orders_manager.verify_order(request_body)
@@ -63,3 +53,26 @@ class VerifyOrderView(APIView):
             return JsonResponse({'error_message': response_data['error_message']}, status=status_codes.HTTP_400_BAD_REQUEST)
 
         return JsonResponse({'redirect_url': response_data['redirect_url']}, status=status_codes.HTTP_200_OK)
+
+
+class OrdersViewHelper:
+
+    def request_body_validator(request_body):
+
+        if not request_body:
+            return {'error_message': 'invalid request body'}
+        
+        if 'razorpay_order_id' not in request_body or not request_body['razorpay_order_id']:
+            return {'error_message': 'send razorpay_order_id'}
+        
+        if 'razorpay_payment_id' not in request_body or not request_body['razorpay_payment_id']:
+            return {'error_message': 'send razorpay_payment_id'}
+        
+        if 'razorpay_signature' not in request_body or not request_body['razorpay_signature']:
+            return {'error_message': 'send razorpay_signature'}
+
+        if order_id != request_body['razorpay_order_id']:
+            return {'error_message': 'invalid order_id in url'}
+
+        return request_body
+        

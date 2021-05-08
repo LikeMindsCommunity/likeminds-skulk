@@ -3,7 +3,9 @@ from ..models import Plans
 from django.conf import settings
 import hmac
 import hashlib
-import os
+import razorpay
+
+RAZORPAY_CLIENT = razorpay.Client(auth=(settings.RAZORPAY_KEY, settings.RAZORPAY_SECRET))
 
 class OrdersImpl(OrdersManager):
 
@@ -28,7 +30,7 @@ class OrdersImpl(OrdersManager):
 
 
     def call_razorpay_api_to_create_object(self, order_data) -> dict:
-        order = settings.RAZORPAY_CLIENT.order.create(data=order_data)
+        order = RAZORPAY_CLIENT.order.create(data=order_data)
 
         if not order:
             return {'error_message': 'Error creating order'}
@@ -64,7 +66,10 @@ class OrdersImpl(OrdersManager):
 
 
     def verify_order(self, req_body:dict) -> dict:
-        order_instance = settings.RAZORPAY_CLIENT.order.fetch(req_body['razorpay_order_id'])
+        order_instance = RAZORPAY_CLIENT.order.fetch(req_body['razorpay_order_id'])
+
+        if not order_instance:
+            return {'error_message': 'error getting order object'}
 
         message = "{}|{}".format(req_body['razorpay_order_id'], req_body['razorpay_payment_id'])
         digest = hmac.new(

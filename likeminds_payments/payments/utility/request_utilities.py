@@ -1,5 +1,6 @@
 import json
 
+
 class RequestUtilities:
 
     @staticmethod
@@ -10,4 +11,3 @@ class RequestUtilities:
             request_body = {}
 
         return request_body
-        

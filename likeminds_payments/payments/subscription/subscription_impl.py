@@ -1,9 +1,15 @@
 from ..subscription.subscription_manager import SubscriptionManager
-from ..subscription.constants import subscription_plan_choices
+from ..subscription.constants import subscription_plan_choices, likeminds_logo_url, order_text, company_name, community_api
 from ..subscription.serializers import PlanSerializer
 from ..utility.plan_utilities import PlanUtilities
+from ..utility.api_utilities import ApiUtilities
+from ..external_services.razorpay.razorpay_wrapper import RazorpayWrapper
 
 from ..models import SubscriptionPlan
+from django.conf import settings
+
+import hmac
+import hashlib
 
 
 class SubscriptionImpl(SubscriptionManager):
@@ -83,7 +89,7 @@ class SubscriptionImpl(SubscriptionManager):
     def _serialize_plans(plans):
         return PlanSerializer(plans)
 
-    def fetch_plan(self, community_id: str) -> dict:
+    def fetch_plan(self, community_id: str) -> object:
 
         plans = self._fetch_plans(community_id)
 
@@ -112,11 +118,124 @@ class SubscriptionImpl(SubscriptionManager):
 
         return {'success': True}
 
+    @staticmethod
+    def _get_community_name(community_id: int) -> dict:
+
+        if not community_id:
+            return {'error_message': 'send community_id'}
+
+        url = '{url}/{community_id}'.format(url=community_api, community_id=community_id)
+        response = ApiUtilities.generate_get_request(url)
+
+        if 'error_message' in response:
+            return {'error_message': 'error getting community name'}
+
+        return {'value': response['community']['name']}
+
+    @staticmethod
+    def _create_order_object_data(plan_instance: dict, order_body: dict, community_name: str) -> dict:
+
+        order_data = {
+            "amount": float(plan_instance.cost) * 100,
+            "currency": "INR",
+            "receipt": "receipt#1",
+            "notes": {
+                "plan_id": plan_instance.plan_id,
+                "community_name": community_name,
+                "name": plan_instance.name,
+                "cost": plan_instance.cost,
+                "cm_emails": plan_instance.cm_emails,
+                "buddy_emails": plan_instance.buddy_emails,
+                "payment_page_url": order_body['payment_page_url'],
+                "renew": False
+            }
+        }
+
+        if 'renew' in order_body:
+            order_data['notes']['renew'] = order_body['renew']
+
+        return order_data
+
+    @staticmethod
+    def _create_razorpay_client_options(order_data: dict) -> dict:
+
+        razorpay_client = RazorpayWrapper.get_instance()
+
+        order = razorpay_client.order.create(data=order_data)
+
+        if not order:
+            return {'error_message': 'error while creating order'}
+
+        options = {
+            "key": settings.RAZORPAY_KEY,
+            "amount": order['amount'],
+            "currency": order['currency'],
+            "description": order_text,
+            "image": likeminds_logo_url,
+            "order_id": order['id'],
+            "name": company_name,
+            "receipt": "receipt#1",
+            "notes": order['notes']
+        }
+
+        return options
+
     def create_order(self, order_body: dict) -> dict:
-        pass
+
+        plan_instance = SubscriptionPlan.get_plan_or_None(order_body['plan_id'])
+
+        if not plan_instance:
+            return {'error_message': 'invalid plan_id'}
+
+        if plan_instance.is_deleted:
+            return {'error_message': 'plan no longer exists'}
+
+        community_name = self._get_community_name(plan_instance.community_id)
+
+        if 'error_message' in community_name:
+            return {'error_message': community_name['error_message']}
+
+        order_data = self._create_order_object_data(plan_instance, order_body, community_name['value'])
+        options = self._create_razorpay_client_options(order_data)
+
+        if 'error_message' in options:
+            return {'error_message': options['error_message']}
+
+        return options
+
+    @staticmethod
+    def _verify_payment_signature(payment_body):
+
+        message = "{}|{}".format(payment_body['razorpay_order_id'], payment_body['razorpay_payment_id'])
+        digest = hmac.new(
+            key=bytes(settings.RAZORPAY_SECRET, 'utf-8'),
+            msg=bytes(message, 'utf-8'),
+            digestmod=hashlib.sha256
+        ).hexdigest()
+
+        if digest != payment_body['razorpay_signature']:
+            return {'error_message': 'Signature mismatch'}
+
+        return {'success': True}
 
     def verify_order(self, payment_body: dict) -> dict:
-        pass
+
+        if payment_body['razorpay_order_id'] != payment_body['order_id']:
+            return {'error_message': 'order_id not matching with razorpay_order_id'}
+
+        razorpay_client = RazorpayWrapper.get_instance()
+
+        order_instance = razorpay_client.order.fetch(payment_body['order_id'])
+
+        if not order_instance:
+            return {'error_message': 'invalid razorpay_order_id'}
+
+        response = self._verify_payment_signature(payment_body)
+
+        if 'error_message' in response:
+            return {'error_message': response['error_message']}
+
+        return response
 
     def create_transaction(self, transaction_body: dict) -> dict:
         pass

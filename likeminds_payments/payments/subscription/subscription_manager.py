@@ -23,7 +23,7 @@ class SubscriptionManager(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def fetch_plan(self, community_id: str) -> dict:
+    def fetch_plan(self, community_id: str) -> object:
         """
         fetch all the plans of a community
         """

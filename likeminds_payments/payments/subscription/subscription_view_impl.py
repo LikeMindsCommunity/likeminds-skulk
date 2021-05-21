@@ -20,7 +20,7 @@ class CreatePlanView(APIView):
 
         plan_body = RequestUtilities.load_request_body(request)
 
-        validated_request_body = SubscriptionViewHelper.plan_body_validator(plan_body)
+        validated_request_body = SubscriptionViewHelper.create_plan_body_validator(plan_body)
 
         if 'error_message' in validated_request_body:
             return JsonResponse({'success': False, 'error_message': validated_request_body['error_message']}, status=status_codes.HTTP_400_BAD_REQUEST)
@@ -64,8 +64,6 @@ class DeletePlanView(APIView):
 
         request_body = RequestUtilities.load_request_body(request)
 
-        print(request_body)
-
         validated_request_body = SubscriptionViewHelper.delete_plan_body_validator(request_body)
 
         if 'error_message' in validated_request_body:
@@ -80,10 +78,60 @@ class DeletePlanView(APIView):
         return JsonResponse({'success': True}, status=status_codes.HTTP_200_OK)
 
 
+class CreateOrderView(APIView):
+
+    @method_decorator(csrf_exempt)
+    def dispatch(self, request, *args, **kwargs):
+        return super(CreateOrderView, self).dispatch(request, *args, **kwargs)
+
+    @staticmethod
+    def post(request, *args, **kwargs):
+
+        request_body = RequestUtilities.load_request_body(request)
+
+        validated_request_body = SubscriptionViewHelper.create_order_body_validator(request_body)
+
+        if 'error_message' in validated_request_body:
+            return JsonResponse({'success': False, 'error_message': validated_request_body['error_message']}, status=status_codes.HTTP_400_BAD_REQUEST)
+
+        subscription_manager = SubscriptionImpl()
+        response_data = subscription_manager.create_order(validated_request_body)
+
+        if 'error_message' in response_data:
+            return JsonResponse({'success': False, 'error_message': response_data['error_message']}, status=status_codes.HTTP_400_BAD_REQUEST)
+
+        return JsonResponse({'success': True, "order": response_data}, status=status_codes.HTTP_200_OK)
+
+
+class VerifyOrderView(APIView):
+
+    @method_decorator(csrf_exempt)
+    def dispatch(self, request, *args, **kwargs):
+        return super(VerifyOrderView, self).dispatch(request, *args, **kwargs)
+
+    @staticmethod
+    def post(request, *args, **kwargs):
+
+        request_body = RequestUtilities.load_request_body(request)
+
+        validated_request_body = SubscriptionViewHelper.verify_order_body_validator(request_body)
+
+        if 'error_message' in validated_request_body:
+            return JsonResponse({'success': False, 'error_message': validated_request_body['error_message']}, status=status_codes.HTTP_400_BAD_REQUEST)
+
+        subscription_manager = SubscriptionImpl()
+        response_data = subscription_manager.verify_order(validated_request_body)
+
+        if 'error_message' in response_data:
+            return JsonResponse({'success': False, 'error_message': response_data['error_message']}, status=status_codes.HTTP_400_BAD_REQUEST)
+
+        return JsonResponse({'success': True}, status=status_codes.HTTP_200_OK)
+
+
 class SubscriptionViewHelper:
 
     @staticmethod
-    def plan_body_validator(plan_body):
+    def create_plan_body_validator(plan_body):
 
         if not plan_body:
             return {'error_message': 'invalid request body'}
@@ -142,5 +190,39 @@ class SubscriptionViewHelper:
 
         if 'plan_id' not in request_body or not request_body['plan_id']:
             return {'error_message': 'send plan_id'}
+
+        return request_body
+
+    @staticmethod
+    def create_order_body_validator(request_body):
+
+        if not request_body:
+            return {'error_message': 'invalid request body'}
+
+        if 'plan_id' not in request_body or not request_body['plan_id']:
+            return {'error_message': 'send plan_id'}
+
+        if 'payment_page_url' not in request_body or not request_body['payment_page_url']:
+            return {'error_message': 'send payment_page_url'}
+
+        return request_body
+
+    @staticmethod
+    def verify_order_body_validator(request_body):
+
+        if not request_body:
+            return {'error_message': 'invalid request body'}
+
+        if 'order_id' not in request_body or not request_body['order_id']:
+            return {'error_message': 'send order_id'}
+
+        if 'razorpay_order_id' not in request_body or not request_body['razorpay_order_id']:
+            return {'error_message': 'send razorpay_order_id'}
+
+        if 'razorpay_payment_id' not in request_body or not request_body['razorpay_payment_id']:
+            return {'error_message': 'send razorpay_payment_id'}
+
+        if 'razorpay_signature' not in request_body or not request_body['razorpay_signature']:
+            return {'error_message': 'send razorpay_signature'}
 
         return request_body

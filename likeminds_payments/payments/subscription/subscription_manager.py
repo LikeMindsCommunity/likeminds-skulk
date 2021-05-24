@@ -51,14 +51,14 @@ class SubscriptionManager(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def create_transaction(self, transaction_body: dict) -> dict:
+    def create_transaction(self, transaction_body: dict, transaction_raw_body, transaction_signature: str) -> dict:
         """
         create a transaction from razorpay webhook
         """
         raise NotImplementedError
 
     @abc.abstractmethod
-    def update_transaction(self, payment_id: str) -> dict:
+    def update_transaction(self, payment_id: str, user_id: str) -> dict:
         """
         update an existing transaction
         """

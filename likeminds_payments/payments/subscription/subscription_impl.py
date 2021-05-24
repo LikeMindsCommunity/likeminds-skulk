@@ -1,11 +1,14 @@
 from ..subscription.subscription_manager import SubscriptionManager
-from ..subscription.constants import subscription_plan_choices, likeminds_logo_url, order_text, company_name, community_api
+from ..subscription.constants import subscription_plan_choices, likeminds_logo_url, order_text, company_name, \
+    community_api
 from ..subscription.serializers import PlanSerializer
 from ..utility.plan_utilities import PlanUtilities
 from ..utility.api_utilities import ApiUtilities
+from ..utility.number_utilities import NumberUtilities
+from ..utility.time_utilities import TimeUtilities
 from ..external_services.razorpay.razorpay_wrapper import RazorpayWrapper
 
-from ..models import SubscriptionPlan
+from ..models import SubscriptionPlan, Transaction, Subscription, SubscriptionHistory
 from django.conf import settings
 
 import hmac
@@ -154,6 +157,9 @@ class SubscriptionImpl(SubscriptionManager):
         if 'renew' in order_body:
             order_data['notes']['renew'] = order_body['renew']
 
+        if 'user_id' in order_body:
+            order_data['notes']['user_id'] = order_body['user_id']
+
         return order_data
 
     @staticmethod
@@ -237,11 +243,237 @@ class SubscriptionImpl(SubscriptionManager):
 
         return response
 
-    def create_transaction(self, transaction_body: dict) -> dict:
-        pass
+    @staticmethod
+    def _verify_transaction_signature(payload, signature: str) -> dict:
 
-    def update_transaction(self, payment_id: str) -> dict:
-        pass
+        message = payload.decode('utf-8')
+
+        digest = hmac.new(
+            key=bytes(settings.RAZORPAY_WEBHOOK_SECRET, 'utf-8'),
+            msg=bytes(message, 'utf-8'),
+            digestmod=hashlib.sha256
+        ).hexdigest()
+
+        if digest != signature:
+            return {'error_message': 'Signature mismatch'}
+
+        return {'success': True}
+
+    @staticmethod
+    def _create_transaction_data(transaction_body):
+        payment_instance = transaction_body['payload']['payment']['entity']
+        refund_instance = {}
+        if 'refund' in transaction_body['payload']:
+            refund_instance = transaction_body['payload']['refund']['entity']
+
+        razorpay_client = RazorpayWrapper.get_instance()
+
+        order_instance = razorpay_client.order.fetch(payment_instance['order_id'])
+
+        if not order_instance:
+            return {'error_message': 'no order exists for given payment'}
+
+        order_notes = order_instance['notes']
+
+        transaction_data = {
+            "plan_id": order_notes['plan_id'],
+            "payment_id": payment_instance['id'],
+            "community_name": order_notes['community_name'],
+            "plan_name": order_notes['name'],
+            "plan_cost": order_notes['cost'],
+            "renew": order_notes['renew'],
+            "amount": payment_instance['amount'],
+            "payment_email": payment_instance['email'],
+            "payment_phone": payment_instance['contact'],
+            "currency": payment_instance['currency'],
+            "is_international": payment_instance['international'],
+            "method": payment_instance['method'],
+            "status": payment_instance['status'],
+            "error_description": "",
+            "refund_amount": 0,
+            "user_id": None,
+            "payment_page_url": order_notes['payment_page_url']
+        }
+
+        if payment_instance['error_description'] is not None:
+            transaction_data["error_description"] = payment_instance['error_description']
+
+        if 'amount' in refund_instance:
+            transaction_data["refund_amount"] = refund_instance['amount']
+
+        if 'user_id' in order_notes:
+            transaction_data["user_id"] = order_notes['user_id']
+
+        return transaction_data
+
+    def create_transaction(self, transaction_body: dict, transaction_raw_body, transaction_signature: str) -> dict:
+
+        # TODO
+        # signature_verification = self._verify_transaction_signature(transaction_raw_body, transaction_signature)
+        #
+        # if 'error_message' in signature_verification:
+        #     return {'error_message': signature_verification['error_message']}
+
+        existing_transaction_instance = Transaction.get_transaction_or_None(
+            transaction_body['payload']['payment']['entity']['id']
+        )
+
+        if existing_transaction_instance:
+
+            if transaction_body["event"] == "refund.processed":
+                existing_transaction_instance.status = "refund"
+                existing_transaction_instance.save()
+
+                return {'success': True}
+            else:
+                return {'error_message': 'transaction exists with given plan_id'}
+
+        transaction_data = self._create_transaction_data(transaction_body)
+
+        if 'error_message' in transaction_data:
+            return {'error_message': transaction_data['error_message']}
+
+        transaction_instance = Transaction.create_instance(transaction_data)
+
+        if not transaction_instance:
+            return {'error_message': 'error while creating transaction'}
+
+        return {'success': True}
+
+    def update_transaction(self, payment_id: str, user_id: str) -> dict:
+
+        transaction_instance = Transaction.get_transaction_or_None(payment_id=payment_id)
+
+        if not transaction_instance:
+            return {'error_message': 'no transaction exists with given payment_id'}
+
+        user_id_int = NumberUtilities.get_integer_from_string(user_id)
+
+        if user_id_int == 0:
+            return {'error_message': 'invalid user_id'}
+
+        if transaction_instance.user_id is not None and transaction_instance.user_id != user_id_int:
+            return {'error_message': 'invalid user'}
+
+        if transaction_instance.user_id is not None and transaction_instance.user_id == user_id_int:
+            return {'message': 'user already updated'}
+
+        transaction_instance.user_id = user_id_int
+        transaction_instance.save()
+
+        return {'success': True}
+
+    @staticmethod
+    def _generate_data_for_new_subscription(transaction_instance: dict, subscription_plan_instance: dict) -> dict:
+
+        current_time = TimeUtilities.current_time_in_milliseconds()
+        data = {
+            "subscription_data": {
+                "user_id": transaction_instance.user_id,
+                "community_id": subscription_plan_instance.community_id,
+                "plan_id": subscription_plan_instance.plan_id,
+                "date_subscribed": current_time,
+                "trial_end": None,
+                "valid_till": TimeUtilities.add_months_in_epoch_time(current_time,
+                                                                     subscription_plan_instance.duration_in_months),
+                "type": "onetime"
+            }
+        }
+
+        data["subscription_history_data"] = {
+            "start_date": current_time,
+            "end_date": data["subscription_data"]["valid_till"],
+            "description": '',
+            "transaction": transaction_instance,
+            "type": "paid",
+            "status": "paid"
+        }
+
+        return data
+
+    @staticmethod
+    def _generate_data_for_existing_subscription(subscription_instance: dict,
+                                                 subscription_plan_instance: dict,
+                                                 transaction_instance: dict) -> dict:
+
+        current_time = TimeUtilities.current_time_in_milliseconds()
+        data = {
+            "subscription_data": {
+                "type": "onetime"
+            }
+        }
+
+        existing_valid_till = subscription_instance.valid_till
+        if existing_valid_till >= current_time:
+            data["subscription_data"]["valid_till"] = TimeUtilities.add_months_in_epoch_time(
+                existing_valid_till,
+                subscription_plan_instance.duration_in_months)
+        else:
+            data["subscription_data"]["valid_till"] = TimeUtilities.add_months_in_epoch_time(
+                current_time,
+                subscription_plan_instance.duration_in_months)
+
+        data["subscription_history_data"] = {
+            "start_date": current_time,
+            "end_date": data["subscription_data"]["valid_till"],
+            "description": '',
+            "transaction": transaction_instance,
+            "type": "paid",
+            "status": "paid"
+        }
+
+        return data
 
     def create_subscription(self, payment_id: str) -> dict:
-        pass
+
+        transaction_instance = Transaction.get_transaction_or_None(payment_id=payment_id)
+
+        if not transaction_instance:
+            return {'error_message': 'no transaction exists for given payment_id'}
+
+        subscription_plan_instance = SubscriptionPlan.get_plan_or_None(plan_id=transaction_instance.plan_id)
+
+        if not subscription_plan_instance:
+            return {'error_message': 'error getting plan details for specified transaction'}
+
+        if not transaction_instance.renew:
+
+            data = self._generate_data_for_new_subscription(transaction_instance, subscription_plan_instance)
+
+            subscription_instance = Subscription.create_instance(data['subscription_data'])
+            subscription_history_instance = SubscriptionHistory.create_instance(data['subscription_history_data'])
+
+            if not subscription_instance:
+                return {'error_message': 'error creating subscription'}
+
+            if not subscription_history_instance:
+                return {'error_message': 'error creating subscription history'}
+
+            return {'success': True}
+
+        else:
+
+            subscription_instance = Subscription.get_subscription_or_None(
+                transaction_instance['user_id'], transaction_instance['community_id']
+            )
+
+            if not subscription_instance:
+                return {'error_message': 'error renewing subscription'}
+
+            data = self._generate_data_for_existing_subscription(subscription_instance,
+                                                                 subscription_plan_instance,
+                                                                 transaction_instance)
+
+            subscription_instance.type = data["subscription_data"]["type"]
+            subscription_instance.valid_till = data["subscription_data"]["valid_till"]
+            subscription_instance.save()
+
+            subscription_history_instance = SubscriptionHistory.create_instance(data['subscription_history_data'])
+
+            if not subscription_instance:
+                return {'error_message': 'error updating subscription'}
+
+            if not subscription_history_instance:
+                return {'error_message': 'error creating subscription history'}
+
+            return {'success': True}

@@ -26,8 +26,16 @@ class SubscriptionImpl(SubscriptionManager):
         if plan_body['duration_name'] in subscription_plan_choices:
             plan_body['duration_in_months'] = subscription_plan_choices[plan_body['duration_name']]
         
-        if 'trials' not in plan_body or not plan_body['trials']:
-            plan_body['trials'] = 0
+        if 'description' not in plan_body or not plan_body['description']:
+            plan_body['description'] = ''
+
+        if 'referral_free_days' not in plan_body or not plan_body['referral_free_days']:
+            plan_body['referral_free_days'] = 0
+
+        if 'image' not in plan_body or not plan_body['image']:
+            plan_body['image'] = ''
+            # TODO
+            # assigning default values according to length of plan
         
         return plan_body
 
@@ -45,6 +53,15 @@ class SubscriptionImpl(SubscriptionManager):
 
         if plan_instance.buddy_emails != plan_body['buddy_emails']:
             plan_instance.buddy_emails = plan_body['buddy_emails']
+
+        if plan_instance.description != plan_body['description']:
+            plan_instance.description = plan_body['description']
+
+        if plan_instance.referral_free_days != plan_body['referral_free_days']:
+            plan_instance.referral_free_days = plan_body['referral_free_days']
+
+        if plan_instance.image != plan_body['image']:
+            plan_instance.image = plan_body['image']
 
         return plan_instance
 
@@ -122,7 +139,7 @@ class SubscriptionImpl(SubscriptionManager):
         return {'success': True}
 
     @staticmethod
-    def _get_community_name(community_id: int) -> dict:
+    def _get_community_data(community_id: int) -> dict:
 
         if not community_id:
             return {'error_message': 'send community_id'}
@@ -133,10 +150,14 @@ class SubscriptionImpl(SubscriptionManager):
         if 'error_message' in response:
             return {'error_message': 'error getting community name'}
 
-        return {'value': response['community']['name']}
+        data = {'name': response['community']['name'], 'grace_period': 0}
+        if 'grace_period' in response['community']:
+            data['grace_period'] = response['community']['grace_period']
+
+        return data
 
     @staticmethod
-    def _create_order_object_data(plan_instance: dict, order_body: dict, community_name: str) -> dict:
+    def _create_order_object_data(plan_instance: dict, order_body: dict, community_data: dict) -> dict:
 
         order_data = {
             "amount": float(plan_instance.cost) * 100,
@@ -144,13 +165,14 @@ class SubscriptionImpl(SubscriptionManager):
             "receipt": "receipt#1",
             "notes": {
                 "plan_id": plan_instance.plan_id,
-                "community_name": community_name,
+                "community_name": community_data['name'],
                 "name": plan_instance.name,
                 "cost": plan_instance.cost,
                 "cm_emails": plan_instance.cm_emails,
                 "buddy_emails": plan_instance.buddy_emails,
                 "payment_page_url": order_body['payment_page_url'],
-                "renew": False
+                "renew": False,
+                "grace_period": community_data['grace_period']
             }
         }
 
@@ -159,6 +181,9 @@ class SubscriptionImpl(SubscriptionManager):
 
         if 'user_id' in order_body:
             order_data['notes']['user_id'] = order_body['user_id']
+
+        if 'shared_by' in order_body:
+            order_data['notes']['shared_by'] = order_body['shared_by']
 
         return order_data
 
@@ -196,12 +221,12 @@ class SubscriptionImpl(SubscriptionManager):
         if plan_instance.is_deleted:
             return {'error_message': 'plan no longer exists'}
 
-        community_name = self._get_community_name(plan_instance.community_id)
+        community_data = self._get_community_data(plan_instance.community_id)
 
-        if 'error_message' in community_name:
-            return {'error_message': community_name['error_message']}
+        if 'error_message' in community_data:
+            return {'error_message': community_data['error_message']}
 
-        order_data = self._create_order_object_data(plan_instance, order_body, community_name['value'])
+        order_data = self._create_order_object_data(plan_instance, order_body, community_data)
         options = self._create_razorpay_client_options(order_data)
 
         if 'error_message' in options:

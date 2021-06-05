@@ -40,6 +40,10 @@ class SubscriptionViewHelper:
         if 'buddy_emails' not in plan_body or not plan_body['buddy_emails']:
             return {'error_message': 'send buddy_emails'}
 
+        if 'referral_free_days' in plan_body:
+            if not isinstance(plan_body['referral_free_days'], int) or int(plan_body['referral_free_days']) < 0:
+                return {'error_message': 'invalid referral_free_days value'}
+
         return plan_body
 
     @staticmethod

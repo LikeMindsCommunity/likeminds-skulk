@@ -16,7 +16,9 @@ def PlanSerializer(plans, is_deleted=False) -> list:
                 'duration_in_months': plan.duration_in_months,
                 'cm_emails': plan.cm_emails,
                 'buddy_emails': plan.buddy_emails,
-                'trials': plan.trials,
+                'description': plan.description,
+                'referral_free_days': plan.referral_free_days,
+                'image': plan.image,
                 'url': PlanUtilities.generate_plan_url(plan.plan_id)
             }
 

@@ -12,8 +12,10 @@ class SubscriptionPlan(models.Model):
     duration_in_months = models.IntegerField(default=0)
     cm_emails = models.TextField(null=True)
     buddy_emails = models.TextField(null=True)
-    trials = models.IntegerField(default=0)
     is_deleted = models.BooleanField(default=False)
+    description = models.TextField(default='')
+    referral_free_days = models.IntegerField(default=0)
+    image = models.CharField(max_length=256, default='')
     created_at = models.BigIntegerField(default=0)
     updated_at = models.BigIntegerField(default=0)
 
@@ -38,8 +40,10 @@ class SubscriptionPlan(models.Model):
         instance.duration_in_months = plan_body['duration_in_months']
         instance.cm_emails = plan_body['cm_emails']
         instance.buddy_emails = plan_body['buddy_emails']
-        instance.trials = plan_body['trials']
         instance.is_deleted = False
+        instance.description = plan_body['description']
+        instance.referral_free_days = plan_body['referral_free_days']
+        instance.image = plan_body['image']
         instance.save()
 
         return instance

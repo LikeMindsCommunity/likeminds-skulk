@@ -11,8 +11,11 @@ class SubscriptionManager(metaclass=abc.ABCMeta):
                 (hasattr(subclass, 'create_order') and callable(subclass.create_order)) and
                 (hasattr(subclass, 'verify_order') and callable(subclass.verify_order)) and
                 (hasattr(subclass, 'create_transaction') and callable(subclass.create_transaction)) and
-                (hasattr(subclass, 'update_transaction') and callable(subclass.update_transaction)) and
-                (hasattr(subclass, 'create_subscription') and callable(subclass.create_subscription)) or
+                (hasattr(subclass, 'create_subscription') and callable(subclass.create_subscription)) and
+                (hasattr(subclass, 'start_subscription') and callable(subclass.start_subscription)) and
+                (hasattr(subclass, 'fetch_subscription') and callable(subclass.fetch_subscription)) and
+                (hasattr(subclass, 'fetch_subscription_history') and callable(subclass.fetch_subscription_history)) and
+                (hasattr(subclass, 'fetch_community_meta') and callable(subclass.fetch_community_meta)) or
                 NotImplemented)
 
     @abc.abstractmethod
@@ -58,15 +61,37 @@ class SubscriptionManager(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def update_transaction(self, payment_id: str, user_id: str) -> dict:
+    def create_subscription(self, subscription_body: dict, user_id: str) -> dict:
         """
-        update an existing transaction
+        create subscription from the payment
         """
         raise NotImplementedError
 
     @abc.abstractmethod
-    def create_subscription(self, payment_id: str) -> dict:
+    def start_subscription(self, request_body: dict) -> dict:
         """
-        create subscription from the payment
+        start subscription of a specific user for given community
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def fetch_subscription(self, user_id: str, community_id: str) -> object:
+        """
+        fetch all the subscriptions of a user
+        (a single subscription, if community_id is provided)
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def fetch_subscription_history(self, user_id: str, community_id: str) -> object:
+        """
+        fetch all the subscriptions history for a user for a given community
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def fetch_community_meta(self, payment_id: str) -> dict:
+        """
+        get community meta details for given payment_id
         """
         raise NotImplementedError

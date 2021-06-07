@@ -78,6 +78,8 @@ class Transaction(models.Model):
     refund_amount = models.IntegerField(default=0)
     user_id = models.IntegerField(null=True, default=None)
     payment_page_url = models.CharField(max_length=128)
+    shared_by = models.IntegerField(null=True, default=None)
+    grace_period = models.IntegerField(default=0)
     created_at = models.BigIntegerField(default=0)
     updated_at = models.BigIntegerField(default=0)
 
@@ -111,6 +113,8 @@ class Transaction(models.Model):
         instance.refund_amount = transaction_body['refund_amount']
         instance.user_id = transaction_body['user_id']
         instance.payment_page_url = transaction_body['payment_page_url']
+        instance.shared_by = transaction_body['shared_by']
+        instance.grace_period = transaction_body['grace_period']
         instance.save()
 
         return instance
@@ -128,14 +132,15 @@ class Transaction(models.Model):
 
 
 class Subscription(models.Model):
-    user_id = models.IntegerField()
+    user_id = models.IntegerField(default=0)
     community_id = models.IntegerField(default=0)
     plan_id = models.CharField(max_length=64)
     date_subscribed = models.BigIntegerField(default=0)
     valid_till = models.BigIntegerField(default=0)
     date_unsubscribed = models.BigIntegerField(default=None, null=True)
-    trial_end = models.BigIntegerField(default=None, null=True)
     type = models.CharField(max_length=10)
+    renewal_due = models.BigIntegerField(default=0)
+    transaction = models.ForeignKey(Transaction, on_delete=models.SET_NULL, null=True)
     created_at = models.BigIntegerField(default=0)
     updated_at = models.BigIntegerField(default=0)
 
@@ -160,6 +165,8 @@ class Subscription(models.Model):
         instance.date_unsubscribed = None
         instance.trial_end = subscription_body['trial_end']
         instance.type = subscription_body['type']
+        instance.renewal_due = subscription_body['renewal_due']
+        instance.transaction = subscription_body['transaction']
         instance.save()
 
         return instance
@@ -182,7 +189,8 @@ class SubscriptionHistory(models.Model):
     description = models.TextField(default='')
     transaction = models.ForeignKey(Transaction, on_delete=models.CASCADE, null=True)
     type = models.CharField(max_length=8)
-    status = models.CharField(max_length=8)
+    user_id = models.IntegerField(default=0)
+    community_id = models.IntegerField(default=0)
     created_at = models.BigIntegerField(default=0)
     updated_at = models.BigIntegerField(default=0)
 
@@ -197,7 +205,8 @@ class SubscriptionHistory(models.Model):
         instance.description = subscription_history_body['description']
         instance.transaction = subscription_history_body['transaction']
         instance.type = subscription_history_body['type']
-        instance.status = subscription_history_body['status']
+        instance.user_id = subscription_history_body['user_id']
+        instance.community_id = subscription_history_body['community_id']
         instance.save()
 
         return instance

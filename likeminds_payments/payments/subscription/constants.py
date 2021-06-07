@@ -11,6 +11,11 @@ likeminds_logo_url = "https://uploads-ssl.webflow.com/605033ad58253a624fdb1964/6
 order_text = "Order Payment"
 company_name = "Collabmates Pvt. Ltd."
 community_api = "https://www.likeminds.community/api/community"
+member_state_api = "https://www.likeminds.community/api/members_state"
+community_questions_api = "https://www.likeminds.community/api/questions"
+free_subscription = 'free'
+lifetime_valid_till = 1924972199
+notify_period = 3
 
 valid_webhook_events = [
     "refund.processed",

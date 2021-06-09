@@ -163,7 +163,6 @@ class Subscription(models.Model):
         instance.date_subscribed = subscription_body['date_subscribed']
         instance.valid_till = subscription_body['valid_till']
         instance.date_unsubscribed = None
-        instance.trial_end = subscription_body['trial_end']
         instance.type = subscription_body['type']
         instance.renewal_due = subscription_body['renewal_due']
         instance.transaction = subscription_body['transaction']

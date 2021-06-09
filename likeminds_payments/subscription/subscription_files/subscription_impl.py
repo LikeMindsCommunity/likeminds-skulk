@@ -760,6 +760,8 @@ class SubscriptionImpl(SubscriptionManager):
             if 'error_message' in generate_subscription:
                 return {'error_message': generate_subscription['error_message']}
 
+            return {'success': True}
+
         elif 'community_id' in subscription_body and 'type' in subscription_body:
 
             community_id = NumberUtilities.get_integer_from_string(subscription_body['community_id'])

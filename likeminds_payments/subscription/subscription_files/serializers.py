@@ -101,7 +101,8 @@ def SubscriptionHistorySerializer(subscription_history) -> list:
             subscription_plan = SubscriptionPlan.get_plan_or_None(plan_id=entry.transaction.plan_id)
             if subscription_plan is not None:
                 history_object['duration_name'] = subscription_plan.duration_name
-                history_object['plan'] = subscription_plan
+                serialized_plan = PlanSerializer([subscription_plan])
+                history_object['plan'] = serialized_plan[0]
 
         output.append(history_object)
 

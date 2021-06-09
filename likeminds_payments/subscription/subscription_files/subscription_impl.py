@@ -1,7 +1,7 @@
-from ..subscription.subscription_manager import SubscriptionManager
-from ..subscription.constants import subscription_plan_choices, likeminds_logo_url, order_text, company_name, \
+from ..subscription_files.subscription_manager import SubscriptionManager
+from ..subscription_files.constants import subscription_plan_choices, likeminds_logo_url, order_text, company_name, \
     community_api, lifetime_valid_till, member_state_api, community_questions_api, notify_period
-from ..subscription.serializers import PlanSerializer, SubscriptionSerializer, SubscriptionHistorySerializer
+from ..subscription_files.serializers import PlanSerializer, SubscriptionSerializer, SubscriptionHistorySerializer
 from ..utility.plan_utilities import PlanUtilities
 from ..utility.api_utilities import ApiUtilities
 from ..utility.number_utilities import NumberUtilities

@@ -1,19 +1,16 @@
 from django.http import JsonResponse
 from rest_framework.views import APIView
 from rest_framework import status as status_codes
-from rest_framework.permissions import IsAuthenticated
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 
 from ..mixins import TransactionMixin
 from ..utility.request_utilities import RequestUtilities
-from ..subscription.subscription_impl import SubscriptionImpl
-from ..subscription.subscription_view_helper import SubscriptionViewHelper
+from ..subscription_files.subscription_impl import SubscriptionImpl
+from ..subscription_files.subscription_view_helper import SubscriptionViewHelper
 
 
 class CreatePlanView(TransactionMixin, APIView):
-
-    permission_classes = (IsAuthenticated,)
 
     @method_decorator(csrf_exempt)
     def dispatch(self, request, *args, **kwargs):
@@ -76,8 +73,6 @@ class FetchPlanView(APIView):
 
 
 class DeletePlanView(TransactionMixin, APIView):
-
-    permission_classes = (IsAuthenticated,)
 
     @method_decorator(csrf_exempt)
     def dispatch(self, request, *args, **kwargs):

@@ -1,4 +1,4 @@
-from ..subscription.constants import valid_webhook_events, subscription_plan_choices, free_subscription
+from ..subscription_files.constants import valid_webhook_events, subscription_plan_choices, free_subscription
 
 
 class SubscriptionViewHelper:

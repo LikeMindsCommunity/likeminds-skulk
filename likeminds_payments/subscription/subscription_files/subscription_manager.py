@@ -63,14 +63,14 @@ class SubscriptionManager(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def create_subscription(self, subscription_body: dict, user_id: str) -> dict:
         """
-        create subscription from the payment
+        create subscription_files from the payment
         """
         raise NotImplementedError
 
     @abc.abstractmethod
     def start_subscription(self, request_body: dict) -> dict:
         """
-        start subscription of a specific user for given community
+        start subscription_files of a specific user for given community
         """
         raise NotImplementedError
 
@@ -78,7 +78,7 @@ class SubscriptionManager(metaclass=abc.ABCMeta):
     def fetch_subscription(self, user_id: str, community_id: str) -> object:
         """
         fetch all the subscriptions of a user
-        (a single subscription, if community_id is provided)
+        (a single subscription_files, if community_id is provided)
         """
         raise NotImplementedError
 

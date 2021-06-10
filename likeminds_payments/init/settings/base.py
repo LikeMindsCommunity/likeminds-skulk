@@ -44,7 +44,8 @@ INSTALLED_APPS = [
 CORS_ORIGIN_ALLOW_ALL = True
 
 CORS_ALLOW_HEADERS = list(default_headers) + [
-    'x-member-id'
+    'x-member-id',
+    'x-platform-code'
 ]
 
 MIDDLEWARE = [

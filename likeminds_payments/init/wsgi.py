@@ -1,5 +1,5 @@
 """
-WSGI config for likeminds_payments project.
+WSGI config for init project.
 
 It exposes the WSGI callable as a module-level variable named ``application``.
 
@@ -14,7 +14,7 @@ from django.core.wsgi import get_wsgi_application
 from django.conf import settings
 
 if not settings.IS_BETA:
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'likeminds_payments.settings.production')
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'init.settings.production')
 else:
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'lieminds_payments.settings.development')
 

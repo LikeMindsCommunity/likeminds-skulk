@@ -1,5 +1,6 @@
 import json
 
+
 class RequestUtilities:
 
     @staticmethod
@@ -10,4 +11,7 @@ class RequestUtilities:
             request_body = {}
 
         return request_body
-        
+
+    @staticmethod
+    def get_parameter_from_headers(request, parameter) -> str:
+        return request.META.get(parameter, '')

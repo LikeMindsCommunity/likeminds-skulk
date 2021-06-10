@@ -1,0 +1,47 @@
+import time
+
+milliseconds_in_a_day = 86400000
+
+days_in_months = {
+    '01': 31,
+    '02': 28,
+    '03': 31,
+    '04': 30,
+    '05': 31,
+    '06': 30,
+    '07': 31,
+    '08': 31,
+    '09': 30,
+    '10': 31,
+    '11': 30,
+    '12': 31
+}
+
+
+class TimeUtilities:
+
+    @staticmethod
+    def current_time_in_milliseconds() -> int:
+        return int((time.time() * 1000))
+
+    @staticmethod
+    def get_number_of_days_in_months(start_month: str, months_count: int) -> int:
+        consider = False
+        total_days = 0
+        while months_count != 0:
+            for k, days in days_in_months.items():
+                if consider is True and months_count != 0:
+                    total_days += days
+                    months_count -= 1
+                if k == start_month:
+                    consider = True
+                if months_count == 0:
+                    consider = False
+        return total_days
+
+    @staticmethod
+    def add_months_in_epoch_time(epoch: int, months: int) -> int:
+        month = time.strftime("%m", time.gmtime(epoch))
+        days = TimeUtilities.get_number_of_days_in_months(month, months)
+
+        return epoch + (days - 1) * milliseconds_in_a_day

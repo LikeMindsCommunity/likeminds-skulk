@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 import os
 from dotenv import load_dotenv
+from corsheaders.defaults import default_headers
 from pathlib import Path
 
 load_dotenv()
@@ -41,6 +42,10 @@ INSTALLED_APPS = [
 ]
 
 CORS_ORIGIN_ALLOW_ALL = True
+
+CORS_ALLOW_HEADERS = list(default_headers) + [
+    'x-member-id'
+]
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',

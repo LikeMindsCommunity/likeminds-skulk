@@ -272,18 +272,13 @@ class SubscriptionImpl(SubscriptionManager):
     @staticmethod
     def _verify_transaction_signature(payload, signature: str) -> dict:
 
-        message = json.dumps(payload)
+        message = str(payload, 'utf-8')
 
-        razorpay_client = RazorpayWrapper.get_instance()
-
-        digest = razorpay_client.utility.verify_webhook_signature(
-            message, signature, settings.RAZORPAY_WEBHOOK_SECRET)
-
-        # digest = hmac.new(
-        #     key=bytes(settings.RAZORPAY_WEBHOOK_SECRET, 'utf-8'),
-        #     msg=bytes(message, 'utf-8'),
-        #     digestmod=hashlib.sha256
-        # ).hexdigest()
+        digest = hmac.new(
+            key=bytes(settings.RAZORPAY_WEBHOOK_SECRET, 'utf-8'),
+            msg=bytes(message, 'utf-8'),
+            digestmod=hashlib.sha256
+        ).hexdigest()
 
         if digest != signature:
             return {'error_message': 'Signature mismatch'}
@@ -348,11 +343,10 @@ class SubscriptionImpl(SubscriptionManager):
 
     def create_transaction(self, transaction_body: dict, transaction_raw_body, transaction_signature: str) -> dict:
 
-        # TODO
-        # signature_verification = self._verify_transaction_signature(transaction_raw_body, transaction_signature)
-        #
-        # if 'error_message' in signature_verification:
-        #     return {'error_message': signature_verification['error_message']}
+        signature_verification = self._verify_transaction_signature(transaction_raw_body, transaction_signature)
+
+        if 'error_message' in signature_verification:
+            return {'error_message': signature_verification['error_message']}
 
         existing_transaction_instance = Transaction.get_transaction_or_None(
             transaction_body['payload']['payment']['entity']['id']
@@ -398,7 +392,8 @@ class SubscriptionImpl(SubscriptionManager):
         if not transaction_instance:
             return {'error_message': 'error while creating transaction'}
 
-        if transaction_body['event'] == 'captured':
+        if transaction_body['event'] == 'payment.captured':
+
             if transaction_data['renew'] and transaction_data['user_id'] is not None:
                 data = {
                     'payment_id': transaction_data['payment_id']

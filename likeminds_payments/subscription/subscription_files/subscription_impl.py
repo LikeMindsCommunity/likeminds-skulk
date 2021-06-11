@@ -360,13 +360,15 @@ class SubscriptionImpl(SubscriptionManager):
 
         if existing_transaction_instance:
 
+            plan_instance = SubscriptionPlan.get_plan_or_None(plan_id=existing_transaction_instance.plan_id)
+
             if transaction_body["event"] == "refund.processed":
                 existing_transaction_instance.status = "refund"
                 existing_transaction_instance.save()
 
                 if existing_transaction_instance.user_id is not None:
                     subscription_instance = Subscription.get_subscription_or_None(
-                        existing_transaction_instance.user_id, existing_transaction_instance.community_id)
+                        existing_transaction_instance.user_id, plan_instance.community_id)
 
                     if subscription_instance is not None:
                         current_time = TimeUtilities.current_time_in_milliseconds()
@@ -560,7 +562,7 @@ class SubscriptionImpl(SubscriptionManager):
 
                 if transaction_instance.shared_by is not None:
                     referrer_subscription_instance = Subscription.get_subscription_or_None(
-                        transaction_instance.shared_by, transaction_instance.community_id
+                        transaction_instance.shared_by, plan_instance.community_id
                     )
 
                     if referrer_subscription_instance.type != 'onetime':
@@ -598,7 +600,7 @@ class SubscriptionImpl(SubscriptionManager):
                 return {'error_message': 'Invalid user ID'}
 
             subscription_instance = Subscription.get_subscription_or_None(
-                transaction_instance.user_id, transaction_instance.community_id
+                transaction_instance.user_id, plan_instance.community_id
             )
 
             if not subscription_instance:

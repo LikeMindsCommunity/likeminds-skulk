@@ -308,7 +308,7 @@ class SubscriptionImpl(SubscriptionManager):
             "community_name": order_notes['community_name'],
             "plan_name": order_notes['name'],
             "plan_cost": order_notes['cost'],
-            "renew": order_notes['renew'],
+            "renew": False,
             "amount": payment_instance['amount'],
             "payment_email": payment_instance['email'],
             "payment_phone": payment_instance['contact'],
@@ -326,6 +326,9 @@ class SubscriptionImpl(SubscriptionManager):
 
         if payment_instance['error_description'] is not None:
             transaction_data["error_description"] = payment_instance['error_description']
+
+        if 'renew' in order_notes and order_notes['renew'] == "true":
+            transaction_data['renew'] = True
 
         if 'amount' in refund_instance:
             transaction_data['refund_amount'] = refund_instance['amount']

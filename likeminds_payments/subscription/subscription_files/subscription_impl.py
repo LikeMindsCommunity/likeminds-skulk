@@ -569,7 +569,6 @@ class SubscriptionImpl(SubscriptionManager):
                     referrer_data = SubscriptionImpl._generate_data_for_existing_subscription_against_referral(
                         referrer_subscription_instance, plan_instance, transaction_instance)
 
-                    referrer_subscription_instance.type = referrer_data["subscription_data"]["type"]
                     referrer_subscription_instance.valid_till = referrer_data["subscription_data"]["valid_till"]
                     referrer_subscription_instance.renewal_due = referrer_data["subscription_data"]["renewal_due"]
                     referrer_subscription_instance.save()

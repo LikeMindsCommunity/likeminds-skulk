@@ -1,4 +1,4 @@
-from ..subscription_files.constants import valid_webhook_events, subscription_plan_choices, free_subscription
+import subscription.subscription_files.constants as constants
 
 
 class SubscriptionViewHelper:
@@ -17,7 +17,7 @@ class SubscriptionViewHelper:
             if 'duration_name' not in plan_body or not plan_body['duration_name']:
                 return {'error_message': 'send duration_name of plan'}
 
-            if plan_body['duration_name'] not in subscription_plan_choices:
+            if plan_body['duration_name'] not in constants.SUBSCRIPTION_PLAN_CHOICES:
                 return {'error_message': 'invalid duration_name'}
 
         else:
@@ -110,13 +110,13 @@ class SubscriptionViewHelper:
         if not request_body:
             return {'error_message': 'invalid request body'}
 
-        if 'event' not in request_body or request_body['event'] not in valid_webhook_events:
+        if 'event' not in request_body or request_body['event'] not in constants.VALID_WEBHOOK_EVENTS:
             return {'error_message': 'invalid event recognized'}
 
         if 'payload' not in request_body or not request_body['payload']:
             return {'error_message': 'no payload detected'}
 
-        if request_body['event'] == valid_webhook_events[0]:
+        if request_body['event'] == constants.VALID_WEBHOOK_EVENTS[0]:
             if 'refund' not in request_body['payload'] or not request_body['payload']['refund']:
                 return {'error_message': 'no refund object detected'}
 
@@ -136,7 +136,7 @@ class SubscriptionViewHelper:
 
         if 'payment_id' not in request_body or not request_body['payment_id']:
             if 'community_id' in request_body:
-                if 'type' not in request_body or not request_body['type'] == free_subscription:
+                if 'type' not in request_body or not request_body['type'] == constants.FREE_SUBSCRIPTION:
                     return {'error_message': 'invalid type value'}
 
             return {'error_message': 'send payment_id'}

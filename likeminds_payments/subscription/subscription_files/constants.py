@@ -1,4 +1,4 @@
-subscription_plan_choices = {
+SUBSCRIPTION_PLAN_CHOICES = {
     "monthly": 1,
     "quarterly": 3,
     "half_yearly": 6,
@@ -6,18 +6,19 @@ subscription_plan_choices = {
     "lifetime": 999
 }
 
-plan_base_url = "https://betapayment.likeminds.community"
-likeminds_logo_url = "https://uploads-ssl.webflow.com/605033ad58253a624fdb1964/6055d9b3d5d4c689c60acac7_Favicon%20256X256.jpg"
-order_text = "Order Payment"
-company_name = "Collabmates Pvt. Ltd."
-community_api = "https://www.likeminds.community/api/community"
-member_state_api = "https://www.likeminds.community/api/members_state"
-community_questions_api = "https://www.likeminds.community/api/questions"
-free_subscription = 'free'
-lifetime_valid_till = 1924972199
-notify_period = 3
+PLAN_BASE_URL = "https://betapayment.likeminds.community"
+LIKEMINDS_LOGO_URL = \
+    "https://uploads-ssl.webflow.com/605033ad58253a624fdb1964/6055d9b3d5d4c689c60acac7_Favicon%20256X256.jpg"
+ORDER_TEXT = "Order Payment"
+COMPANY_NAME = "Collabmates Pvt. Ltd."
+COMMUNITY_API = "https://www.likeminds.community/api/community"
+MEMBER_STATE_API = "https://www.likeminds.community/api/members_state"
+COMMUNITY_QUESTIONS_API = "https://www.likeminds.community/api/questions"
+FREE_SUBSCRIPTION = 'free'
+LIFETIME_VALID_TILL = 1924972199
+NOTIFY_PERIOD = 3
 
-valid_webhook_events = [
+VALID_WEBHOOK_EVENTS = [
     "refund.processed",
     "payment.captured",
     "payment.failed",

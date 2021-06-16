@@ -1,6 +1,5 @@
 from ..subscription_files.subscription_manager import SubscriptionManager
-from ..subscription_files.constants import subscription_plan_choices, likeminds_logo_url, order_text, company_name, \
-    community_api, lifetime_valid_till, member_state_api, community_questions_api, notify_period
+import subscription.subscription_files.constants as constants
 from ..subscription_files.serializers import PlanSerializer, SubscriptionSerializer, SubscriptionHistorySerializer
 from ..utility.plan_utilities import PlanUtilities
 from ..utility.api_utilities import ApiUtilities
@@ -13,7 +12,6 @@ from django.conf import settings
 
 import hmac
 import hashlib
-import json
 
 
 class SubscriptionImpl(SubscriptionManager):
@@ -24,8 +22,8 @@ class SubscriptionImpl(SubscriptionManager):
         if 'name' not in plan_body or not plan_body['name']:
             plan_body['name'] = ""
 
-        if plan_body['duration_name'] in subscription_plan_choices:
-            plan_body['duration_in_months'] = subscription_plan_choices[plan_body['duration_name']]
+        if plan_body['duration_name'] in constants.SUBSCRIPTION_PLAN_CHOICES:
+            plan_body['duration_in_months'] = constants.SUBSCRIPTION_PLAN_CHOICES[plan_body['duration_name']]
 
         if 'description' not in plan_body or not plan_body['description']:
             plan_body['description'] = ''
@@ -145,7 +143,7 @@ class SubscriptionImpl(SubscriptionManager):
         if not community_id:
             return {'error_message': 'send community_id'}
 
-        url = '{url}/{community_id}'.format(url=community_api, community_id=community_id)
+        url = '{url}/{community_id}'.format(url=constants.COMMUNITY_API, community_id=community_id)
         response = ApiUtilities.generate_get_request(url)
 
         if 'error_message' in response:
@@ -202,10 +200,10 @@ class SubscriptionImpl(SubscriptionManager):
             "key": settings.RAZORPAY_KEY,
             "amount": order['amount'],
             "currency": order['currency'],
-            "description": order_text,
-            "image": likeminds_logo_url,
+            "description": constants.ORDER_TEXT,
+            "image": constants.LIKEMINDS_LOGO_URL,
             "order_id": order['id'],
-            "name": company_name,
+            "name": constants.COMPANY_NAME,
             "receipt": "receipt#1",
             "notes": order['notes']
         }
@@ -371,7 +369,7 @@ class SubscriptionImpl(SubscriptionManager):
                         current_time = TimeUtilities.current_time_in_milliseconds()
                         subscription_instance.valid_till = TimeUtilities.subtract_days_in_epoch_time(current_time, 1)
                         subscription_instance.renewal_due = TimeUtilities.subtract_days_in_epoch_time(
-                            subscription_instance.valid_till, notify_period)
+                            subscription_instance.valid_till, constants.NOTIFY_PERIOD)
                         subscription_instance.save()
 
                     subscription_history_instance = SubscriptionHistory.objects.get(
@@ -443,12 +441,12 @@ class SubscriptionImpl(SubscriptionManager):
             }
         }
 
-        if subscription_plan_instance.duration_in_months == subscription_plan_choices["lifetime"]:
+        if subscription_plan_instance.duration_in_months == constants.SUBSCRIPTION_PLAN_CHOICES["lifetime"]:
             data["subscription_data"]["type"] = "lifetime"
-            data["subscription_data"]["valid_till"] = lifetime_valid_till
+            data["subscription_data"]["valid_till"] = constants.LIFETIME_VALID_TILL
 
         data["subscription_data"]["renewal_due"] = TimeUtilities.subtract_days_in_epoch_time(
-            data["subscription_data"]["valid_till"], notify_period)
+            data["subscription_data"]["valid_till"], constants.NOTIFY_PERIOD)
 
         data["subscription_history_data"] = {
             "start_date": current_time,
@@ -460,7 +458,7 @@ class SubscriptionImpl(SubscriptionManager):
             "community_id": subscription_plan_instance.community_id
         }
 
-        if subscription_plan_instance.duration_in_months == subscription_plan_choices["lifetime"]:
+        if subscription_plan_instance.duration_in_months == constants.SUBSCRIPTION_PLAN_CHOICES["lifetime"]:
             data["subscription_history_data"]["description"] = "lifetime payment"
 
         return data
@@ -490,7 +488,7 @@ class SubscriptionImpl(SubscriptionManager):
                 subscription_plan_instance.duration_in_months)
 
         data["subscription_data"]["renewal_due"] = TimeUtilities.subtract_days_in_epoch_time(
-            data["subscription_data"]["valid_till"], notify_period)
+            data["subscription_data"]["valid_till"], constants.NOTIFY_PERIOD)
 
         data["subscription_history_data"] = {
             "start_date": current_time,
@@ -522,7 +520,7 @@ class SubscriptionImpl(SubscriptionManager):
         }
 
         data["subscription_data"]["renewal_due"] = TimeUtilities.subtract_days_in_epoch_time(
-            data["subscription_data"]["valid_till"], notify_period)
+            data["subscription_data"]["valid_till"], constants.NOTIFY_PERIOD)
 
         data["subscription_history_data"] = {
             "start_date": current_time,
@@ -633,7 +631,7 @@ class SubscriptionImpl(SubscriptionManager):
                 "community_id": community_id,
                 "plan_id": None,
                 "date_subscribed": date_subscribed,
-                "valid_till": lifetime_valid_till,
+                "valid_till": constants.LIFETIME_VALID_TILL,
                 "date_unsubscribed": None,
                 "type": "free",
                 "transaction": None
@@ -641,7 +639,7 @@ class SubscriptionImpl(SubscriptionManager):
         }
 
         data["subscription_data"]["renewal_due"] = TimeUtilities.subtract_days_in_epoch_time(
-            data["subscription_data"]["valid_till"], notify_period)
+            data["subscription_data"]["valid_till"], constants.NOTIFY_PERIOD)
 
         data["subscription_history_data"] = {
             "start_date": date_subscribed,
@@ -702,7 +700,7 @@ class SubscriptionImpl(SubscriptionManager):
         if not community_id or not member_id:
             return {'error_message': 'send community_id and user_id'}
 
-        url = member_state_api
+        url = constants.MEMBER_STATE_API
         query_params = {
             'community_id': community_id,
             'member_id': member_id
@@ -722,7 +720,7 @@ class SubscriptionImpl(SubscriptionManager):
         if not community_id or not user_id or not aj:
             return {'error_message': 'insufficient values sent'}
 
-        url = community_questions_api
+        url = constants.COMMUNITY_QUESTIONS_API
         query_params = {
             'community_id': community_id,
             'aj': aj

@@ -1,22 +1,35 @@
-from ..subscription_files.subscription_manager import SubscriptionManager
-from ..subscription_files.constants import subscription_plan_choices, likeminds_logo_url, order_text, company_name, \
-    community_api, lifetime_valid_till, member_state_api, community_questions_api, notify_period
-from ..subscription_files.serializers import PlanSerializer, SubscriptionSerializer, SubscriptionHistorySerializer
-from ..utility.plan_utilities import PlanUtilities
-from ..utility.api_utilities import ApiUtilities
-from ..utility.number_utilities import NumberUtilities
-from ..utility.time_utilities import TimeUtilities
-from ..external_services.razorpay.razorpay_wrapper import RazorpayWrapper
+import hashlib
+import hmac
 
-from ..models import SubscriptionPlan, Transaction, Subscription, SubscriptionHistory
+import razorpay
 from django.conf import settings
 
-import hmac
-import hashlib
-import json
+from ..external_services.razorpay.razorpay_wrapper import RazorpayWrapper
+from ..models import SubscriptionPlan, Transaction, Subscription, SubscriptionHistory
+from ..subscription_files.constants import subscription_plan_choices, likeminds_logo_url, order_text, company_name, \
+    community_api, lifetime_valid_till, member_state_api, community_questions_api, notify_period
+from ..subscription_files.serializers import PlanSerializer, SubscriptionSerializer, SubscriptionHistorySerializer, \
+    SubscriptionListSerializer, TransactionSerializer
+from ..subscription_files.subscription_manager import SubscriptionManager
+from ..utility.api_utilities import ApiUtilities
+from ..utility.core_service_utilities import CoreServiceUtilities
+from ..utility.number_utilities import NumberUtilities
+from ..utility.plan_utilities import PlanUtilities
+from ..utility.time_utilities import TimeUtilities
 
 
 class SubscriptionImpl(SubscriptionManager):
+
+    @staticmethod
+    def _new_plan_validator(plan_body: dict) -> dict:
+
+        plans = SubscriptionPlan.objects.filter(duration_name=plan_body['duration_name'],
+                                                community_id=plan_body['community_id'])
+
+        if len(plans) != 0:
+            return {'error_message': 'plan already exist with provided duration_name, update existing one'}
+
+        return plan_body
 
     @staticmethod
     def _create_new_plan_object(plan_body: dict) -> dict:
@@ -43,25 +56,25 @@ class SubscriptionImpl(SubscriptionManager):
     @staticmethod
     def _update_existing_plan_object(plan_body: dict, plan_instance: dict) -> dict:
 
-        if plan_instance.name != plan_body['name']:
+        if 'name' in plan_body and plan_instance.name != plan_body['name']:
             plan_instance.name = plan_body['name']
 
-        if plan_instance.cost != plan_body['cost']:
+        if 'cost' in plan_body and plan_instance.cost != plan_body['cost']:
             plan_instance.cost = plan_body['cost']
 
-        if plan_instance.cm_emails != plan_body['cm_emails']:
+        if 'cm_emails' in plan_body and plan_instance.cm_emails != plan_body['cm_emails']:
             plan_instance.cm_emails = plan_body['cm_emails']
 
-        if plan_instance.buddy_emails != plan_body['buddy_emails']:
+        if 'buddy_emails' in plan_body and plan_instance.buddy_emails != plan_body['buddy_emails']:
             plan_instance.buddy_emails = plan_body['buddy_emails']
 
-        if plan_instance.description != plan_body['description']:
+        if 'description' in plan_body and plan_instance.description != plan_body['description']:
             plan_instance.description = plan_body['description']
 
-        if plan_instance.referral_free_days != plan_body['referral_free_days']:
+        if 'referral_free_days' in plan_body and plan_instance.referral_free_days != plan_body['referral_free_days']:
             plan_instance.referral_free_days = plan_body['referral_free_days']
 
-        if plan_instance.image != plan_body['image']:
+        if 'image' in plan_body and plan_instance.image != plan_body['image']:
             plan_instance.image = plan_body['image']
 
         return plan_instance
@@ -74,11 +87,24 @@ class SubscriptionImpl(SubscriptionManager):
 
         return {'url': PlanUtilities.generate_plan_url(plan_instance.plan_id)}
 
-    def create_plan(self, plan_body: dict) -> dict:
+    def create_plan(self, plan_body: dict, user_id: str) -> dict:
 
         if 'plan_id' not in plan_body or not plan_body['plan_id']:
 
-            plan_instance_body = self._create_new_plan_object(plan_body)
+            authenticator = CoreServiceUtilities.is_owner(plan_body['community_id'], user_id)
+
+            if 'error_message' in authenticator:
+                return {'error_message': authenticator['error_message']}
+
+            if 'is_owner' in authenticator and authenticator['is_owner'] is False:
+                return {'error_message': 'You are not the Owner/CM of the community'}
+
+            plan_validator = self._new_plan_validator(plan_body)
+
+            if 'error_message' in plan_validator:
+                return {'error_message': plan_validator['error_message']}
+
+            plan_instance_body = self._create_new_plan_object(plan_validator)
             plan_instance = SubscriptionPlan.create_instance(plan_instance_body)
 
             if not plan_instance:
@@ -94,6 +120,14 @@ class SubscriptionImpl(SubscriptionManager):
 
             if not plan_instance:
                 return {'error_message': 'invalid plan_id'}
+
+            authenticator = CoreServiceUtilities.is_owner(plan_instance.community_id, user_id)
+
+            if 'error_message' in authenticator:
+                return {'error_message': authenticator['error_message']}
+
+            if 'is_owner' in authenticator and authenticator['is_owner'] is False:
+                return {'error_message': 'You are not the Owner/CM of the community'}
 
             plan_updated_instance = self._update_existing_plan_object(plan_body, plan_instance)
             plan_updated_instance.save()
@@ -127,12 +161,20 @@ class SubscriptionImpl(SubscriptionManager):
 
         return plan_instance
 
-    def delete_plan(self, plan_id: str) -> dict:
+    def delete_plan(self, plan_id: str, user_id: str) -> dict:
 
         plan_instance = SubscriptionPlan.get_plan_or_None(plan_id=plan_id)
 
         if not plan_instance:
             return {'error_message': 'invalid plan_id'}
+
+        authenticator = CoreServiceUtilities.is_owner(plan_instance.community_id, user_id)
+
+        if 'error_message' in authenticator:
+            return {'error_message': authenticator['error_message']}
+
+        if 'is_owner' in authenticator and authenticator['is_owner'] is False:
+            return {'error_message': 'You are not the Owner/CM of the community'}
 
         plan_deleted_instance = self._delete_plan_instance(plan_instance)
         plan_deleted_instance.save()
@@ -368,14 +410,14 @@ class SubscriptionImpl(SubscriptionManager):
                         existing_transaction_instance.user_id, plan_instance.community_id)
 
                     if subscription_instance is not None:
-                        current_time = TimeUtilities.current_time_in_milliseconds()
-                        subscription_instance.valid_till = TimeUtilities.subtract_days_in_epoch_time(current_time, 1)
+                        subscription_instance.valid_till = TimeUtilities.subtract_months_in_epoch_time(
+                            subscription_instance.valid_till, plan_instance.duration_in_months)
                         subscription_instance.renewal_due = TimeUtilities.subtract_days_in_epoch_time(
                             subscription_instance.valid_till, notify_period)
                         subscription_instance.save()
 
-                    subscription_history_instance = SubscriptionHistory.objects.get(
-                        transaction=existing_transaction_instance)
+                    subscription_history_instance = SubscriptionHistory.get_history_with_transaction_or_None(
+                        existing_transaction_instance)
 
                     if subscription_history_instance is not None:
                         subscription_history_instance.type = 'refunded'
@@ -407,6 +449,66 @@ class SubscriptionImpl(SubscriptionManager):
                     return {'error_message': create_subscription['error_message']}
 
         return {'success': True}
+
+    @staticmethod
+    def _fetch_transactions(user_id: str, community_id: str):
+        output = []
+        transactions = Transaction.objects.filter(user_id=user_id).order_by('created_at')
+        for transaction in transactions:
+            plan = SubscriptionPlan.get_plan_or_None(transaction.plan_id)
+            if plan.community_id == community_id:
+                output.append(transaction)
+        return output
+
+    @staticmethod
+    def _serialize_transactions(transactions):
+        return TransactionSerializer(transactions)
+
+    def fetch_transactions(self, member_id: str, community_id: str, user_id: str) -> object:
+
+        authenticator = CoreServiceUtilities.is_owner(community_id, user_id)
+
+        if 'error_message' in authenticator:
+            return {'error_message': authenticator['error_message']}
+
+        if 'is_owner' in authenticator and authenticator['is_owner'] is False:
+            return {'error_message': 'You are not the Owner/CM of the community'}
+
+        transactions = self._fetch_transactions(member_id, community_id)
+
+        if len(transactions) == 0:
+            return {'error_message': 'no transaction exist for this user in this community'}
+
+        return self._serialize_transactions(transactions)
+
+    def refund_transaction(self, transaction_id: str, user_id: str) -> dict:
+
+        transaction_instance = Transaction.get_transaction_with_id_or_None(transaction_id)
+
+        if transaction_instance is None:
+            return {'error_message': 'invalid transaction id'}
+
+        plan_instance = SubscriptionPlan.get_plan_or_None(transaction_instance.plan_id)
+
+        if plan_instance is None:
+            return {'error_message': 'malformed transaction'}
+
+        authenticator = CoreServiceUtilities.is_owner(plan_instance.community_id, user_id)
+
+        if 'error_message' in authenticator:
+            return {'error_message': authenticator['error_message']}
+
+        if 'is_owner' in authenticator and authenticator['is_owner'] is False:
+            return {'error_message': 'You are not the Owner/CM of the community'}
+
+        razorpay_client = RazorpayWrapper.get_instance()
+
+        try:
+            response = razorpay_client.payment.refund(transaction_instance.payment_id, transaction_instance.amount)
+        except razorpay.errors.BadRequestError as e:
+            return {'error_message': e.__str__()}
+
+        return response
 
     @staticmethod
     def _check_if_transaction_is_used(payment_id: str) -> dict:
@@ -540,8 +642,9 @@ class SubscriptionImpl(SubscriptionManager):
         return data
 
     @staticmethod
-    def _generate_subscription_against_transaction(transaction_instance: dict, user_id: int) -> dict:
+    def _generate_subscription_against_transaction(transaction_instance: dict, user_id: str) -> dict:
 
+        user_id = NumberUtilities.get_integer_from_string(user_id)
         plan_instance = SubscriptionPlan.get_plan_or_None(plan_id=transaction_instance.plan_id)
 
         if plan_instance is None:
@@ -656,8 +759,10 @@ class SubscriptionImpl(SubscriptionManager):
         return data
 
     @staticmethod
-    def _generate_free_subscription(user_id: int, community_id: int):
+    def _generate_free_subscription(user_id: str, community_id: str):
 
+        user_id = NumberUtilities.get_integer_from_string(user_id)
+        community_id = NumberUtilities.get_integer_from_string(community_id)
         subscription_instance = Subscription.get_subscription_or_None(user_id, community_id)
 
         if subscription_instance is None:
@@ -697,50 +802,43 @@ class SubscriptionImpl(SubscriptionManager):
             return {'success': True}
 
     @staticmethod
-    def _get_member_state(community_id: int, member_id: int) -> dict:
-
-        if not community_id or not member_id:
-            return {'error_message': 'send community_id and user_id'}
-
-        url = member_state_api
-        query_params = {
-            'community_id': community_id,
-            'member_id': member_id
-        }
-        response = ApiUtilities.generate_get_request(url=url, query_params=query_params)
-
-        if 'error_message' in response:
-            return {'error_message': 'error getting member state'}
-
-        data = {'is_owner': response['member']['is_owner']}
-
-        return data
-
-    @staticmethod
-    def _verify_aj(community_id: int, user_id: int, aj: int):
-
-        if not community_id or not user_id or not aj:
-            return {'error_message': 'insufficient values sent'}
-
-        url = community_questions_api
-        query_params = {
-            'community_id': community_id,
-            'aj': aj
-        }
-        headers = {
-            'x-member-id': '{}'.format(user_id)
-        }
-
-        response = ApiUtilities.generate_get_request(url=url, headers=headers, query_params=query_params)
-
-        if 'error_message' in response:
-            return {'error_message': 'error getting member state'}
-
-        return {'aj_expired': response['aj_expired']}
-
-    def create_subscription(self, subscription_body: dict, user_id: str) -> dict:
+    def _add_free_days_to_subscription(user_id: str, community_id: str, valid_till: int, n_days: int):
 
         user_id = NumberUtilities.get_integer_from_string(user_id)
+        community_id = NumberUtilities.get_integer_from_string(community_id)
+        subscription_instance = Subscription.get_subscription_or_None(user_id, community_id)
+
+        if subscription_instance is not None:
+
+            if valid_till is not None and valid_till > subscription_instance.valid_till and n_days is None:
+                subscription_instance.valid_till = valid_till
+
+            if valid_till is None and n_days is not None:
+                subscription_instance.valid_till = TimeUtilities.add_days_in_epoch_time(
+                    subscription_instance.valid_till, n_days)
+
+            subscription_instance.save()
+
+            subscription_history_data = {
+                "start_date": subscription_instance.date_subscribed,
+                "end_date": subscription_instance.valid_till,
+                "description": 'free limited subscription',
+                "transaction": None,
+                "type": "free",
+                "user_id": user_id,
+                "community_id": community_id
+            }
+
+            subscription_history_instance = SubscriptionHistory.create_instance(subscription_history_data)
+
+            if not subscription_history_instance:
+                return {'error_message': 'error creating subscription history'}
+
+            return {'success': True}
+
+        return {'error_message': 'invalid user_id and community_id pair'}
+
+    def create_subscription(self, subscription_body: dict, user_id: str) -> dict:
 
         if 'payment_id' in subscription_body:
 
@@ -763,25 +861,49 @@ class SubscriptionImpl(SubscriptionManager):
 
         elif 'community_id' in subscription_body and 'type' in subscription_body:
 
-            community_id = NumberUtilities.get_integer_from_string(subscription_body['community_id'])
+            authenticator = CoreServiceUtilities.is_owner(subscription_body['community_id'], user_id)
 
-            member_state = self._get_member_state(community_id, user_id)
-            is_owner = member_state['is_owner']
+            if 'error_message' in authenticator:
+                return {'error_message': authenticator['error_message']}
 
-            if is_owner:
+            if 'is_owner' in authenticator:
+                if authenticator['is_owner'] is False and subscription_body['type'] == 'dashboard':
+                    return {'error_message': 'You are not the Owner/CM of the community'}
 
-                generate_free_subscription = self._generate_free_subscription(user_id, community_id)
+                if subscription_body['type'] == 'dashboard':
 
-                if 'error_message' in generate_free_subscription:
-                    return {'error_message': generate_free_subscription['error_message']}
+                    valid_till = None
+                    n_days = None
 
-                return {'success': True}
+                    if 'valid_till' in subscription_body:
+                        valid_till = subscription_body['valid_till']
+
+                    if 'n_days' in subscription_body:
+                        n_days = subscription_body['n_days']
+
+                    add_free_days = self._add_free_days_to_subscription(user_id, subscription_body['community_id'],
+                                                                        valid_till, n_days)
+
+                    if 'error_message' in add_free_days:
+                        return {'error_message': add_free_days['error_message']}
+
+                    return {'success': True}
+
+                if subscription_body['type'] == 'free':
+
+                    generate_free_subscription = self._generate_free_subscription(user_id,
+                                                                                  subscription_body['community_id'])
+
+                    if 'error_message' in generate_free_subscription:
+                        return {'error_message': generate_free_subscription['error_message']}
+
+                    return {'success': True}
 
             if 'aj' in subscription_body:
 
                 aj = NumberUtilities.get_integer_from_string(subscription_body['aj'])
 
-                verify_aj = self._verify_aj(community_id, user_id, aj)
+                verify_aj = CoreServiceUtilities.verify_aj(subscription_body['community_id'], user_id, aj)
 
                 if 'error_message' in verify_aj:
                     return {'error_message': verify_aj['error_message']}
@@ -791,7 +913,8 @@ class SubscriptionImpl(SubscriptionManager):
                 if aj_expired:
                     return {'error_message': 'Link expired'}
 
-                generate_free_subscription = self._generate_free_subscription(user_id, community_id)
+                generate_free_subscription = self._generate_free_subscription(user_id,
+                                                                              subscription_body['community_id'])
 
                 if 'error_message' in generate_free_subscription:
                     return {'error_message': generate_free_subscription['error_message']}
@@ -822,7 +945,7 @@ class SubscriptionImpl(SubscriptionManager):
         return {'error_message': 'something went wrong'}
 
     @staticmethod
-    def _fetch_subscriptions(user_id: int, community_id: int):
+    def _fetch_subscriptions(user_id: str, community_id: str):
         if community_id is not None:
             return Subscription.objects.filter(user_id=user_id, community_id=community_id).order_by('created_at')
         return Subscription.objects.filter(user_id=user_id).order_by('created_at')
@@ -831,10 +954,28 @@ class SubscriptionImpl(SubscriptionManager):
     def _serialize_subscriptions(subscriptions):
         return SubscriptionSerializer(subscriptions)
 
-    def fetch_subscription(self, user_id: str, community_id: str) -> object:
+    @staticmethod
+    def _serialize_subscriptions_list(subscriptions):
+        return SubscriptionListSerializer(subscriptions)
 
-        user_id = NumberUtilities.get_integer_from_string(user_id)
-        community_id = NumberUtilities.get_integer_from_string(community_id) if community_id else None
+    def fetch_subscription(self, user_id: str, community_id: str, member_ids: list) -> object:
+
+        if member_ids is not None:
+
+            authenticator = CoreServiceUtilities.is_owner(community_id, user_id)
+
+            if 'error_message' in authenticator:
+                return {'error_message': authenticator['error_message']}
+
+            if 'is_owner' in authenticator and authenticator['is_owner'] is False:
+                return {'error_message': 'You are not the Owner/CM of the community'}
+
+            member_subscriptions = {}
+
+            for member_id in member_ids:
+                member_subscriptions[member_id] = self._fetch_subscriptions(member_id, community_id)
+
+            return self._serialize_subscriptions_list(member_subscriptions)
 
         subscriptions = self._fetch_subscriptions(user_id, community_id)
 
@@ -842,6 +983,31 @@ class SubscriptionImpl(SubscriptionManager):
             return {'error_message': 'no subscriptions exist with provided user_id'}
 
         return self._serialize_subscriptions(subscriptions)
+
+    def cancel_subscription(self, user_id: str, community_id: str) -> dict:
+
+        is_pending_member = CoreServiceUtilities.is_pending_member(community_id, user_id)
+
+        if 'error_message' in is_pending_member:
+            return {'error_message': is_pending_member['error_message']}
+
+        if is_pending_member['is_pending_member'] is False:
+            return {'error_message': 'Your subscription cannot be cancelled'}
+
+        subscription_instance = Subscription.get_subscription_or_None(user_id, community_id)
+
+        if subscription_instance is None:
+            return {'error_message': 'no subscription exists for this user_id and community_id'}
+
+        razorpay_client = RazorpayWrapper.get_instance()
+
+        try:
+            response = razorpay_client.payment.refund(subscription_instance.transaction.payment_id,
+                                                      subscription_instance.transaction.amount)
+        except razorpay.errors.BadRequestError as e:
+            return {'error_message': e.__str__()}
+
+        return response
 
     @staticmethod
     def _fetch_subscription_history(user_id: int, community_id: int):

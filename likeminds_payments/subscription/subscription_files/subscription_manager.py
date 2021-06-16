@@ -11,15 +11,18 @@ class SubscriptionManager(metaclass=abc.ABCMeta):
                 (hasattr(subclass, 'create_order') and callable(subclass.create_order)) and
                 (hasattr(subclass, 'verify_order') and callable(subclass.verify_order)) and
                 (hasattr(subclass, 'create_transaction') and callable(subclass.create_transaction)) and
+                (hasattr(subclass, 'fetch_transactions') and callable(subclass.fetch_transactions)) and
+                (hasattr(subclass, 'refund_transaction') and callable(subclass.refund_transaction)) and
                 (hasattr(subclass, 'create_subscription') and callable(subclass.create_subscription)) and
                 (hasattr(subclass, 'start_subscription') and callable(subclass.start_subscription)) and
                 (hasattr(subclass, 'fetch_subscription') and callable(subclass.fetch_subscription)) and
+                (hasattr(subclass, 'cancel_subscription') and callable(subclass.cancel_subscription)) and
                 (hasattr(subclass, 'fetch_subscription_history') and callable(subclass.fetch_subscription_history)) and
                 (hasattr(subclass, 'fetch_community_meta') and callable(subclass.fetch_community_meta)) or
                 NotImplemented)
 
     @abc.abstractmethod
-    def create_plan(self, plan_body: dict) -> dict:
+    def create_plan(self, plan_body: dict, user_id: str) -> dict:
         """
         create a new plan
         """
@@ -33,7 +36,7 @@ class SubscriptionManager(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def delete_plan(self, plan_id: str) -> dict:
+    def delete_plan(self, plan_id: str, user_id: str) -> dict:
         """
         delete an existing plan
         """
@@ -61,6 +64,20 @@ class SubscriptionManager(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
+    def fetch_transactions(self, member_id: str, community_id: str, user_id: str) -> object:
+        """
+        Fetch all the transactions of a user
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def refund_transaction(self, transaction_id: str, user_id: str) -> dict:
+        """
+        Refund a specific transaction
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
     def create_subscription(self, subscription_body: dict, user_id: str) -> dict:
         """
         create subscription_files from the payment
@@ -75,12 +92,18 @@ class SubscriptionManager(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def fetch_subscription(self, user_id: str, community_id: str) -> object:
+    def fetch_subscription(self, user_id: str, community_id: str, member_ids: list) -> object:
         """
         fetch all the subscriptions of a user
         (a single subscription_files, if community_id is provided)
         """
         raise NotImplementedError
+
+    @abc.abstractmethod
+    def cancel_subscription(self, user_id: str, community_id: str) -> dict:
+        """
+        cancel the subscription for a user for given community
+        """
 
     @abc.abstractmethod
     def fetch_subscription_history(self, user_id: str, community_id: str) -> object:

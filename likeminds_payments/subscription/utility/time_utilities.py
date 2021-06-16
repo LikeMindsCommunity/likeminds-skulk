@@ -25,11 +25,14 @@ class TimeUtilities:
         return int(time.time() * 1000)
 
     @staticmethod
-    def get_number_of_days_in_months(start_month: str, months_count: int) -> int:
+    def get_number_of_days_in_months(start_month: str, months_count: int, backward: bool = False) -> int:
         consider = False
         total_days = 0
         while months_count != 0:
-            for k, days in days_in_months.items():
+            months_list = sorted(days_in_months.items())
+            if backward:
+                months_list = reversed(months_list)
+            for k, days in months_list:
                 if consider is True and months_count != 0:
                     total_days += days
                     months_count -= 1
@@ -45,6 +48,13 @@ class TimeUtilities:
         days = TimeUtilities.get_number_of_days_in_months(month, months)
 
         return epoch + (days - 1) * milliseconds_in_a_day
+
+    @staticmethod
+    def subtract_months_in_epoch_time(epoch: int, months: int) -> int:
+        month = time.strftime("%m", time.gmtime(epoch))
+        days = TimeUtilities.get_number_of_days_in_months(month, months, True)
+
+        return epoch - (days + 1) * milliseconds_in_a_day
 
     @staticmethod
     def subtract_days_in_epoch_time(epoch: int, days: int) -> int:

@@ -1,13 +1,17 @@
-from ..subscription_files.constants import valid_webhook_events, subscription_plan_choices, free_subscription
+from ..subscription_files.constants import valid_webhook_events, subscription_plan_choices
+import json
 
 
 class SubscriptionViewHelper:
 
     @staticmethod
-    def create_plan_body_validator(plan_body):
+    def create_plan_body_validator(plan_body, user_id):
 
         if not plan_body:
             return {'error_message': 'invalid request body'}
+
+        if not user_id:
+            return {'error_message': 'send x-member-id in headers'}
 
         if 'plan_id' not in plan_body or not plan_body['plan_id']:
 
@@ -20,6 +24,12 @@ class SubscriptionViewHelper:
             if plan_body['duration_name'] not in subscription_plan_choices:
                 return {'error_message': 'invalid duration_name'}
 
+            if 'cost' not in plan_body or not plan_body['cost']:
+                return {'error_message': 'send cost of plan'}
+
+            if 'cm_emails' not in plan_body or not plan_body['cm_emails']:
+                return {'error_message': 'send cm_emails'}
+
         else:
 
             if 'community_id' in plan_body:
@@ -27,18 +37,6 @@ class SubscriptionViewHelper:
 
             if 'duration_name' in plan_body:
                 return {'error_message': 'duration_name cannot be updated'}
-
-        if 'cost' not in plan_body or not plan_body['cost']:
-            return {'error_message': 'send cost of plan'}
-
-        if plan_body['cost'] == 0:
-            return {'error_message': 'cost of plan cannot be zero'}
-
-        if 'cm_emails' not in plan_body or not plan_body['cm_emails']:
-            return {'error_message': 'send cm_emails'}
-
-        if 'buddy_emails' not in plan_body or not plan_body['buddy_emails']:
-            return {'error_message': 'send buddy_emails'}
 
         if 'referral_free_days' in plan_body:
             if not isinstance(plan_body['referral_free_days'], int) or int(plan_body['referral_free_days']) < 0:
@@ -60,13 +58,16 @@ class SubscriptionViewHelper:
         return query_params
 
     @staticmethod
-    def delete_plan_body_validator(request_body):
+    def delete_plan_body_validator(request_body, user_id):
 
         if not request_body:
             return {'error_message': 'invalid request body'}
 
         if 'plan_id' not in request_body or not request_body['plan_id']:
             return {'error_message': 'send plan_id'}
+
+        if not user_id:
+            return {'error_message': 'send x-member-id in headers'}
 
         return request_body
 
@@ -129,15 +130,45 @@ class SubscriptionViewHelper:
         return request_body
 
     @staticmethod
+    def get_transactions_body_validator(request_body, user_id):
+
+        if not request_body:
+            return {'error_message': 'invalid request body'}
+
+        if not user_id:
+            return {'error_message': 'send x-member-id in headers'}
+
+        if 'user_id' not in request_body or not request_body['user_id']:
+            return {'error_message': 'send user_id in body'}
+
+        if 'community_id' not in request_body or not request_body['community_id']:
+            return {'error_message': 'send community_id in body'}
+
+        return request_body
+
+    @staticmethod
+    def refund_transaction_body_validator(request_body, user_id):
+
+        if not request_body:
+            return {'error_message': 'invalid request body'}
+
+        if not user_id:
+            return {'error_message': 'send x-member-id in headers'}
+
+        if 'transaction_id' not in request_body or not request_body['transaction_id']:
+            return {'error_message': 'send transaction_id'}
+
+        return request_body
+
+    @staticmethod
     def create_subscription_body_validator(request_body):
 
         if not request_body:
             return {'error_message': 'invalid request body'}
 
         if 'payment_id' not in request_body or not request_body['payment_id']:
-            if 'community_id' in request_body:
-                if 'type' not in request_body or not request_body['type'] == free_subscription:
-                    return {'error_message': 'invalid type value'}
+            if 'community_id' in request_body and 'type' not in request_body:
+                return {'error_message': 'send type in body'}
 
             return {'error_message': 'send payment_id'}
 
@@ -161,13 +192,31 @@ class SubscriptionViewHelper:
     def get_subscription_filter_params(request):
 
         query_params = {
-            'community_id': None
+            'community_id': None,
+            'member_ids': None
         }
 
         if request.GET.get('community_id'):
             query_params['community_id'] = request.GET.get('community_id')
 
+        if request.GET.get('member_ids'):
+            query_params['member_ids'] = json.loads(request.GET.get('member_ids'))
+
         return query_params
+
+    @staticmethod
+    def cancel_subscription_body_validator(request_body, user_id):
+
+        if not request_body:
+            return {'error_message': 'invalid request body'}
+
+        if 'community_id' not in request_body:
+            return {'error_message': 'send community_id'}
+
+        if not user_id:
+            return {'error_message': 'send x-member-id in headers'}
+
+        return request_body
 
     @staticmethod
     def get_subscription_history_filter_params(request):

@@ -94,6 +94,13 @@ class Transaction(models.Model):
             return None
 
     @staticmethod
+    def get_transaction_with_id_or_None(pk):
+        try:
+            return Transaction.objects.get(pk=pk)
+        except:
+            return None
+
+    @staticmethod
     def create_instance(transaction_body):
         instance = Transaction()
         instance.plan_id = transaction_body['plan_id']
@@ -195,6 +202,13 @@ class SubscriptionHistory(models.Model):
 
     def __str__(self):
         return self.pk
+
+    @staticmethod
+    def get_history_with_transaction_or_None(transaction_instance):
+        try:
+            return Subscription.objects.get(transaction=transaction_instance)
+        except:
+            return None
 
     @staticmethod
     def create_instance(subscription_history_body):

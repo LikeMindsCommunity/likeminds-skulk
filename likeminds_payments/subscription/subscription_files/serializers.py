@@ -44,6 +44,39 @@ def _getMembershipState(subscription_object: dict) -> int:
     return 0
 
 
+def TransactionSerializer(transactions) -> list:
+
+    output = []
+
+    for transaction in transactions:
+        transaction_object = {
+            'id': transaction.id,
+            'plan_id': transaction.plan_id,
+            'payment_id': transaction.payment_id,
+            'community_name': transaction.community_name,
+            'plan_name': transaction.plan_name,
+            'plan_cost': transaction.plan_cost,
+            'renew': transaction.renew,
+            'amount': transaction.amount,
+            'payment_email': transaction.payment_email,
+            'payment_phone': transaction.payment_phone,
+            'currency': transaction.currency,
+            'is_international': transaction.is_international,
+            'method': transaction.method,
+            'status': transaction.status,
+            'error_description': transaction.error_description,
+            'refund_amount': transaction.refund_amount,
+            'user_id': transaction.user_id,
+            'payment_page_url': transaction.payment_page_url,
+            'shared_by': transaction.shared_by,
+            'grace_period': transaction.grace_period
+        }
+
+        output.append(transaction_object)
+
+    return output
+
+
 def SubscriptionSerializer(subscriptions) -> list:
 
     output = []
@@ -72,6 +105,17 @@ def SubscriptionSerializer(subscriptions) -> list:
         subscription_object['membership_state'] = _getMembershipState(subscription_object)
 
         output.append(subscription_object)
+
+    return output
+
+
+def SubscriptionListSerializer(member_subscriptions) -> object:
+
+    output = {}
+
+    for key in member_subscriptions.keys():
+
+        output[key] = SubscriptionSerializer(member_subscriptions[key])
 
     return output
 

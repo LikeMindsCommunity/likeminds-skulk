@@ -20,8 +20,9 @@ class CreatePlanView(TransactionMixin, APIView):
     def post(request, *args, **kwargs):
 
         plan_body = RequestUtilities.load_request_body(request)
+        user_id = RequestUtilities.get_parameter_from_headers(request, 'HTTP_X_MEMBER_ID')
 
-        validated_request_body = SubscriptionViewHelper.create_plan_body_validator(plan_body)
+        validated_request_body = SubscriptionViewHelper.create_plan_body_validator(plan_body, user_id)
 
         if 'error_message' in validated_request_body:
             return JsonResponse(
@@ -30,7 +31,7 @@ class CreatePlanView(TransactionMixin, APIView):
             )
 
         subscription_manager = SubscriptionImpl()
-        response_data = subscription_manager.create_plan(validated_request_body)
+        response_data = subscription_manager.create_plan(validated_request_body, user_id)
 
         if 'error_message' in response_data:
             return JsonResponse(
@@ -82,8 +83,9 @@ class DeletePlanView(TransactionMixin, APIView):
     def post(request, *args, **kwargs):
 
         request_body = RequestUtilities.load_request_body(request)
+        user_id = RequestUtilities.get_parameter_from_headers(request, 'HTTP_X_MEMBER_ID')
 
-        validated_request_body = SubscriptionViewHelper.delete_plan_body_validator(request_body)
+        validated_request_body = SubscriptionViewHelper.delete_plan_body_validator(request_body, user_id)
 
         if 'error_message' in validated_request_body:
             return JsonResponse(
@@ -92,7 +94,7 @@ class DeletePlanView(TransactionMixin, APIView):
             )
 
         subscription_manager = SubscriptionImpl()
-        response_data = subscription_manager.delete_plan(validated_request_body['plan_id'])
+        response_data = subscription_manager.delete_plan(validated_request_body['plan_id'], user_id)
 
         if 'error_message' in response_data:
             return JsonResponse(
@@ -210,6 +212,78 @@ class CreateTransactionView(TransactionMixin, APIView):
         )
 
 
+class FetchTransactionsView(APIView):
+
+    @method_decorator(csrf_exempt)
+    def dispatch(self, request, *args, **kwargs):
+        return super(FetchTransactionsView, self).dispatch(request, *args, **kwargs)
+
+    @staticmethod
+    def post(request, *args, **kwargs):
+
+        request_body = RequestUtilities.load_request_body(request)
+        user_id = RequestUtilities.get_parameter_from_headers(request, 'HTTP_X_MEMBER_ID')
+
+        validated_request_body = SubscriptionViewHelper.get_transactions_body_validator(request_body, user_id)
+
+        if 'error_message' in validated_request_body:
+            return JsonResponse(
+                {'success': False, 'error_message': validated_request_body['error_message']},
+                status=status_codes.HTTP_400_BAD_REQUEST
+            )
+
+        subscription_manager = SubscriptionImpl()
+        response_data = subscription_manager.fetch_transactions(validated_request_body['user_id'],
+                                                                validated_request_body['community_id'],
+                                                                user_id)
+
+        if 'error_message' in response_data:
+            return JsonResponse(
+                {'success': False, 'error_message': response_data['error_message']},
+                status=status_codes.HTTP_400_BAD_REQUEST
+            )
+
+        return JsonResponse(
+            {'success': True, 'transactions': response_data},
+            status=status_codes.HTTP_200_OK
+        )
+
+
+class RefundTransactionView(TransactionMixin, APIView):
+
+    @method_decorator(csrf_exempt)
+    def dispatch(self, request, *args, **kwargs):
+        return super(RefundTransactionView, self).dispatch(request, *args, **kwargs)
+
+    @staticmethod
+    def post(request, *args, **kwargs):
+
+        request_body = RequestUtilities.load_request_body(request)
+        user_id = RequestUtilities.get_parameter_from_headers(request, 'HTTP_X_MEMBER_ID')
+
+        validated_request_body = SubscriptionViewHelper.refund_transaction_body_validator(request_body, user_id)
+
+        if 'error_message' in validated_request_body:
+            return JsonResponse(
+                {'success': False, 'error_message': validated_request_body['error_message']},
+                status=status_codes.HTTP_400_BAD_REQUEST
+            )
+
+        subscription_manager = SubscriptionImpl()
+        response_data = subscription_manager.refund_transaction(validated_request_body['transaction_id'], user_id)
+
+        if 'error_message' in response_data:
+            return JsonResponse(
+                {'success': False, 'error_message': response_data['error_message']},
+                status=status_codes.HTTP_400_BAD_REQUEST
+            )
+
+        return JsonResponse(
+            {'success': True},
+            status=status_codes.HTTP_200_OK
+        )
+
+
 class CreateSubscriptionView(TransactionMixin, APIView):
 
     @method_decorator(csrf_exempt)
@@ -304,7 +378,9 @@ class FetchSubscriptionView(TransactionMixin, APIView):
             )
 
         subscription_manager = SubscriptionImpl()
-        response_data = subscription_manager.fetch_subscription(user_id, query_params['community_id'])
+        response_data = subscription_manager.fetch_subscription(user_id,
+                                                                query_params['community_id'],
+                                                                query_params['member_ids'])
 
         if 'error_message' in response_data:
             return JsonResponse(
@@ -314,6 +390,41 @@ class FetchSubscriptionView(TransactionMixin, APIView):
 
         return JsonResponse(
             {'success': True, 'subscriptions': response_data},
+            status=status_codes.HTTP_200_OK
+        )
+
+
+class CancelSubscriptionView(TransactionMixin, APIView):
+
+    @method_decorator(csrf_exempt)
+    def dispatch(self, request, *args, **kwargs):
+        return super(CancelSubscriptionView, self).dispatch(request, *args, **kwargs)
+
+    @staticmethod
+    def post(request, *args, **kwargs):
+
+        request_body = RequestUtilities.load_request_body(request)
+        user_id = RequestUtilities.get_parameter_from_headers(request, 'HTTP_X_MEMBER_ID')
+
+        validated_request_body = SubscriptionViewHelper.cancel_subscription_body_validator(request_body, user_id)
+
+        if 'error_message' in validated_request_body:
+            return JsonResponse(
+                {'success': False, 'error_message': validated_request_body['error_message']},
+                status=status_codes.HTTP_400_BAD_REQUEST
+            )
+
+        subscription_manager = SubscriptionImpl()
+        response_data = subscription_manager.cancel_subscription(validated_request_body)
+
+        if 'error_message' in response_data:
+            return JsonResponse(
+                {'success': False, 'error_message': response_data['error_message']},
+                status=status_codes.HTTP_400_BAD_REQUEST
+            )
+
+        return JsonResponse(
+            {'success': True},
             status=status_codes.HTTP_200_OK
         )
 

@@ -4,40 +4,6 @@ import subscription.subscription_files.constants as constants
 class SubscriptionViewHelper:
 
     @staticmethod
-    def create_order_body_validator(request_body):
-
-        if not request_body:
-            return {'error_message': 'invalid request body'}
-
-        if 'plan_id' not in request_body or not request_body['plan_id']:
-            return {'error_message': 'send plan_id'}
-
-        if 'payment_page_url' not in request_body or not request_body['payment_page_url']:
-            return {'error_message': 'send payment_page_url'}
-
-        return request_body
-
-    @staticmethod
-    def verify_order_body_validator(request_body):
-
-        if not request_body:
-            return {'error_message': 'invalid request body'}
-
-        if 'order_id' not in request_body or not request_body['order_id']:
-            return {'error_message': 'send order_id'}
-
-        if 'razorpay_order_id' not in request_body or not request_body['razorpay_order_id']:
-            return {'error_message': 'send razorpay_order_id'}
-
-        if 'razorpay_payment_id' not in request_body or not request_body['razorpay_payment_id']:
-            return {'error_message': 'send razorpay_payment_id'}
-
-        if 'razorpay_signature' not in request_body or not request_body['razorpay_signature']:
-            return {'error_message': 'send razorpay_signature'}
-
-        return request_body
-
-    @staticmethod
     def create_transaction_body_validator(request_body):
 
         if not request_body:

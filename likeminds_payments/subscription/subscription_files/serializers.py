@@ -1,6 +1,6 @@
 from ..utility.plan_utilities import PlanUtilities
 from ..utility.time_utilities import TimeUtilities
-from ..models import SubscriptionPlan
+from ..plans.models import SubscriptionPlan
 
 
 def PlanSerializer(plans, is_deleted=False) -> list:

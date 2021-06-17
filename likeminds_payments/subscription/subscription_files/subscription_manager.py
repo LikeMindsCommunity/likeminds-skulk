@@ -5,10 +5,7 @@ class SubscriptionManager(metaclass=abc.ABCMeta):
 
     @classmethod
     def __subclasshook__(cls, subclass):
-        return ((hasattr(subclass, 'create_plan') and callable(subclass.create_plan)) and
-                (hasattr(subclass, 'fetch_plan') and callable(subclass.fetch_plan)) and
-                (hasattr(subclass, 'delete_plan') and callable(subclass.delete_plan)) and
-                (hasattr(subclass, 'create_order') and callable(subclass.create_order)) and
+        return ((hasattr(subclass, 'create_order') and callable(subclass.create_order)) and
                 (hasattr(subclass, 'verify_order') and callable(subclass.verify_order)) and
                 (hasattr(subclass, 'create_transaction') and callable(subclass.create_transaction)) and
                 (hasattr(subclass, 'create_subscription') and callable(subclass.create_subscription)) and
@@ -17,27 +14,6 @@ class SubscriptionManager(metaclass=abc.ABCMeta):
                 (hasattr(subclass, 'fetch_subscription_history') and callable(subclass.fetch_subscription_history)) and
                 (hasattr(subclass, 'fetch_community_meta') and callable(subclass.fetch_community_meta)) or
                 NotImplemented)
-
-    @abc.abstractmethod
-    def create_plan(self, plan_body: dict) -> dict:
-        """
-        create a new plan
-        """
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def fetch_plan(self, community_id: str) -> object:
-        """
-        fetch all the plans of a community
-        """
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def delete_plan(self, plan_id: str) -> dict:
-        """
-        delete an existing plan
-        """
-        raise NotImplementedError
 
     @abc.abstractmethod
     def create_order(self, order_body: dict) -> dict:

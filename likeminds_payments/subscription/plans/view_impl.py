@@ -37,8 +37,8 @@ class CreatePlanView(TransactionMixin, APIView):
                 status=status_codes.HTTP_400_BAD_REQUEST
             )
 
-        subscription_manager = PlanImpl(plan_instance=instance_data['plan_instance'])
-        response_data = subscription_manager.create_plan()
+        plan_manager = PlanImpl(plan_instance=instance_data['plan_instance'])
+        response_data = plan_manager.create_plan()
 
         if 'error_message' in response_data:
             return JsonResponse(
@@ -65,8 +65,8 @@ class FetchPlanView(APIView):
                 status=status_codes.HTTP_400_BAD_REQUEST
             )
 
-        subscription_manager = PlanImpl(community_id=query_params['community_id'])
-        response_data = subscription_manager.fetch_plan()
+        plan_manager = PlanImpl(community_id=query_params['community_id'])
+        response_data = plan_manager.fetch_plan()
 
         if 'error_message' in response_data:
             return JsonResponse(
@@ -99,8 +99,8 @@ class DeletePlanView(TransactionMixin, APIView):
                 status=status_codes.HTTP_400_BAD_REQUEST
             )
 
-        subscription_manager = PlanImpl(plan_id=validated_request_body['plan_id'])
-        response_data = subscription_manager.delete_plan()
+        plan_manager = PlanImpl(plan_id=validated_request_body['plan_id'])
+        response_data = plan_manager.delete_plan()
 
         if 'error_message' in response_data:
             return JsonResponse(

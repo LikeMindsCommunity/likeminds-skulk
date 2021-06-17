@@ -5,17 +5,17 @@ from ..utility.time_utilities import TimeUtilities
 
 class SubscriptionPlan(models.Model):
     plan_id = models.CharField(unique=True, max_length=64)
-    community_id = models.IntegerField(default=0)
+    community_id = models.IntegerField(null=False)
     name = models.CharField(null=True, max_length=128)
     duration_name = models.CharField(max_length=16)
     cost = models.IntegerField(default=0)
-    duration_in_months = models.IntegerField(default=0)
-    cm_emails = models.TextField(null=True)
+    duration_in_months = models.IntegerField()
+    cm_emails = models.TextField(default='')
     buddy_emails = models.TextField(null=True)
     is_deleted = models.BooleanField(default=False)
     description = models.TextField(default='')
     referral_free_days = models.IntegerField(default=0)
-    image = models.CharField(max_length=256, default='')
+    image = models.CharField(max_length=256)
     created_at = models.BigIntegerField(default=0)
     updated_at = models.BigIntegerField(default=0)
 

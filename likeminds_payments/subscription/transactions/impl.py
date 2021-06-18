@@ -5,8 +5,9 @@ from ..utility.time_utilities import TimeUtilities
 from .constants import *
 from .models import Transaction
 from ..plans.models import SubscriptionPlan
-from ..models import Subscription, SubscriptionHistory
-from ..subscription_files.subscription_impl import SubscriptionImpl
+from ..subscriptions.models import Subscription
+from ..models import SubscriptionHistory
+from ..subscriptions.view_impl import SubscriptionImpl
 
 import hmac
 import hashlib
@@ -166,11 +167,11 @@ class TransactionImpl(TransactionManager):
         if transaction_body['event'] == 'payment.captured':
 
             if transaction_data['renew'] and transaction_data['user_id'] is not None:
-                data = {
-                    'payment_id': transaction_data['payment_id']
-                }
 
-                create_subscription = SubscriptionImpl.create_subscription(data, transaction_data['user_id'])
+                subscription_manager = SubscriptionImpl(payment_id=transaction_data['payment_id'],
+                                                        user_id=transaction_data['user_id'])
+
+                create_subscription = subscription_manager.create_subscription()
 
                 if 'error_message' in create_subscription:
                     return {'error_message': create_subscription['error_message']}

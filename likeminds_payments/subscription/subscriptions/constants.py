@@ -1,0 +1,8 @@
+FREE_SUBSCRIPTION = 'free'
+LIFETIME_PAYMENT = 'lifetime'
+ONETIME_PAYMENT = 'onetime'
+LIFETIME_VALID_TILL = 1924972199
+ONETIME_DESCRIPTION = 'onetime payment'
+LIFETIME_DESCRIPTION = 'lifetime payment'
+RENEWAL_DESCRIPTION = 'renewal payment'
+FREE_DESCRIPTION = 'free subscription'

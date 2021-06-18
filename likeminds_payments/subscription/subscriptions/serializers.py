@@ -1,4 +1,5 @@
 from ..utility.time_utilities import TimeUtilities
+from .constants import *
 
 
 def _getMembershipState(subscription_object: dict) -> int:
@@ -7,13 +8,13 @@ def _getMembershipState(subscription_object: dict) -> int:
 
     if current_time > subscription_object['valid_till']:
         if current_time > subscription_object['valid_till_grace_period']:
-            return 1
-        return 2
+            return STATUS_EXPIRED
+        return STATUS_GRACE_PERIOD
 
     if current_time > subscription_object['renewal_due']:
-        return 3
+        return STATUS_RENEWAL_DUE
 
-    return 0
+    return STATUS_ACTIVE
 
 
 def SubscriptionSerializer(subscriptions) -> list:

@@ -4,7 +4,6 @@ from .orders.view_impl import *
 from .transactions.view_impl import *
 from .subscriptions.view_impl import *
 from .subscription_histories.view_impl import *
-import subscription.subscription_files.subscription_view_impl as views
 
 app_name = "subscription"
 
@@ -19,5 +18,5 @@ urlpatterns = [
     path('start', StartSubscriptionView.as_view(), name="start-subscription"),
     path('fetch', FetchSubscriptionView.as_view(), name="fetch-subscription"),
     path('fetch_history', FetchSubscriptionHistoryView.as_view(), name='fetch-subscription-history'),
-    path('fetch_community_meta', views.FetchCommunityMetaView.as_view(), name='fetch-community-meta')
+    path('fetch_community_meta', FetchCommunityMetaView.as_view(), name='fetch-community-meta')
 ]

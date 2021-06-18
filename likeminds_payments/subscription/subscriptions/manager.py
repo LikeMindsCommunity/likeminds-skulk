@@ -7,7 +7,8 @@ class SubscriptionManager(metaclass=abc.ABCMeta):
     def __subclasshook__(cls, subclass):
         return ((hasattr(subclass, 'create_subscription') and callable(subclass.create_subscription)) and
                 (hasattr(subclass, 'start_subscription') and callable(subclass.start_subscription)) and
-                (hasattr(subclass, 'fetch_subscription') and callable(subclass.fetch_subscription)) or
+                (hasattr(subclass, 'fetch_subscription') and callable(subclass.fetch_subscription)) and
+                (hasattr(subclass, 'fetch_community_meta') and callable(subclass.fetch_community_meta)) or
                 NotImplemented)
 
     @abc.abstractmethod
@@ -29,5 +30,12 @@ class SubscriptionManager(metaclass=abc.ABCMeta):
         """
         fetch all the subscriptions of a user
         (a single subscription_files, if community_id is provided)
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def fetch_community_meta(self) -> dict:
+        """
+        get community meta details for given payment_id
         """
         raise NotImplementedError

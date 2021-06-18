@@ -1,4 +1,4 @@
-from ..subscription_files.constants import PLAN_BASE_URL
+from ..plans.constants import PLAN_BASE_URL
 
 
 class PlanUtilities:

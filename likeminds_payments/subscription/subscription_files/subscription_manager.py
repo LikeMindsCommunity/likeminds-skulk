@@ -5,20 +5,12 @@ class SubscriptionManager(metaclass=abc.ABCMeta):
 
     @classmethod
     def __subclasshook__(cls, subclass):
-        return ((hasattr(subclass, 'create_transaction') and callable(subclass.create_transaction)) and
-                (hasattr(subclass, 'create_subscription') and callable(subclass.create_subscription)) and
+        return ((hasattr(subclass, 'create_subscription') and callable(subclass.create_subscription)) and
                 (hasattr(subclass, 'start_subscription') and callable(subclass.start_subscription)) and
                 (hasattr(subclass, 'fetch_subscription') and callable(subclass.fetch_subscription)) and
                 (hasattr(subclass, 'fetch_subscription_history') and callable(subclass.fetch_subscription_history)) and
                 (hasattr(subclass, 'fetch_community_meta') and callable(subclass.fetch_community_meta)) or
                 NotImplemented)
-
-    @abc.abstractmethod
-    def create_transaction(self, transaction_body: dict, transaction_raw_body, transaction_signature: str) -> dict:
-        """
-        create a transaction from razorpay webhook
-        """
-        raise NotImplementedError
 
     @abc.abstractmethod
     def create_subscription(self, subscription_body: dict, user_id: str) -> dict:

@@ -10,42 +10,6 @@ from ..subscription_files.subscription_impl import SubscriptionImpl
 from ..subscription_files.subscription_view_helper import SubscriptionViewHelper
 
 
-class CreateTransactionView(TransactionMixin, APIView):
-
-    @method_decorator(csrf_exempt)
-    def dispatch(self, request, *args, **kwargs):
-        return super(CreateTransactionView, self).dispatch(request, *args, **kwargs)
-
-    @staticmethod
-    def post(request, *args, **kwargs):
-
-        request_body = RequestUtilities.load_request_body(request)
-        validated_request_body = SubscriptionViewHelper.create_transaction_body_validator(request_body)
-        razorpay_signature = RequestUtilities.get_parameter_from_headers(request, 'HTTP_X_RAZORPAY_SIGNATURE')
-
-        raw_body = request.body
-
-        if not razorpay_signature or 'error_message' in validated_request_body:
-            return JsonResponse(
-                {'success': False, 'error_message': 'invalid request body or signature'},
-                status=status_codes.HTTP_400_BAD_REQUEST
-            )
-
-        subscription_manager = SubscriptionImpl()
-        response_data = subscription_manager.create_transaction(validated_request_body, raw_body, razorpay_signature)
-
-        if 'error_message' in response_data:
-            return JsonResponse(
-                {'success': False, 'error_message': response_data['error_message']},
-                status=status_codes.HTTP_400_BAD_REQUEST
-            )
-
-        return JsonResponse(
-            {'success': True},
-            status=status_codes.HTTP_200_OK
-        )
-
-
 class CreateSubscriptionView(TransactionMixin, APIView):
 
     @method_decorator(csrf_exempt)

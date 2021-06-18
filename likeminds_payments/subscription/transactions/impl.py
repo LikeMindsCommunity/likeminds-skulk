@@ -6,7 +6,7 @@ from .constants import *
 from .models import Transaction
 from ..plans.models import SubscriptionPlan
 from ..subscriptions.models import Subscription
-from ..models import SubscriptionHistory
+from ..subscription_histories.models import SubscriptionHistory
 from ..subscriptions.view_impl import SubscriptionImpl
 
 import hmac

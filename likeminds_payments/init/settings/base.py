@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 import os
 from dotenv import load_dotenv
+from corsheaders.defaults import default_headers
 from pathlib import Path
 
 load_dotenv()
@@ -36,17 +37,19 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'rest_framework.authtoken',
-    'payments'
+    'subscription',
+    'corsheaders'
 ]
 
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.TokenAuthentication',
-    ]
-}
+CORS_ORIGIN_ALLOW_ALL = True
+
+CORS_ALLOW_HEADERS = list(default_headers) + [
+    'x-member-id',
+    'x-platform-code'
+]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',

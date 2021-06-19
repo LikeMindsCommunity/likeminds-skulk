@@ -14,7 +14,8 @@ TIME_ZONE = 'Asia/Kolkata'
 # variable to check for beta server
 IS_BETA = True
 
-APPEND_SLASH = False
+URL = os.getenv("DEVELOPMENT_URL")
+CORE_SERVICE_URL = os.getenv("DEVELOPMENT_CORE_URL")
 
 ALLOWED_HOSTS = [os.getenv("DEVELOPMENT_ALLOWED_HOST_1"), os.getenv("DEVELOPMENT_ALLOWED_HOST_2")]
 

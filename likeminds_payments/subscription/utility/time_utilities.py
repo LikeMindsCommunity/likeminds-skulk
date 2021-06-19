@@ -1,6 +1,6 @@
 import time
 
-milliseconds_in_a_day = 86400000
+MILLISECONDS_IN_A_DAY = 86400000
 
 days_in_months = {
     '01': 31,
@@ -22,7 +22,7 @@ class TimeUtilities:
 
     @staticmethod
     def current_time_in_milliseconds() -> int:
-        return int((time.time() * 1000))
+        return int(time.time() * 1000)
 
     @staticmethod
     def get_number_of_days_in_months(start_month: str, months_count: int) -> int:
@@ -44,4 +44,16 @@ class TimeUtilities:
         month = time.strftime("%m", time.gmtime(epoch))
         days = TimeUtilities.get_number_of_days_in_months(month, months)
 
-        return epoch + (days - 1) * milliseconds_in_a_day
+        return epoch + days * MILLISECONDS_IN_A_DAY
+
+    @staticmethod
+    def subtract_days_in_epoch_time(epoch: int, days: int) -> int:
+        return epoch - days * MILLISECONDS_IN_A_DAY
+
+    @staticmethod
+    def add_days_in_epoch_time(epoch: int, days: int) -> int:
+        return epoch + days * MILLISECONDS_IN_A_DAY
+
+    @staticmethod
+    def add_milliseconds_in_epoch_time(epoch: int, milliseconds: int) -> int:
+        return epoch + milliseconds

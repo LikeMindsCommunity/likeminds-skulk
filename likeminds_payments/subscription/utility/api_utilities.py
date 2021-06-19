@@ -4,7 +4,12 @@ import requests
 class ApiUtilities:
 
     @staticmethod
-    def generate_get_request(url, headers={}, query_params={}):
+    def generate_get_request(url, headers=None, query_params=None):
+
+        if query_params is None:
+            query_params = {}
+        if headers is None:
+            headers = {}
 
         if not url:
             return {'error_message': 'send url'}
@@ -16,7 +21,12 @@ class ApiUtilities:
         return validated_response
 
     @staticmethod
-    def generate_post_request(url, headers={}, data={}):
+    def generate_post_request(url, headers=None, data=None):
+
+        if data is None:
+            data = {}
+        if headers is None:
+            headers = {}
 
         if not url:
             return {'error_message': 'send url'}

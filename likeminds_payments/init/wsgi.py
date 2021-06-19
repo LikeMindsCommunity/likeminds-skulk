@@ -16,6 +16,6 @@ from django.conf import settings
 if not settings.IS_BETA:
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'init.settings.production')
 else:
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'lieminds_payments.settings.development')
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'likeminds_payments.settings.beta')
 
 application = get_wsgi_application()

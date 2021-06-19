@@ -158,8 +158,8 @@ class SubscriptionImpl(SubscriptionManager):
 
         data = {
             "subscription_data": {
-                "valid_till": TimeUtilities.subtract_days_in_epoch_time(TimeUtilities.add_days_in_epoch_time(
-                    existing_valid_till, subscription_plan_instance.referral_free_days), 1)
+                "valid_till": TimeUtilities.add_days_in_epoch_time(
+                    existing_valid_till, subscription_plan_instance.referral_free_days)
             }
         }
 

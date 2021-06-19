@@ -138,7 +138,7 @@ class TransactionImpl(TransactionManager):
 
                     if subscription_instance is not None:
                         current_time = TimeUtilities.current_time_in_milliseconds()
-                        subscription_instance.valid_till = TimeUtilities.subtract_days_in_epoch_time(current_time, 1)
+                        subscription_instance.valid_till = current_time
                         subscription_instance.renewal_due = TimeUtilities.subtract_days_in_epoch_time(
                             subscription_instance.valid_till, NOTIFY_PERIOD)
                         subscription_instance.save()

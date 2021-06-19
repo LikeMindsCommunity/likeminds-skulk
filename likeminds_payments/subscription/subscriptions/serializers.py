@@ -39,7 +39,7 @@ def SubscriptionSerializer(subscriptions) -> list:
         if subscription.transaction is not None:
             subscription_object['plan_id'] = subscription.transaction.plan_id
             subscription_object['grace_period'] = subscription.transaction.grace_period
-            subscription_object['valid_till_grace_period'] = TimeUtilities.add_days_in_epoch_time(
+            subscription_object['valid_till_grace_period'] = TimeUtilities.add_milliseconds_in_epoch_time(
                 subscription.valid_till, subscription.transaction.grace_period)
 
         subscription_object['membership_state'] = _getMembershipState(subscription_object)

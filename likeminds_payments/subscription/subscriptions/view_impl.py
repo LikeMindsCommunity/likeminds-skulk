@@ -38,6 +38,7 @@ class CreateSubscriptionView(TransactionMixin, APIView):
         subscription_manager = SubscriptionImpl(payment_id=validated_request_body['payment_id'],
                                                 community_id=validated_request_body['community_id'],
                                                 user_id=user_id, subscription_type=validated_request_body['type'],
+                                                free_user_id=validated_request_body['user_id'],
                                                 aj=validated_request_body['aj'])
         response_data = subscription_manager.create_subscription()
 

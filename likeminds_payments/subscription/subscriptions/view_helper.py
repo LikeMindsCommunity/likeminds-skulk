@@ -21,7 +21,10 @@ class SubscriptionViewHelper:
                 validated_request_body['community_id'] = request_body['community_id']
                 if 'type' not in request_body or not request_body['type'] == FREE_SUBSCRIPTION:
                     return {'error_message': 'invalid type value'}
+                if 'user_id' not in request_body or not request_body['user_id']:
+                    return {'error_message': 'send user_id'}
                 validated_request_body['type'] = request_body['type']
+                validated_request_body['user_id'] = request_body['user_id']
                 if 'aj' in request_body:
                     validated_request_body['aj'] = request_body['aj']
             else:

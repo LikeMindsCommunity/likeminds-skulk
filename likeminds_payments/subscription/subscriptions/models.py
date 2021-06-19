@@ -6,7 +6,7 @@ from ..transactions.models import Transaction
 class Subscription(models.Model):
     user_id = models.IntegerField()
     community_id = models.IntegerField()
-    plan_id = models.CharField(max_length=64)
+    plan_id = models.CharField(max_length=64, null=True)
     date_subscribed = models.BigIntegerField(default=0)
     valid_till = models.BigIntegerField(default=0)
     date_unsubscribed = models.BigIntegerField(default=None, null=True)

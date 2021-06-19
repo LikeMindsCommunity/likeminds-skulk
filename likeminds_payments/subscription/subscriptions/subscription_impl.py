@@ -368,7 +368,10 @@ class SubscriptionImpl(SubscriptionManager):
         if 'error_message' in response:
             return {'error_message': 'error getting member state'}
 
-        data = {'is_owner': response['member']['is_owner']}
+        data = {'is_owner': False}
+
+        if response['state'] == 1:
+            data = {'is_owner': True}
 
         return data
 

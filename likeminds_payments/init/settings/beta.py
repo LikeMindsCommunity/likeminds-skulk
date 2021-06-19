@@ -20,6 +20,7 @@ TIME_ZONE = 'Asia/Kolkata'
 IS_BETA = True
 
 URL = os.getenv("BETA_URL")
+CORE_SERVICE_URL = os.getenv("BETA_CORE_URL")
 
 ALLOWED_HOSTS = [os.getenv("BETA_ALLOWED_HOST_1"), os.getenv("BETA_ALLOWED_HOST_2")]
 

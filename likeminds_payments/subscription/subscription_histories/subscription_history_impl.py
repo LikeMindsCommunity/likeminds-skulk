@@ -1,4 +1,4 @@
-from .manager import SubscriptionHistoryManager
+from .subscription_history_manager import SubscriptionHistoryManager
 from .serializers import SubscriptionHistorySerializer
 from ..utility.number_utilities import NumberUtilities
 

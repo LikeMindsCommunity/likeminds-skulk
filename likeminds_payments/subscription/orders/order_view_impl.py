@@ -5,8 +5,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 
 from ..utility.request_utilities import RequestUtilities
-from .impl import OrderImpl
-from .view_helper import OrderViewHelper
+from .order_impl import OrderImpl
+from .order_view_helper import OrderViewHelper
 
 
 class CreateOrderView(APIView):

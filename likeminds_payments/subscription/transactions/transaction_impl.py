@@ -1,4 +1,4 @@
-from .manager import TransactionManager
+from .transaction_manager import TransactionManager
 from django.conf import settings
 from ..external_services.razorpay.razorpay_wrapper import RazorpayWrapper
 from ..utility.time_utilities import TimeUtilities
@@ -7,7 +7,7 @@ from .models import Transaction
 from ..plans.models import SubscriptionPlan
 from ..subscriptions.models import Subscription
 from ..subscription_histories.models import SubscriptionHistory
-from ..subscriptions.view_impl import SubscriptionImpl
+from ..subscriptions.subscription_view_impl import SubscriptionImpl
 
 import hmac
 import hashlib

@@ -13,7 +13,8 @@ class SubscriptionViewHelper:
             'payment_id': None,
             'community_id': None,
             'aj': None,
-            'type': None
+            'type': None,
+            'user_id': None
         }
 
         if 'payment_id' not in request_body or not request_body['payment_id']:

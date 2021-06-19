@@ -4,8 +4,8 @@ from rest_framework import status as status_codes
 
 from ..mixins import TransactionMixin
 from ..utility.request_utilities import RequestUtilities
-from .impl import SubscriptionHistoryImpl
-from .view_helper import SubscriptionHistoryViewHelper
+from .subscription_history_impl import SubscriptionHistoryImpl
+from .subscription_history_view_helper import SubscriptionHistoryViewHelper
 
 
 class FetchSubscriptionHistoryView(TransactionMixin, APIView):

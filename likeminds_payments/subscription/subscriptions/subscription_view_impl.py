@@ -6,8 +6,8 @@ from django.utils.decorators import method_decorator
 
 from ..mixins import TransactionMixin
 from ..utility.request_utilities import RequestUtilities
-from .impl import SubscriptionImpl
-from .view_helper import SubscriptionViewHelper
+from .subscription_impl import SubscriptionImpl
+from .subscription_view_helper import SubscriptionViewHelper
 
 
 class CreateSubscriptionView(TransactionMixin, APIView):

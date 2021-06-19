@@ -6,8 +6,8 @@ from django.utils.decorators import method_decorator
 
 from ..mixins import TransactionMixin
 from ..utility.request_utilities import RequestUtilities
-from ..plans.impl import PlanImpl
-from ..plans.view_helper import PlanViewHelper
+from ..plans.plan_impl import PlanImpl
+from ..plans.plan_view_helper import PlanViewHelper
 
 
 class CreatePlanView(TransactionMixin, APIView):

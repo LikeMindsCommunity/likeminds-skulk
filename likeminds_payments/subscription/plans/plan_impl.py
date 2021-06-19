@@ -1,4 +1,4 @@
-from ..plans.manager import PlanManager
+from ..plans.plan_manager import PlanManager
 from .models import SubscriptionPlan
 from .serializers import PlanSerializer
 

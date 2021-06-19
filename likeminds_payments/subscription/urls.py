@@ -1,9 +1,9 @@
 from django.urls import path
-from .plans.view_impl import *
-from .orders.view_impl import *
-from .transactions.view_impl import *
-from .subscriptions.view_impl import *
-from .subscription_histories.view_impl import *
+from .plans.plan_view_impl import *
+from .orders.order_view_impl import *
+from .transactions.transaction_view_impl import *
+from .subscriptions.subscription_view_impl import *
+from .subscription_histories.subscription_history_view_impl import *
 
 app_name = "subscription"
 

@@ -2,7 +2,7 @@ from ..utility.time_utilities import TimeUtilities
 from .constants import *
 
 
-def _getMembershipState(subscription_object: dict) -> int:
+def getMembershipState(subscription_object: dict) -> int:
 
     current_time = TimeUtilities.current_time_in_milliseconds()
 
@@ -42,7 +42,7 @@ def SubscriptionSerializer(subscriptions) -> list:
             subscription_object['valid_till_grace_period'] = TimeUtilities.add_milliseconds_in_epoch_time(
                 subscription.valid_till, subscription.transaction.grace_period)
 
-        subscription_object['membership_state'] = _getMembershipState(subscription_object)
+        subscription_object['membership_state'] = getMembershipState(subscription_object)
 
         output.append(subscription_object)
 

@@ -1,4 +1,4 @@
-from .manager import SubscriptionManager
+from .subscription_manager import SubscriptionManager
 from ..transactions.models import Transaction
 from .models import Subscription
 from ..subscription_histories.models import SubscriptionHistory
@@ -182,6 +182,84 @@ class SubscriptionImpl(SubscriptionManager):
         return data
 
     @staticmethod
+    def _generate_first_transaction(transaction_instance: dict, plan_instance: dict, user_id: int):
+
+        if transaction_instance.user_id is None:
+            transaction_instance.user_id = user_id
+            transaction_instance.save()
+
+            data = SubscriptionImpl._generate_data_for_new_subscription_against_transaction(
+                transaction_instance, plan_instance, user_id)
+
+            subscription_instance = Subscription.create_instance(data['subscription_data'])
+            subscription_history_instance = SubscriptionHistory.create_instance(data['subscription_history_data'])
+
+            if transaction_instance.shared_by is not None:
+                referrer_subscription_instance = Subscription.get_subscription_or_None(
+                    transaction_instance.shared_by, plan_instance.community_id
+                )
+
+                if referrer_subscription_instance.type != ONETIME_PAYMENT:
+                    return {'error_message': 'referrer user is not having onetime subscription'}
+
+                referrer_data = SubscriptionImpl._generate_data_for_existing_subscription_against_referral(
+                    referrer_subscription_instance, plan_instance, transaction_instance)
+
+                referrer_subscription_instance.valid_till = referrer_data["subscription_data"]["valid_till"]
+                referrer_subscription_instance.renewal_due = referrer_data["subscription_data"]["renewal_due"]
+                referrer_subscription_instance.save()
+
+                referrer_subscription_history_instance = SubscriptionHistory.create_instance(
+                    referrer_data['subscription_history_data'])
+
+                if not referrer_subscription_history_instance:
+                    return {'error_message': 'error creating subscription history for referrer user'}
+
+            if not subscription_instance:
+                return {'error_message': 'error creating subscription'}
+
+            if not subscription_history_instance:
+                return {'error_message': 'error creating subscription history'}
+
+            return {'success': True}
+
+        return {'error_message': 'Payment ID already used'}
+
+    @staticmethod
+    def _generate_renewal_transaction(transaction_instance: dict, plan_instance: dict, user_id):
+
+        if transaction_instance.user_id is None:
+            return {'error_message': "user ID doesn't exist for renewal transaction"}
+
+        if transaction_instance.user_id != user_id:
+            return {'error_message': 'Invalid user ID'}
+
+        subscription_instance = Subscription.get_subscription_or_None(
+            transaction_instance.user_id, plan_instance.community_id
+        )
+
+        if not subscription_instance:
+            return {'error_message': 'no subscription exists for given user in given community'}
+
+        if subscription_instance.type == LIFETIME_PAYMENT:
+            return {'error_message': 'cannot renew a lifetime subscription'}
+
+        data = SubscriptionImpl._generate_data_for_existing_subscription_against_transaction(
+            subscription_instance, plan_instance, transaction_instance)
+
+        subscription_instance.type = data["subscription_data"]["type"]
+        subscription_instance.valid_till = data["subscription_data"]["valid_till"]
+        subscription_instance.renewal_due = data["subscription_data"]["renewal_due"]
+        subscription_instance.save()
+
+        subscription_history_instance = SubscriptionHistory.create_instance(data['subscription_history_data'])
+
+        if not subscription_history_instance:
+            return {'error_message': 'error creating subscription history'}
+
+        return {'success': True}
+
+    @staticmethod
     def _generate_subscription_against_transaction(transaction_instance: dict, user_id: int) -> dict:
 
         plan_instance = SubscriptionPlan.get_plan_or_None(plan_id=transaction_instance.plan_id)
@@ -190,78 +268,14 @@ class SubscriptionImpl(SubscriptionManager):
             return {'error_message': 'no plan exist for this transaction, contact your cm.'}
 
         if not transaction_instance.renew:
-            if transaction_instance.user_id is None:
-                transaction_instance.user_id = user_id
-                transaction_instance.save()
 
-                data = SubscriptionImpl._generate_data_for_new_subscription_against_transaction(
-                    transaction_instance, plan_instance, user_id)
-
-                subscription_instance = Subscription.create_instance(data['subscription_data'])
-                subscription_history_instance = SubscriptionHistory.create_instance(data['subscription_history_data'])
-
-                if transaction_instance.shared_by is not None:
-                    referrer_subscription_instance = Subscription.get_subscription_or_None(
-                        transaction_instance.shared_by, plan_instance.community_id
-                    )
-
-                    if referrer_subscription_instance.type != ONETIME_PAYMENT:
-                        return {'error_message': 'referrer user is not having onetime subscription'}
-
-                    referrer_data = SubscriptionImpl._generate_data_for_existing_subscription_against_referral(
-                        referrer_subscription_instance, plan_instance, transaction_instance)
-
-                    referrer_subscription_instance.valid_till = referrer_data["subscription_data"]["valid_till"]
-                    referrer_subscription_instance.renewal_due = referrer_data["subscription_data"]["renewal_due"]
-                    referrer_subscription_instance.save()
-
-                    referrer_subscription_history_instance = SubscriptionHistory.create_instance(
-                        referrer_data['subscription_history_data'])
-
-                    if not referrer_subscription_history_instance:
-                        return {'error_message': 'error creating subscription history for referrer user'}
-
-                if not subscription_instance:
-                    return {'error_message': 'error creating subscription'}
-
-                if not subscription_history_instance:
-                    return {'error_message': 'error creating subscription history'}
-
-                return {'success': True}
-
-            return {'error_message': 'Payment ID already used'}
+            transaction = SubscriptionImpl._generate_first_transaction(transaction_instance, plan_instance, user_id)
+            return transaction
 
         if transaction_instance.renew:
-            if transaction_instance.user_id is None:
-                return {'error_message': "user ID doesn't exist for renewal transaction"}
 
-            if transaction_instance.user_id != user_id:
-                return {'error_message': 'Invalid user ID'}
-
-            subscription_instance = Subscription.get_subscription_or_None(
-                transaction_instance.user_id, plan_instance.community_id
-            )
-
-            if not subscription_instance:
-                return {'error_message': 'no subscription exists for given user in given community'}
-
-            if subscription_instance.type == LIFETIME_PAYMENT:
-                return {'error_message': 'cannot renew a lifetime subscription'}
-
-            data = SubscriptionImpl._generate_data_for_existing_subscription_against_transaction(
-                subscription_instance, plan_instance, transaction_instance)
-
-            subscription_instance.type = data["subscription_data"]["type"]
-            subscription_instance.valid_till = data["subscription_data"]["valid_till"]
-            subscription_instance.renewal_due = data["subscription_data"]["renewal_due"]
-            subscription_instance.save()
-
-            subscription_history_instance = SubscriptionHistory.create_instance(data['subscription_history_data'])
-
-            if not subscription_history_instance:
-                return {'error_message': 'error creating subscription history'}
-
-            return {'success': True}
+            transaction = SubscriptionImpl._generate_renewal_transaction(transaction_instance, plan_instance, user_id)
+            return transaction
 
     @staticmethod
     def _generate_data_for_free_subscription(user_id: int, community_id: int, date_subscribed: int) -> dict:

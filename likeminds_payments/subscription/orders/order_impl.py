@@ -1,5 +1,5 @@
 from django.conf import settings
-from .manager import OrderManager
+from .order_manager import OrderManager
 
 import razorpay.resources.order as order
 from .constants import *

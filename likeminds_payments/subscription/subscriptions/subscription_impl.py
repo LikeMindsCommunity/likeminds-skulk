@@ -462,7 +462,7 @@ class SubscriptionImpl(SubscriptionManager):
         return {'error_message': 'something went wrong'}
 
     @staticmethod
-    def _fetch_subscriptions(user_id: int, community_id: int):
+    def _fetch_subscriptions(user_id: str, community_id: str):
         if community_id is not None:
             return Subscription.objects.filter(user_id=user_id, community_id=community_id).order_by('created_at')
         return Subscription.objects.filter(user_id=user_id).order_by('created_at')
@@ -473,10 +473,7 @@ class SubscriptionImpl(SubscriptionManager):
 
     def fetch_subscription(self) -> dict:
 
-        user_id = NumberUtilities.get_integer_from_string(self.get_user_id())
-        community_id = NumberUtilities.get_integer_from_string(self.get_community_id())
-
-        subscriptions = self._fetch_subscriptions(user_id, community_id)
+        subscriptions = self._fetch_subscriptions(self.get_user_id(), self.get_community_id())
 
         if len(subscriptions) == 0:
             return {'error_message': 'no subscriptions exist with provided user_id'}

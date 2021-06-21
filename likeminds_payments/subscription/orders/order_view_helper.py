@@ -1,6 +1,7 @@
 from ..plans.models import SubscriptionPlan
 from ..utility.core_service_utilities import CoreServiceUtilities
 from ..external_services.razorpay.razorpay_wrapper import RazorpayWrapper
+from .constants import *
 
 
 class OrderViewHelper:
@@ -23,7 +24,7 @@ class OrderViewHelper:
     def _create_order_object_data(plan_instance: SubscriptionPlan, order_body: dict, community_data: dict) -> dict:
 
         order_data = {
-            "amount": float(plan_instance.cost) * 100,
+            "amount": plan_instance.cost,
             "currency": "INR",
             "receipt": "receipt#1",
             "notes": {
@@ -38,6 +39,11 @@ class OrderViewHelper:
                 "grace_period": 0
             }
         }
+
+        if 'country_code' in order_body and order_body['country_code'] != INDIA_CODE:
+            if plan_instance.cost_usd is not None:
+                order_data['amount'] = plan_instance.cost_usd
+                order_data['currency'] = USD_CURRENCY
 
         if 'renew' in order_body:
             order_data['notes']['renew'] = order_body['renew']

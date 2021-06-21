@@ -38,7 +38,7 @@ class CreateTransactionView(TransactionMixin, APIView):
         if 'error_message' in response_data:
             return JsonResponse(
                 {'success': False, 'error_message': response_data['error_message']},
-                status=status_codes.HTTP_400_BAD_REQUEST
+                status=status_codes.HTTP_200_OK
             )
 
         return JsonResponse(
@@ -71,7 +71,10 @@ class FetchTransactionsView(APIView):
                                                                                user_id)
 
         if 'error_message' in instance_data:
-            return {'error_message': instance_data['error_message']}
+            return JsonResponse(
+                {'success': False, 'error_message': instance_data['error_message']},
+                status=status_codes.HTTP_200_OK
+            )
 
         transaction_manager = TransactionImpl(user_id=validated_request_body['user_id'],
                                               community_id=validated_request_body['community_id'])
@@ -80,7 +83,7 @@ class FetchTransactionsView(APIView):
         if 'error_message' in response_data:
             return JsonResponse(
                 {'success': False, 'error_message': response_data['error_message']},
-                status=status_codes.HTTP_400_BAD_REQUEST
+                status=status_codes.HTTP_200_OK
             )
 
         return JsonResponse(
@@ -113,7 +116,10 @@ class RefundTransactionView(TransactionMixin, APIView):
             validated_request_body['transaction_id'], user_id)
 
         if 'error_message' in instance_data:
-            return {'error_message': validated_request_body['error_message']}
+            return JsonResponse(
+                {'success': False, 'error_message': instance_data['error_message']},
+                status=status_codes.HTTP_200_OK
+            )
 
         transaction_manager = TransactionImpl(transaction_instance=instance_data['transaction_instance'])
         response_data = transaction_manager.refund_transaction()
@@ -121,7 +127,7 @@ class RefundTransactionView(TransactionMixin, APIView):
         if 'error_message' in response_data:
             return JsonResponse(
                 {'success': False, 'error_message': response_data['error_message']},
-                status=status_codes.HTTP_400_BAD_REQUEST
+                status=status_codes.HTTP_200_OK
             )
 
         return JsonResponse(

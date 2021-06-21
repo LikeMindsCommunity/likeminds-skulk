@@ -35,7 +35,7 @@ class CreatePlanView(TransactionMixin, APIView):
         if 'error_message' in instance_data:
             return JsonResponse(
                 {'success': False, 'error_message': instance_data['error_message']},
-                status=status_codes.HTTP_400_BAD_REQUEST
+                status=status_codes.HTTP_200_OK
             )
 
         plan_manager = PlanImpl(plan_instance=instance_data['plan_instance'])
@@ -44,7 +44,7 @@ class CreatePlanView(TransactionMixin, APIView):
         if 'error_message' in response_data:
             return JsonResponse(
                 {'success': False, 'error_message': response_data['error_message']},
-                status=status_codes.HTTP_400_BAD_REQUEST
+                status=status_codes.HTTP_200_OK
             )
 
         return JsonResponse(
@@ -72,7 +72,7 @@ class FetchPlanView(APIView):
         if 'error_message' in response_data:
             return JsonResponse(
                 {'success': False, 'error_message': response_data['error_message']},
-                status=status_codes.HTTP_400_BAD_REQUEST
+                status=status_codes.HTTP_200_OK
             )
 
         return JsonResponse(
@@ -106,7 +106,7 @@ class DeletePlanView(TransactionMixin, APIView):
         if 'error_message' in instance_data:
             return JsonResponse(
                 {'success': False, 'error_message': instance_data['error_message']},
-                status=status_codes.HTTP_400_BAD_REQUEST
+                status=status_codes.HTTP_200_OK
             )
 
         plan_manager = PlanImpl(plan_instance=instance_data['plan_instance'])
@@ -115,7 +115,7 @@ class DeletePlanView(TransactionMixin, APIView):
         if 'error_message' in response_data:
             return JsonResponse(
                 {'success': False, 'error_message': response_data['error_message']},
-                status=status_codes.HTTP_400_BAD_REQUEST
+                status=status_codes.HTTP_200_OK
             )
 
         return JsonResponse(

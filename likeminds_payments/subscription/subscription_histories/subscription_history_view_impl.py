@@ -34,7 +34,7 @@ class FetchSubscriptionHistoryView(TransactionMixin, APIView):
         if 'error_message' in response_data:
             return JsonResponse(
                 {'success': False, 'error_message': response_data['error_message']},
-                status=status_codes.HTTP_400_BAD_REQUEST
+                status=status_codes.HTTP_200_OK
             )
 
         return JsonResponse(

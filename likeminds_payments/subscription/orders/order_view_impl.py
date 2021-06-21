@@ -31,7 +31,10 @@ class CreateOrderView(APIView):
         order_instance = OrderViewHelper.create_order_instance_helper(validated_request_body)
 
         if 'error_message' in order_instance:
-            return {'error_message': order_instance['error_message']}
+            return JsonResponse(
+                {'success': False, 'error_message': order_instance['error_message']},
+                status=status_codes.HTTP_200_OK
+            )
 
         order_manager = OrderImpl(order_instance=order_instance['order_instance'])
         response_data = order_manager.create_order()
@@ -39,7 +42,7 @@ class CreateOrderView(APIView):
         if 'error_message' in response_data:
             return JsonResponse(
                 {'success': False, 'error_message': response_data['error_message']},
-                status=status_codes.HTTP_400_BAD_REQUEST
+                status=status_codes.HTTP_200_OK
             )
 
         return JsonResponse(
@@ -67,6 +70,14 @@ class VerifyOrderView(APIView):
                 status=status_codes.HTTP_400_BAD_REQUEST
             )
 
+        order_instance = OrderViewHelper.verify_order_body_validator(validated_request_body)
+
+        if 'error_message' in order_instance:
+            return JsonResponse(
+                {'success': False, 'error_message': order_instance['error_message']},
+                status=status_codes.HTTP_200_OK
+            )
+
         order_manager = OrderImpl(razorpay_order_id=validated_request_body['razorpay_order_id'],
                                   razorpay_payment_id=validated_request_body['razorpay_payment_id'],
                                   razorpay_signature=validated_request_body['razorpay_signature'])
@@ -75,7 +86,7 @@ class VerifyOrderView(APIView):
         if 'error_message' in response_data:
             return JsonResponse(
                 {'success': False, 'error_message': response_data['error_message']},
-                status=status_codes.HTTP_400_BAD_REQUEST
+                status=status_codes.HTTP_200_OK
             )
 
         return JsonResponse(

@@ -87,13 +87,23 @@ class SubscriptionViewHelper:
         if not request_body:
             return {'error_message': 'invalid request body'}
 
+        body = {
+            'community_id': None,
+            'user_id': None
+        }
+
         if 'community_id' not in request_body:
             return {'error_message': 'send community_id'}
+
+        body['community_id'] = request_body['community_id']
+
+        if 'user_id' in request_body:
+            body['user_id'] = request_body['user_id']
 
         if not user_id:
             return {'error_message': 'send x-member-id in headers'}
 
-        return request_body
+        return body
 
     @staticmethod
     def get_community_meta_filter_params(request):

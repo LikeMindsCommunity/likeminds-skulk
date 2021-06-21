@@ -23,19 +23,19 @@ class SubscriptionImpl(SubscriptionManager):
     community_id = None
     member_ids = None
     subscription_type = None
-    free_user_id = None
+    member_id = None
     valid_till = None
     n_days = None
 
     def __init__(self, payment_id: str = None, user_id: str = None, community_id: str = None,
-                 subscription_type: str = None, free_user_id: str = None, valid_till: str = None,
+                 subscription_type: str = None, member_id: str = None, valid_till: str = None,
                  n_days: str = None, member_ids: list = None):
         self.payment_id = payment_id
         self.user_id = user_id
         self.community_id = community_id
         self.member_ids = member_ids
         self.subscription_type = subscription_type
-        self.free_user_id = free_user_id
+        self.member_id = member_id
         self.valid_till = valid_till
         self.n_days = n_days
 
@@ -51,8 +51,8 @@ class SubscriptionImpl(SubscriptionManager):
     def get_subscription_type(self) -> str:
         return self.subscription_type
 
-    def get_free_user_id(self) -> str:
-        return self.free_user_id
+    def get_member_id(self) -> str:
+        return self.member_id
 
     def get_valid_till(self) -> str:
         return self.valid_till
@@ -442,7 +442,7 @@ class SubscriptionImpl(SubscriptionManager):
                     return {'error_message': 'You are not the Owner/CM of the community'}
 
                 if self.get_subscription_type() == DASHBOARD:
-                    add_free_days = self._add_free_days_to_subscription(self.get_free_user_id(),
+                    add_free_days = self._add_free_days_to_subscription(self.get_member_id(),
                                                                         self.get_community_id(),
                                                                         self.get_valid_till(),
                                                                         self.get_n_days())
@@ -454,7 +454,7 @@ class SubscriptionImpl(SubscriptionManager):
 
                 if self.get_subscription_type() == FREE_SUBSCRIPTION:
 
-                    generate_free_subscription = self._generate_free_subscription(self.get_free_user_id(),
+                    generate_free_subscription = self._generate_free_subscription(self.get_member_id(),
                                                                                   self.get_community_id())
 
                     if 'error_message' in generate_free_subscription:
@@ -527,18 +527,36 @@ class SubscriptionImpl(SubscriptionManager):
 
     def cancel_subscription(self) -> dict:
 
-        is_pending_member = CoreServiceUtilities.is_pending_member(self.get_community_id(), self.get_user_id())
+        if self.get_member_id() is not None:
 
-        if 'error_message' in is_pending_member:
-            return {'error_message': is_pending_member['error_message']}
+            authenticator = CoreServiceUtilities.is_owner(self.get_community_id(), self.get_user_id())
 
-        if is_pending_member['is_pending_member'] is False:
-            return {'error_message': 'Your subscription cannot be cancelled'}
+            if 'error_message' in authenticator:
+                return {'error_message': authenticator['error_message']}
 
-        subscription_instance = Subscription.get_subscription_or_None(self.get_user_id(), self.get_community_id())
+            if 'is_owner' in authenticator and authenticator['is_owner'] is False:
+                return {'error_message': 'You are not the Owner/CM of the community'}
+
+            subscription_instance = Subscription.get_subscription_or_None(user_id=self.get_member_id(),
+                                                                          community_id=self.get_community_id())
+
+        else:
+
+            is_pending_member = CoreServiceUtilities.is_pending_member(self.get_community_id(), self.get_user_id())
+
+            if 'error_message' in is_pending_member:
+                return {'error_message': is_pending_member['error_message']}
+
+            if is_pending_member['is_pending_member'] is False:
+                return {'error_message': 'Your are not a pending member'}
+
+            subscription_instance = Subscription.get_subscription_or_None(self.get_user_id(), self.get_community_id())
 
         if subscription_instance is None:
             return {'error_message': 'no subscription exists for this user_id and community_id'}
+
+        if subscription_instance.transaction is None:
+            return {'error_message': 'no active payment associated with this user subscription to be refunded'}
 
         razorpay_client = RazorpayWrapper.get_instance()
 

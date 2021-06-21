@@ -140,7 +140,8 @@ class CancelSubscriptionView(TransactionMixin, APIView):
                 status=status_codes.HTTP_400_BAD_REQUEST
             )
 
-        subscription_manager = SubscriptionImpl(user_id=user_id, community_id=validated_request_body['community_id'])
+        subscription_manager = SubscriptionImpl(user_id=user_id, community_id=validated_request_body['community_id'],
+                                                member_id=validated_request_body['user_id'])
         response_data = subscription_manager.cancel_subscription()
 
         if 'error_message' in response_data:

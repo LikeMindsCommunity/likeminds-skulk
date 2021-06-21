@@ -59,6 +59,24 @@ class PlanViewHelper:
     @staticmethod
     def _create_new_plan_instance(plan_body) -> dict:
 
+        if 'cost' in plan_body or plan_body['cost']:
+            plan_body['cost'] *= 100
+
+        if 'strike_cost' not in plan_body or not plan_body['strike_cost']:
+            plan_body['strike_cost'] = None
+        else:
+            plan_body['strike_cost'] *= 100
+
+        if 'cost_usd' not in plan_body or not plan_body['cost_usd']:
+            plan_body['cost_usd'] = None
+        else:
+            plan_body['cost_usd'] *= 100
+
+        if 'strike_cost_usd' not in plan_body or not plan_body['strike_cost_usd']:
+            plan_body['strike_cost_usd'] = None
+        else:
+            plan_body['strike_cost_usd'] *= 100
+
         if 'name' not in plan_body or not plan_body['name']:
             plan_body['name'] = ""
 
@@ -72,9 +90,7 @@ class PlanViewHelper:
             plan_body['referral_free_days'] = 0
 
         if 'image' not in plan_body or not plan_body['image']:
-            plan_body['image'] = ''
-            # TODO
-            # assigning default values according to length of plan
+            plan_body['image'] = PLAN_IMAGES[plan_body['duration_name']]
 
         try:
             plan_instance = SubscriptionPlan.create_instance(plan_body)
@@ -89,8 +105,17 @@ class PlanViewHelper:
         if 'name' in plan_body and plan_instance.name != plan_body['name']:
             plan_instance.name = plan_body['name']
 
-        if 'cost' in plan_body and plan_instance.cost != plan_body['cost']:
-            plan_instance.cost = plan_body['cost']
+        if 'cost' in plan_body and plan_instance.cost/100 != plan_body['cost']:
+            plan_instance.cost = plan_body['cost']*100
+
+        if 'strike_cost' in plan_body and plan_instance.strike_cost/100 != plan_body['strike_cost']:
+            plan_instance.strike_cost = plan_body['strike_cost']*100
+
+        if 'cost_usd' in plan_body and plan_instance.cost_usd/100 != plan_body['cost_usd']:
+            plan_instance.cost_usd = plan_body['cost_usd']*100
+
+        if 'strike_cost_usd' in plan_body and plan_instance.strike_cost_usd/100 != plan_body['strike_cost_usd']:
+            plan_instance.strike_cost_usd = plan_body['strike_cost_usd']*100
 
         if 'cm_emails' in plan_body and plan_instance.cm_emails != plan_body['cm_emails']:
             plan_instance.cm_emails = plan_body['cm_emails']

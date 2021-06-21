@@ -34,7 +34,6 @@ class CreateSubscriptionView(TransactionMixin, APIView):
                                                 community_id=validated_request_body['community_id'],
                                                 user_id=user_id, subscription_type=validated_request_body['type'],
                                                 free_user_id=validated_request_body['user_id'],
-                                                aj=validated_request_body['aj'],
                                                 valid_till=validated_request_body['valid_till'],
                                                 n_days=validated_request_body['n_days'])
         response_data = subscription_manager.create_subscription()

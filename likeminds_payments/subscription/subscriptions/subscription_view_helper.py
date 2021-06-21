@@ -16,7 +16,6 @@ class SubscriptionViewHelper:
         validated_request_body = {
             'payment_id': None,
             'community_id': None,
-            'aj': None,
             'type': None,
             'user_id': None,
             'valid_till': None,
@@ -37,9 +36,6 @@ class SubscriptionViewHelper:
 
                 validated_request_body['type'] = request_body['type']
                 validated_request_body['user_id'] = request_body['user_id']
-
-                if 'aj' in request_body:
-                    validated_request_body['aj'] = request_body['aj']
 
                 if 'valid_till' in request_body:
                     validated_request_body['valid_till'] = request_body['valid_till']

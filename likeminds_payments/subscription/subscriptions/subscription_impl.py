@@ -23,20 +23,18 @@ class SubscriptionImpl(SubscriptionManager):
     community_id = None
     member_ids = None
     subscription_type = None
-    aj = None
     free_user_id = None
     valid_till = None
     n_days = None
 
     def __init__(self, payment_id: str = None, user_id: str = None, community_id: str = None,
-                 subscription_type: str = None, aj: str = None, free_user_id: str = None, valid_till: str = None,
+                 subscription_type: str = None, free_user_id: str = None, valid_till: str = None,
                  n_days: str = None, member_ids: list = None):
         self.payment_id = payment_id
         self.user_id = user_id
         self.community_id = community_id
         self.member_ids = member_ids
         self.subscription_type = subscription_type
-        self.aj = aj
         self.free_user_id = free_user_id
         self.valid_till = valid_till
         self.n_days = n_days
@@ -52,9 +50,6 @@ class SubscriptionImpl(SubscriptionManager):
 
     def get_subscription_type(self) -> str:
         return self.subscription_type
-
-    def get_aj(self) -> str:
-        return self.aj
 
     def get_free_user_id(self) -> str:
         return self.free_user_id
@@ -459,40 +454,15 @@ class SubscriptionImpl(SubscriptionManager):
 
                 if self.get_subscription_type() == FREE_SUBSCRIPTION:
 
-                    authenticator = CoreServiceUtilities.is_owner(self.get_community_id(), self.get_free_user_id())
+                    generate_free_subscription = self._generate_free_subscription(self.get_free_user_id(),
+                                                                                  self.get_community_id())
 
-                    if 'error_message' in authenticator:
-                        return {'error_message': authenticator['error_message']}
+                    if 'error_message' in generate_free_subscription:
+                        return {'error_message': generate_free_subscription['error_message']}
 
-                    if 'is_owner' in authenticator:
-                        if authenticator['is_owner'] is False:
+                    return {'success': True}
 
-                            if self.get_aj() is None:
-                                return {'error_message': 'Free subscription tried for invalid user'}
-
-                            if self.get_aj() is not None:
-
-                                verify_aj = CoreServiceUtilities.verify_aj(self.get_community_id(),
-                                                                           self.get_free_user_id(),
-                                                                           self.get_aj())
-
-                                if 'error_message' in verify_aj:
-                                    return {'error_message': verify_aj['error_message']}
-
-                                aj_expired = verify_aj['aj_expired']
-
-                                if aj_expired:
-                                    return {'error_message': 'Link expired'}
-
-                        generate_free_subscription = self._generate_free_subscription(self.get_free_user_id(),
-                                                                                      self.get_community_id())
-
-                        if 'error_message' in generate_free_subscription:
-                            return {'error_message': generate_free_subscription['error_message']}
-
-                        return {'success': True}
-
-            return {'error_message': 'you are not allowed to give free subscriptions'}
+            return {'error_message': 'You are not Owner/CM of this community'}
 
     def start_subscription(self) -> dict:
 

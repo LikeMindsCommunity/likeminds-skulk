@@ -19,6 +19,9 @@ TIME_ZONE = 'Asia/Kolkata'
 # variable to check for beta server
 IS_BETA = False
 
+URL = os.getenv("PRODUCTION_URL")
+CORE_SERVICE_URL = os.getenv("PRODUCTION_CORE_URL")
+
 ALLOWED_HOSTS = [os.getenv("PRODUCTION_ALLOWED_HOST_1"), os.getenv("PRODUCTION_ALLOWED_HOST_2")]
 
 RAZORPAY_KEY = os.getenv("RAZORPAY_KEY")

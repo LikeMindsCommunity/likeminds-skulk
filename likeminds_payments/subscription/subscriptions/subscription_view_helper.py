@@ -12,7 +12,6 @@ class SubscriptionViewHelper:
         validated_request_body = {
             'payment_id': None,
             'community_id': None,
-            'aj': None,
             'type': None,
             'user_id': None
         }
@@ -26,8 +25,6 @@ class SubscriptionViewHelper:
                     return {'error_message': 'send user_id'}
                 validated_request_body['type'] = request_body['type']
                 validated_request_body['user_id'] = request_body['user_id']
-                if 'aj' in request_body:
-                    validated_request_body['aj'] = request_body['aj']
             else:
                 return {'error_message': 'send payment_id'}
         else:

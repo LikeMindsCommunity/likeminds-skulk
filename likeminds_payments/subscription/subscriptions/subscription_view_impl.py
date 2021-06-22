@@ -35,7 +35,8 @@ class CreateSubscriptionView(TransactionMixin, APIView):
                                                 user_id=user_id, subscription_type=validated_request_body['type'],
                                                 member_id=validated_request_body['user_id'],
                                                 valid_till=validated_request_body['valid_till'],
-                                                n_days=validated_request_body['n_days'])
+                                                n_days=validated_request_body['n_days'],
+                                                shared_by=validated_request_body['shared_by'])
         response_data = subscription_manager.create_subscription()
 
         if 'error_message' in response_data:

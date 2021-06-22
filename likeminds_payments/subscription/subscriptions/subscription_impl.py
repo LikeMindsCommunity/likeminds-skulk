@@ -26,10 +26,11 @@ class SubscriptionImpl(SubscriptionManager):
     member_id = None
     valid_till = None
     n_days = None
+    shared_by = None
 
     def __init__(self, payment_id: str = None, user_id: str = None, community_id: str = None,
                  subscription_type: str = None, member_id: str = None, valid_till: str = None,
-                 n_days: str = None, member_ids: list = None):
+                 n_days: str = None, member_ids: list = None, shared_by: str = None):
         self.payment_id = payment_id
         self.user_id = user_id
         self.community_id = community_id
@@ -38,6 +39,7 @@ class SubscriptionImpl(SubscriptionManager):
         self.member_id = member_id
         self.valid_till = valid_till
         self.n_days = n_days
+        self.shared_by = shared_by
 
     def get_payment_id(self) -> str:
         return self.payment_id
@@ -62,6 +64,9 @@ class SubscriptionImpl(SubscriptionManager):
 
     def get_member_ids(self) -> list:
         return self.member_ids
+
+    def get_shared_by(self) -> str:
+        return self.shared_by
 
     @staticmethod
     def _check_if_transaction_is_used(payment_id: str) -> dict:
@@ -438,10 +443,11 @@ class SubscriptionImpl(SubscriptionManager):
                 return {'error_message': authenticator['error_message']}
 
             if 'is_owner' in authenticator:
-                if authenticator['is_owner'] is False:
+                if authenticator['is_owner'] is False and self.get_shared_by() is None:
                     return {'error_message': 'You are not the Owner/CM of the community'}
 
                 if self.get_subscription_type() == DASHBOARD:
+
                     add_free_days = self._add_free_days_to_subscription(self.get_member_id(),
                                                                         self.get_community_id(),
                                                                         self.get_valid_till(),
@@ -454,13 +460,32 @@ class SubscriptionImpl(SubscriptionManager):
 
                 if self.get_subscription_type() == FREE_SUBSCRIPTION:
 
-                    generate_free_subscription = self._generate_free_subscription(self.get_member_id(),
-                                                                                  self.get_community_id())
+                    if self.get_shared_by() is None:
 
-                    if 'error_message' in generate_free_subscription:
-                        return {'error_message': generate_free_subscription['error_message']}
+                        generate_free_subscription = self._generate_free_subscription(self.get_member_id(),
+                                                                                      self.get_community_id())
 
-                    return {'success': True}
+                        if 'error_message' in generate_free_subscription:
+                            return {'error_message': generate_free_subscription['error_message']}
+
+                        return {'success': True}
+
+                    authenticator = CoreServiceUtilities.is_owner(self.get_community_id(), self.get_shared_by())
+
+                    if 'error_message' in authenticator:
+                        return {'error_message': authenticator['error_message']}
+
+                    if 'is_owner' in authenticator:
+                        if authenticator['is_owner'] is False:
+                            return {'error_message': 'shared_by user is not the Owner/CM of the community'}
+
+                        generate_free_subscription = self._generate_free_subscription(self.get_user_id(),
+                                                                                      self.get_community_id())
+
+                        if 'error_message' in generate_free_subscription:
+                            return {'error_message': generate_free_subscription['error_message']}
+
+                        return {'success': True}
 
             return {'error_message': 'You are not Owner/CM of this community'}
 

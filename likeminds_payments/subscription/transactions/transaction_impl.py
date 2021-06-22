@@ -35,7 +35,7 @@ class TransactionImpl(TransactionManager):
         self.transaction_instance = transaction_instance
 
     def get_transaction_body(self) -> dict:
-        return self.get_transaction_body()
+        return self.transaction_body
 
     def get_transaction_raw_body(self) -> bytes:
         return self.transaction_raw_body

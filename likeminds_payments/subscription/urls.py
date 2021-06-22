@@ -11,6 +11,7 @@ urlpatterns = [
     path('create_plan', CreatePlanView.as_view(), name="create-plan"),
     path('fetch_plan', FetchPlanView.as_view(), name="fetch-plan"),
     path('delete_plan', DeletePlanView.as_view(), name="delete-plan"),
+    path('fetch_country_code', FetchCountryCodeView.as_view(), name="fetch-country-code"),
     path('create_order', CreateOrderView.as_view(), name="create-order"),
     path('verify_order', VerifyOrderView.as_view(), name="verify-order"),
     path('create_transaction', CreateTransactionView.as_view(), name="create-transaction"),

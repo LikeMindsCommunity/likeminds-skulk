@@ -127,10 +127,10 @@ class PlanViewHelper:
             if 'is_owner' in authenticator and authenticator['is_owner'] is False:
                 return {'error_message': 'You are not the Owner/CM of the community'}
 
-            plan_validator = PlanViewHelper._new_plan_validator(plan_body)
-
-            if 'error_message' in plan_validator:
-                return {'error_message': plan_validator['error_message']}
+            # plan_validator = PlanViewHelper._new_plan_validator(plan_body)
+            #
+            # if 'error_message' in plan_validator:
+            #     return {'error_message': plan_validator['error_message']}
 
             plan_instance = PlanViewHelper._create_new_plan_instance(plan_body)
 

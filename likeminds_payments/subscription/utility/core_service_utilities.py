@@ -6,7 +6,7 @@ from ..utility.number_utilities import NumberUtilities
 class CoreServiceUtilities:
 
     @staticmethod
-    def is_owner(community_id: str, member_id: str) -> dict:
+    def has_permission(community_id: str, member_id: str) -> dict:
 
         if not community_id or not member_id:
             return {'error_message': 'send community_id and user_id'}
@@ -27,10 +27,10 @@ class CoreServiceUtilities:
         if 'state' not in response:
             return {'error_message': 'no state field in member state response'}
 
-        output = {'is_owner': False}
+        output = {'has_permission': False}
 
         if response['state'] == 1:
-            return {'is_owner': True}
+            return {'has_permission': True}
 
         return output
 

@@ -119,12 +119,12 @@ class PlanViewHelper:
 
         if 'plan_id' not in plan_body or not plan_body['plan_id']:
 
-            authenticator = CoreServiceUtilities.is_owner(plan_body['community_id'], user_id)
+            has_permission_check = CoreServiceUtilities.has_permission(plan_body['community_id'], user_id)
 
-            if 'error_message' in authenticator:
-                return {'error_message': authenticator['error_message']}
+            if 'error_message' in has_permission_check:
+                return {'error_message': has_permission_check['error_message']}
 
-            if 'is_owner' in authenticator and authenticator['is_owner'] is False:
+            if 'has_permission' in has_permission_check and has_permission_check['has_permission'] is False:
                 return {'error_message': 'You are not the Owner/CM of the community'}
 
             # plan_validator = PlanViewHelper._new_plan_validator(plan_body)
@@ -146,12 +146,12 @@ class PlanViewHelper:
             if plan_instance is None:
                 return {'error_message': 'invalid plan_id'}
 
-            authenticator = CoreServiceUtilities.is_owner(plan_instance.community_id, user_id)
+            has_permission_check = CoreServiceUtilities.has_permission(plan_instance.community_id, user_id)
 
-            if 'error_message' in authenticator:
-                return {'error_message': authenticator['error_message']}
+            if 'error_message' in has_permission_check:
+                return {'error_message': has_permission_check['error_message']}
 
-            if 'is_owner' in authenticator and authenticator['is_owner'] is False:
+            if 'has_permission' in has_permission_check and has_permission_check['has_permission'] is False:
                 return {'error_message': 'You are not the Owner/CM of the community'}
 
             updated_plan_instance = PlanViewHelper._update_existing_plan_instance(plan_body, plan_instance)
@@ -196,12 +196,12 @@ class PlanViewHelper:
         if not plan_instance:
             return {'error_message': 'invalid plan_id'}
 
-        authenticator = CoreServiceUtilities.is_owner(plan_instance.community_id, user_id)
+        has_permission_check = CoreServiceUtilities.has_permission(plan_instance.community_id, user_id)
 
-        if 'error_message' in authenticator:
-            return {'error_message': authenticator['error_message']}
+        if 'error_message' in has_permission_check:
+            return {'error_message': has_permission_check['error_message']}
 
-        if 'is_owner' in authenticator and authenticator['is_owner'] is False:
+        if 'has_permission' in has_permission_check and has_permission_check['has_permission'] is False:
             return {'error_message': 'You are not the Owner/CM of the community'}
 
         plan_instance.is_deleted = True

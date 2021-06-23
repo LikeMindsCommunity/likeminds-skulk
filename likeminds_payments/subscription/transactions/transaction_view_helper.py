@@ -50,12 +50,12 @@ class TransactionViewHelper:
     @staticmethod
     def get_transactions_instance_authenticator(community_id, user_id):
 
-        is_owner_check = CoreServiceUtilities.is_owner(community_id, user_id)
+        has_permission_check = CoreServiceUtilities.has_permission(community_id, user_id)
 
-        if 'error_message' in is_owner_check:
-            return {'error_message': is_owner_check['error_message']}
+        if 'error_message' in has_permission_check:
+            return {'error_message': has_permission_check['error_message']}
 
-        if 'is_owner' in is_owner_check and is_owner_check['is_owner'] is False:
+        if 'has_permission' in has_permission_check and has_permission_check['has_permission'] is False:
             return {'error_message': 'You are not the Owner/CM of the community'}
 
         return {'success': True}
@@ -87,12 +87,12 @@ class TransactionViewHelper:
         if plan_instance is None:
             return {'error_message': 'malformed transaction'}
 
-        is_owner_check = CoreServiceUtilities.is_owner(plan_instance.community_id, user_id)
+        has_permission_check = CoreServiceUtilities.has_permission(plan_instance.community_id, user_id)
 
-        if 'error_message' in is_owner_check:
-            return {'error_message': is_owner_check['error_message']}
+        if 'error_message' in has_permission_check:
+            return {'error_message': has_permission_check['error_message']}
 
-        if 'is_owner' in is_owner_check and is_owner_check['is_owner'] is False:
+        if 'has_permission' in has_permission_check and has_permission_check['has_permission'] is False:
             return {'error_message': 'You are not the Owner/CM of the community'}
 
         return {'transaction_instance': transaction_instance}

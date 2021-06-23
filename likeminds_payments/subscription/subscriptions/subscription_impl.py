@@ -432,13 +432,13 @@ class SubscriptionImpl(SubscriptionManager):
 
         elif self.get_community_id() is not None and self.get_subscription_type() is not None:
 
-            is_owner_check = CoreServiceUtilities.is_owner(self.get_community_id(), self.get_member_id())
+            has_permission_check = CoreServiceUtilities.has_permission(self.get_community_id(), self.get_member_id())
 
-            if 'error_message' in is_owner_check:
-                return {'error_message': is_owner_check['error_message']}
+            if 'error_message' in has_permission_check:
+                return {'error_message': has_permission_check['error_message']}
 
-            if 'is_owner' in is_owner_check:
-                if is_owner_check['is_owner'] is False:
+            if 'has_permission' in has_permission_check:
+                if has_permission_check['has_permission'] is False:
                     return {'error_message': 'You are not the Owner/CM of the community'}
 
                 if self.get_subscription_type() == DASHBOARD:
@@ -503,12 +503,12 @@ class SubscriptionImpl(SubscriptionManager):
 
         if self.get_member_ids() is not None:
 
-            is_owner_check = CoreServiceUtilities.is_owner(self.get_community_id(), self.get_member_id())
+            has_permission_check = CoreServiceUtilities.has_permission(self.get_community_id(), self.get_member_id())
 
-            if 'error_message' in is_owner_check:
-                return {'error_message': is_owner_check['error_message']}
+            if 'error_message' in has_permission_check:
+                return {'error_message': has_permission_check['error_message']}
 
-            if 'is_owner' in is_owner_check and is_owner_check['is_owner'] is False:
+            if 'has_permission' in has_permission_check and has_permission_check['has_permission'] is False:
                 return {'error_message': 'You are not the Owner/CM of the community'}
 
             member_subscriptions = {}
@@ -529,12 +529,12 @@ class SubscriptionImpl(SubscriptionManager):
 
         if self.get_user_id() is not None:
 
-            is_owner_check = CoreServiceUtilities.is_owner(self.get_community_id(), self.get_member_id())
+            has_permission_check = CoreServiceUtilities.has_permission(self.get_community_id(), self.get_member_id())
 
-            if 'error_message' in is_owner_check:
-                return {'error_message': is_owner_check['error_message']}
+            if 'error_message' in has_permission_check:
+                return {'error_message': has_permission_check['error_message']}
 
-            if 'is_owner' in is_owner_check and is_owner_check['is_owner'] is False:
+            if 'has_permission' in has_permission_check and has_permission_check['has_permission'] is False:
                 return {'error_message': 'You are not the Owner/CM of the community'}
 
             subscription_instance = Subscription.get_subscription_or_None(user_id=self.get_user_id(),

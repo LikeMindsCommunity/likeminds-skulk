@@ -24,7 +24,15 @@ class CoreServiceUtilities:
         if 'error_message' in response:
             return {'error_message': 'error getting member state'}
 
-        return {'is_owner': response['member']['is_owner']}
+        if 'state' not in response:
+            return {'error_message': 'no state field in member state response'}
+
+        output = {'is_owner': False}
+
+        if response['state'] == 1:
+            return {'is_owner': True}
+
+        return output
 
     @staticmethod
     def verify_aj(community_id: str, user_id: str, aj: str):
@@ -50,6 +58,9 @@ class CoreServiceUtilities:
         if 'error_message' in response:
             return {'error_message': 'error getting member state'}
 
+        if 'aj_expired' not in response:
+            return {'error_message': 'no aj_expired field in member_state'}
+
         return {'aj_expired': response['aj_expired']}
 
     @staticmethod
@@ -70,6 +81,9 @@ class CoreServiceUtilities:
 
         if 'error_message' in response:
             return {'error_message': 'error getting member state'}
+
+        if 'state' not in response:
+            return {'error_message': 'no state field in member state response'}
 
         if response['state'] == 3:
             return {'is_pending_member': True}
@@ -92,5 +106,8 @@ class CoreServiceUtilities:
 
         if 'error_message' in response:
             return {'error_message': response['error_message']}
+
+        if 'community' not in response:
+            return {'error_message': 'no community object in community data response'}
 
         return {'community': response['community']}

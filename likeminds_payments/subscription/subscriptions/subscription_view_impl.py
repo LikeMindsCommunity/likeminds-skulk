@@ -20,9 +20,9 @@ class CreateSubscriptionView(TransactionMixin, APIView):
     def post(request, *args, **kwargs):
 
         request_body = RequestUtilities.load_request_body(request)
-        user_id = RequestUtilities.get_parameter_from_headers(request, 'HTTP_X_MEMBER_ID')
+        member_id = RequestUtilities.get_parameter_from_headers(request, 'HTTP_X_MEMBER_ID')
 
-        validated_request_body = SubscriptionViewHelper.create_subscription_body_validator(request_body, user_id)
+        validated_request_body = SubscriptionViewHelper.create_subscription_body_validator(request_body, member_id)
 
         if 'error_message' in validated_request_body:
             return JsonResponse(
@@ -32,8 +32,8 @@ class CreateSubscriptionView(TransactionMixin, APIView):
 
         subscription_manager = SubscriptionImpl(payment_id=validated_request_body['payment_id'],
                                                 community_id=validated_request_body['community_id'],
-                                                user_id=user_id, subscription_type=validated_request_body['type'],
-                                                member_id=validated_request_body['user_id'],
+                                                member_id=member_id, subscription_type=validated_request_body['type'],
+                                                user_id=validated_request_body['user_id'],
                                                 valid_till=validated_request_body['valid_till'],
                                                 n_days=validated_request_body['n_days'])
         response_data = subscription_manager.create_subscription()

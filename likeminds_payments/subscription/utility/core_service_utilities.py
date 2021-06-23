@@ -94,3 +94,28 @@ class CoreServiceUtilities:
             return {'error_message': response['error_message']}
 
         return {'community': response['community']}
+
+    @staticmethod
+    def remove_member(community_id: str, member_id: str):
+
+        if not community_id:
+            return {'error_message': 'send community_id'}
+
+        if not member_id:
+            return {'error_message': 'send member_id'}
+
+        community_id = NumberUtilities.get_integer_from_string(community_id)
+        member_id = NumberUtilities.get_integer_from_string(member_id)
+
+        url = REMOVE_MEMBER_API
+        data = {
+            'community_id': community_id,
+            'member_id': member_id
+        }
+
+        response = ApiUtilities.generate_post_request(url, data)
+
+        if 'error_message' in response:
+            return {'error_message': response['error_message']}
+
+        return {'success': response['success']}

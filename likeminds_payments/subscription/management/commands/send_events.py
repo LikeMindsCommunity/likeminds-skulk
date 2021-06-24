@@ -1,4 +1,4 @@
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 import subscription.member_notifications.constants as constants
 from subscription.subscriptions.models import Subscription
 from subscription.member_notifications.models import MemberNotification
@@ -7,7 +7,7 @@ import analytics
 
 
 class Command(BaseCommand):
-    help = 'remove all the users whose subscriptions expires'
+    help = 'send events to users based on their membership state'
 
     @staticmethod
     def check_existence(user_id, community_id, code):
@@ -32,7 +32,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
 
         current_time = TimeUtilities.current_time_in_milliseconds()
-        subscriptions = Subscription.objects.all()
+        subscriptions = Subscription.objects.filter(is_removed=False)
 
         for subscription in subscriptions:
 

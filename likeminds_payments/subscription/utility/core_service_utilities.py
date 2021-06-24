@@ -1,4 +1,5 @@
 from ..orders.constants import *
+from .constants import *
 from ..utility.api_utilities import ApiUtilities
 from ..utility.number_utilities import NumberUtilities
 
@@ -6,7 +7,7 @@ from ..utility.number_utilities import NumberUtilities
 class CoreServiceUtilities:
 
     @staticmethod
-    def is_owner(community_id: str, member_id: str) -> dict:
+    def has_permission(community_id: str, member_id: str) -> dict:
 
         if not community_id or not member_id:
             return {'error_message': 'send community_id and user_id'}
@@ -24,7 +25,15 @@ class CoreServiceUtilities:
         if 'error_message' in response:
             return {'error_message': 'error getting member state'}
 
-        return {'is_owner': response['member']['is_owner']}
+        if 'state' not in response:
+            return {'error_message': 'no state field in member state response'}
+
+        output = {'has_permission': False}
+
+        if response['state'] == ADMIN:
+            return {'has_permission': True}
+
+        return output
 
     @staticmethod
     def verify_aj(community_id: str, user_id: str, aj: str):
@@ -50,6 +59,9 @@ class CoreServiceUtilities:
         if 'error_message' in response:
             return {'error_message': 'error getting member state'}
 
+        if 'aj_expired' not in response:
+            return {'error_message': 'no aj_expired field in member_state'}
+
         return {'aj_expired': response['aj_expired']}
 
     @staticmethod
@@ -71,7 +83,11 @@ class CoreServiceUtilities:
         if 'error_message' in response:
             return {'error_message': 'error getting member state'}
 
-        if response['state'] == 3:
+        if 'state' not in response:
+            return {'error_message': 'no state field in member state response'}
+
+        if response['state'] == PENDING_MEMBER:
+
             return {'is_pending_member': True}
 
         return {'is_pending_member': False}
@@ -92,5 +108,8 @@ class CoreServiceUtilities:
 
         if 'error_message' in response:
             return {'error_message': response['error_message']}
+
+        if 'community' not in response:
+            return {'error_message': 'no community object in community data response'}
 
         return {'community': response['community']}

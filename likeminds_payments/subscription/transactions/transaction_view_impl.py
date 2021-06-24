@@ -57,9 +57,10 @@ class FetchTransactionsView(APIView):
     def post(request, *args, **kwargs):
 
         request_body = RequestUtilities.load_request_body(request)
-        user_id = RequestUtilities.get_parameter_from_headers(request, 'HTTP_X_MEMBER_ID')
 
-        validated_request_body = TransactionViewHelper.get_transactions_body_validator(request_body, user_id)
+        member_id = RequestUtilities.get_parameter_from_headers(request, 'HTTP_X_MEMBER_ID')
+
+        validated_request_body = TransactionViewHelper.get_transactions_body_validator(request_body, member_id)
 
         if 'error_message' in validated_request_body:
             return JsonResponse(
@@ -67,8 +68,8 @@ class FetchTransactionsView(APIView):
                 status=status_codes.HTTP_400_BAD_REQUEST
             )
 
-        instance_data = TransactionViewHelper.get_transactions_instance_helper(validated_request_body['community_id'],
-                                                                               user_id)
+        instance_data = TransactionViewHelper.get_transactions_instance_authenticator(
+            validated_request_body['community_id'], member_id)
 
         if 'error_message' in instance_data:
             return JsonResponse(
@@ -112,7 +113,7 @@ class RefundTransactionView(TransactionMixin, APIView):
                 status=status_codes.HTTP_400_BAD_REQUEST
             )
 
-        instance_data = TransactionViewHelper.refund_transaction_instance_helper(
+        instance_data = TransactionViewHelper.refund_transaction_instance_authenticator(
             validated_request_body['transaction_id'], user_id)
 
         if 'error_message' in instance_data:

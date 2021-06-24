@@ -48,14 +48,14 @@ class TransactionViewHelper:
         return request_body
 
     @staticmethod
-    def get_transactions_instance_helper(community_id, user_id):
+    def get_transactions_instance_authenticator(community_id, user_id):
 
-        authenticator = CoreServiceUtilities.is_owner(community_id, user_id)
+        has_permission_check = CoreServiceUtilities.has_permission(community_id, user_id)
 
-        if 'error_message' in authenticator:
-            return {'error_message': authenticator['error_message']}
+        if 'error_message' in has_permission_check:
+            return {'error_message': has_permission_check['error_message']}
 
-        if 'is_owner' in authenticator and authenticator['is_owner'] is False:
+        if 'has_permission' in has_permission_check and has_permission_check['has_permission'] is False:
             return {'error_message': 'You are not the Owner/CM of the community'}
 
         return {'success': True}
@@ -75,7 +75,7 @@ class TransactionViewHelper:
         return request_body
 
     @staticmethod
-    def refund_transaction_instance_helper(transaction_id, user_id):
+    def refund_transaction_instance_authenticator(transaction_id, user_id):
 
         transaction_instance = Transaction.get_transaction_with_id_or_None(transaction_id)
 
@@ -87,12 +87,12 @@ class TransactionViewHelper:
         if plan_instance is None:
             return {'error_message': 'malformed transaction'}
 
-        authenticator = CoreServiceUtilities.is_owner(plan_instance.community_id, user_id)
+        has_permission_check = CoreServiceUtilities.has_permission(plan_instance.community_id, user_id)
 
-        if 'error_message' in authenticator:
-            return {'error_message': authenticator['error_message']}
+        if 'error_message' in has_permission_check:
+            return {'error_message': has_permission_check['error_message']}
 
-        if 'is_owner' in authenticator and authenticator['is_owner'] is False:
+        if 'has_permission' in has_permission_check and has_permission_check['has_permission'] is False:
             return {'error_message': 'You are not the Owner/CM of the community'}
 
         return {'transaction_instance': transaction_instance}

@@ -21,23 +21,16 @@ class SubscriptionImpl(SubscriptionManager):
     payment_id = None
     user_id = None
     community_id = None
-    member_ids = None
     subscription_type = None
     member_id = None
-    valid_till = None
-    n_days = None
 
     def __init__(self, payment_id: str = None, user_id: str = None, community_id: str = None,
-                 subscription_type: str = None, member_id: str = None, valid_till: str = None,
-                 n_days: str = None, member_ids: list = None):
+                 subscription_type: str = None, member_id: str = None):
         self.payment_id = payment_id
         self.user_id = user_id
         self.community_id = community_id
-        self.member_ids = member_ids
         self.subscription_type = subscription_type
         self.member_id = member_id
-        self.valid_till = valid_till
-        self.n_days = n_days
 
     def get_payment_id(self) -> str:
         return self.payment_id
@@ -53,15 +46,6 @@ class SubscriptionImpl(SubscriptionManager):
 
     def get_member_id(self) -> str:
         return self.member_id
-
-    def get_valid_till(self) -> str:
-        return self.valid_till
-
-    def get_n_days(self) -> str:
-        return self.n_days
-
-    def get_member_ids(self) -> list:
-        return self.member_ids
 
     @staticmethod
     def _check_if_transaction_is_used(payment_id: str) -> dict:
@@ -408,7 +392,7 @@ class SubscriptionImpl(SubscriptionManager):
 
         return {'error_message': 'invalid user_id and community_id pair'}
 
-    def create_subscription(self) -> dict:
+    def create_subscription(self, n_days: str = None, valid_till: str = None) -> dict:
 
         if self.get_payment_id() is not None:
 
@@ -444,8 +428,7 @@ class SubscriptionImpl(SubscriptionManager):
                 if self.get_subscription_type() == DASHBOARD:
                     add_free_days = self._add_free_days_to_subscription(self.get_user_id(),
                                                                         self.get_community_id(),
-                                                                        self.get_valid_till(),
-                                                                        self.get_n_days())
+                                                                        valid_till, n_days)
 
                     if 'error_message' in add_free_days:
                         return {'error_message': add_free_days['error_message']}
@@ -499,9 +482,9 @@ class SubscriptionImpl(SubscriptionManager):
     def _serialize_subscriptions_list(subscriptions):
         return SubscriptionListSerializer(subscriptions)
 
-    def fetch_subscription(self) -> dict:
+    def fetch_subscription(self, member_ids: list = None) -> dict:
 
-        if self.get_member_ids() is not None:
+        if member_ids is not None:
 
             has_permission_check = CoreServiceUtilities.has_permission(self.get_community_id(), self.get_member_id())
 
@@ -513,7 +496,7 @@ class SubscriptionImpl(SubscriptionManager):
 
             member_subscriptions = {}
 
-            for member_id in self.get_member_ids():
+            for member_id in member_ids:
                 member_subscriptions[member_id] = self._fetch_subscriptions(member_id, self.get_community_id())
 
             return {'subscriptions': self._serialize_subscriptions_list(member_subscriptions)}

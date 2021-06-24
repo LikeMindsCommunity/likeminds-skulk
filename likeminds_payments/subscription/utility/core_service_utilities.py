@@ -1,4 +1,5 @@
 from ..orders.constants import *
+from .constants import *
 from ..utility.api_utilities import ApiUtilities
 from ..utility.number_utilities import NumberUtilities
 
@@ -29,7 +30,7 @@ class CoreServiceUtilities:
 
         output = {'has_permission': False}
 
-        if response['state'] == 1:
+        if response['state'] == ADMIN:
             return {'has_permission': True}
 
         return output
@@ -85,7 +86,7 @@ class CoreServiceUtilities:
         if 'state' not in response:
             return {'error_message': 'no state field in member state response'}
 
-        if response['state'] == 3:
+        if response['state'] == PENDING_MEMBER:
             return {'is_pending_member': True}
 
         return {'is_pending_member': False}

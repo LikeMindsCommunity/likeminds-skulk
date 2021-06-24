@@ -6,7 +6,6 @@ from django.utils.decorators import method_decorator
 
 from ..external_services.ip.ip_wrapper import IpWrapper
 from ..utility.request_utilities import RequestUtilities
-from ..utility.ip_utilities import IpUtilities
 from .order_impl import OrderImpl
 from .order_view_helper import OrderViewHelper
 

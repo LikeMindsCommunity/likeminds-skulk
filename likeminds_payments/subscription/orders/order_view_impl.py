@@ -6,7 +6,6 @@ from django.utils.decorators import method_decorator
 
 from ..external_services.ip.ip_wrapper import IpWrapper
 from ..utility.request_utilities import RequestUtilities
-from ..utility.ip_utilities import IpUtilities
 from .order_impl import OrderImpl
 from .order_view_helper import OrderViewHelper
 
@@ -102,7 +101,7 @@ class FetchCountryCodeView(APIView):
     @staticmethod
     def get(request, *args, **kwargs):
 
-        ip = IpUtilities.get_ip(request)
+        ip = OrderViewHelper.get_ip(request)
         country_code = IpWrapper.get_country_code_from_ip(ip)
 
         return JsonResponse(

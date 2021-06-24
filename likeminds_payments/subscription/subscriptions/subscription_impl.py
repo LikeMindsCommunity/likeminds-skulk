@@ -392,7 +392,7 @@ class SubscriptionImpl(SubscriptionManager):
 
         return {'error_message': 'invalid user_id and community_id pair'}
 
-    def create_subscription(self, n_days: str = None, valid_till: str = None) -> dict:
+    def create_subscription(self, n_days: str = None, valid_till: str = None, shared_by: str = None) -> dict:
 
         if self.get_payment_id() is not None:
 
@@ -422,10 +422,11 @@ class SubscriptionImpl(SubscriptionManager):
                 return {'error_message': has_permission_check['error_message']}
 
             if 'has_permission' in has_permission_check:
-                if has_permission_check['has_permission'] is False:
+                if has_permission_check['has_permission'] is False and shared_by is None:
                     return {'error_message': 'You are not the Owner/CM of the community'}
 
                 if self.get_subscription_type() == DASHBOARD:
+
                     add_free_days = self._add_free_days_to_subscription(self.get_user_id(),
                                                                         self.get_community_id(),
                                                                         valid_till, n_days)
@@ -437,13 +438,32 @@ class SubscriptionImpl(SubscriptionManager):
 
                 if self.get_subscription_type() == FREE_SUBSCRIPTION:
 
-                    generate_free_subscription = self._generate_free_subscription(self.get_user_id(),
-                                                                                  self.get_community_id())
+                    if shared_by is None:
 
-                    if 'error_message' in generate_free_subscription:
-                        return {'error_message': generate_free_subscription['error_message']}
+                        generate_free_subscription = self._generate_free_subscription(self.get_user_id(),
+                                                                                      self.get_community_id())
 
-                    return {'success': True}
+                        if 'error_message' in generate_free_subscription:
+                            return {'error_message': generate_free_subscription['error_message']}
+
+                        return {'success': True}
+
+                    has_permission_check = CoreServiceUtilities.has_permission(self.get_community_id(), shared_by)
+
+                    if 'error_message' in has_permission_check:
+                        return {'error_message': has_permission_check['error_message']}
+
+                    if 'has_permission' in has_permission_check:
+                        if has_permission_check['has_permission'] is False:
+                            return {'error_message': 'shared_by user is not the Owner/CM of the community'}
+
+                        generate_free_subscription = self._generate_free_subscription(self.get_user_id(),
+                                                                                      self.get_community_id())
+
+                        if 'error_message' in generate_free_subscription:
+                            return {'error_message': generate_free_subscription['error_message']}
+
+                        return {'success': True}
 
             return {'error_message': 'You are not Owner/CM of this community'}
 

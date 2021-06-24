@@ -57,6 +57,7 @@ class FetchTransactionsView(APIView):
     def post(request, *args, **kwargs):
 
         request_body = RequestUtilities.load_request_body(request)
+
         member_id = RequestUtilities.get_parameter_from_headers(request, 'HTTP_X_MEMBER_ID')
 
         validated_request_body = TransactionViewHelper.get_transactions_body_validator(request_body, member_id)

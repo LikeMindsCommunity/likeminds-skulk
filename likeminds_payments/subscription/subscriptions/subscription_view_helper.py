@@ -19,7 +19,8 @@ class SubscriptionViewHelper:
             'type': None,
             'user_id': None,
             'valid_till': None,
-            'n_days': None
+            'n_days': None,
+            'shared_by': None
         }
 
         if 'payment_id' not in request_body or not request_body['payment_id']:
@@ -31,11 +32,13 @@ class SubscriptionViewHelper:
                 if 'type' not in request_body or not request_body['type'] in [FREE_SUBSCRIPTION, DASHBOARD]:
                     return {'error_message': 'invalid type value'}
 
-                if 'user_id' not in request_body or not request_body['user_id']:
-                    return {'error_message': 'send user_id'}
-
                 validated_request_body['type'] = request_body['type']
-                validated_request_body['user_id'] = request_body['user_id']
+
+                if 'user_id' in request_body:
+                    validated_request_body['user_id'] = request_body['user_id']
+
+                if 'shared_by' in request_body:
+                    validated_request_body['shared_by'] = request_body['shared_by']
 
                 if 'valid_till' in request_body:
                     validated_request_body['valid_till'] = request_body['valid_till']

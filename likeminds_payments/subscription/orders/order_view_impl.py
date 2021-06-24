@@ -4,6 +4,7 @@ from rest_framework import status as status_codes
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 
+from ..external_services.ip.ip_wrapper import IpWrapper
 from ..utility.request_utilities import RequestUtilities
 from .order_impl import OrderImpl
 from .order_view_helper import OrderViewHelper
@@ -91,5 +92,19 @@ class VerifyOrderView(APIView):
 
         return JsonResponse(
             {'success': True},
+            status=status_codes.HTTP_200_OK
+        )
+
+
+class FetchCountryCodeView(APIView):
+
+    @staticmethod
+    def get(request, *args, **kwargs):
+
+        ip = OrderViewHelper.get_ip(request)
+        country_code = IpWrapper.get_country_code_from_ip(ip)
+
+        return JsonResponse(
+            {'success': True, 'country_code': country_code},
             status=status_codes.HTTP_200_OK
         )

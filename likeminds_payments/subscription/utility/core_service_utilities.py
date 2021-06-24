@@ -87,6 +87,7 @@ class CoreServiceUtilities:
             return {'error_message': 'no state field in member state response'}
 
         if response['state'] == PENDING_MEMBER:
+
             return {'is_pending_member': True}
 
         return {'is_pending_member': False}

@@ -8,7 +8,10 @@ class SubscriptionPlan(models.Model):
     community_id = models.IntegerField(null=False)
     name = models.CharField(null=True, max_length=128)
     duration_name = models.CharField(max_length=16)
-    cost = models.IntegerField(default=0)
+    cost = models.IntegerField(null=True)
+    strike_cost = models.IntegerField(null=True)
+    cost_usd = models.IntegerField(null=True)
+    strike_cost_usd = models.IntegerField(null=True)
     duration_in_months = models.IntegerField()
     cm_emails = models.TextField(default='')
     buddy_emails = models.TextField(null=True)
@@ -37,6 +40,9 @@ class SubscriptionPlan(models.Model):
         instance.name = plan_body['name']
         instance.duration_name = plan_body['duration_name']
         instance.cost = plan_body['cost']
+        instance.strike_cost = plan_body['strike_cost']
+        instance.cost_usd = plan_body['cost_usd']
+        instance.strike_cost_usd = plan_body['strike_cost_usd']
         instance.duration_in_months = plan_body['duration_in_months']
         instance.cm_emails = plan_body['cm_emails']
         instance.buddy_emails = plan_body['buddy_emails']

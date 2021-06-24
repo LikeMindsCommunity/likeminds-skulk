@@ -35,7 +35,8 @@ class CreateSubscriptionView(TransactionMixin, APIView):
                                                 member_id=member_id, subscription_type=validated_request_body['type'],
                                                 user_id=validated_request_body['user_id'])
         response_data = subscription_manager.create_subscription(valid_till=validated_request_body['valid_till'],
-                                                                 n_days=validated_request_body['n_days'])
+                                                                 n_days=validated_request_body['n_days'],
+                                                                 shared_by=validated_request_body['shared_by'])
 
         if 'error_message' in response_data:
             return JsonResponse(
@@ -141,6 +142,7 @@ class CancelSubscriptionView(TransactionMixin, APIView):
         subscription_manager = SubscriptionImpl(member_id=member_id,
                                                 community_id=validated_request_body['community_id'],
                                                 user_id=validated_request_body['user_id'])
+
         response_data = subscription_manager.cancel_subscription()
 
         if 'error_message' in response_data:

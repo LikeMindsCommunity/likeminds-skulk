@@ -1,8 +1,7 @@
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 from subscription.subscriptions.models import Subscription
 from subscription.utility.time_utilities import TimeUtilities
 from subscription.utility.core_service_utilities import CoreServiceUtilities
-import analytics
 
 
 class Command(BaseCommand):
@@ -12,9 +11,6 @@ class Command(BaseCommand):
 
         current_time = TimeUtilities.current_time_in_milliseconds()
         subscriptions = Subscription.objects.all()
-
-        # TODO
-        # send analytics
 
         for subscription in subscriptions:
 

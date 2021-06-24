@@ -1,5 +1,6 @@
 from ..plans.models import SubscriptionPlan
 from ..utility.core_service_utilities import CoreServiceUtilities
+from ..utility.request_utilities import RequestUtilities
 from ..external_services.razorpay.razorpay_wrapper import RazorpayWrapper
 from .constants import *
 
@@ -120,3 +121,15 @@ class OrderViewHelper:
             return {'error_message': 'invalid razorpay_order_id'}
 
         return {'order_instance': order_instance}
+
+    @staticmethod
+    def get_ip(request) -> str:
+
+        x_forwarded_for = RequestUtilities.get_parameter_from_headers(request, 'HTTP_X_FORWARDED_FOR')
+
+        if x_forwarded_for:
+            ip = x_forwarded_for.split(',')[0]
+        else:
+            ip = RequestUtilities.get_parameter_from_headers(request, 'REMOTE_ADDR')
+
+        return ip

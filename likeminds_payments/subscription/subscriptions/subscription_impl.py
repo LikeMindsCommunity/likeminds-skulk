@@ -25,22 +25,14 @@ class SubscriptionImpl(SubscriptionManager):
     member_ids = None
     subscription_type = None
     member_id = None
-    valid_till = None
-    n_days = None
-    shared_by = None
 
     def __init__(self, payment_id: str = None, user_id: str = None, community_id: str = None,
-                 subscription_type: str = None, member_id: str = None, valid_till: str = None,
-                 n_days: str = None, member_ids: list = None, shared_by: str = None):
+                 subscription_type: str = None, member_id: str = None):
         self.payment_id = payment_id
         self.user_id = user_id
         self.community_id = community_id
-        self.member_ids = member_ids
         self.subscription_type = subscription_type
         self.member_id = member_id
-        self.valid_till = valid_till
-        self.n_days = n_days
-        self.shared_by = shared_by
 
     def get_payment_id(self) -> str:
         return self.payment_id
@@ -56,18 +48,6 @@ class SubscriptionImpl(SubscriptionManager):
 
     def get_member_id(self) -> str:
         return self.member_id
-
-    def get_valid_till(self) -> str:
-        return self.valid_till
-
-    def get_n_days(self) -> str:
-        return self.n_days
-
-    def get_member_ids(self) -> list:
-        return self.member_ids
-
-    def get_shared_by(self) -> str:
-        return self.shared_by
 
     @staticmethod
     def _remove_member_notifications(user_id: str, community_id: str):
@@ -405,11 +385,7 @@ class SubscriptionImpl(SubscriptionManager):
                 subscription_instance.valid_till = TimeUtilities.add_days_in_epoch_time(
                     subscription_instance.valid_till, n_days)
 
-            subscription_instance.is_removed = False
             subscription_instance.save()
-
-            SubscriptionImpl._remove_member_notifications(subscription_instance.user_id,
-                                                          subscription_instance.community_id)
 
             subscription_history_data = {
                 "start_date": subscription_instance.date_subscribed,
@@ -430,7 +406,7 @@ class SubscriptionImpl(SubscriptionManager):
 
         return {'error_message': 'invalid user_id and community_id pair'}
 
-    def create_subscription(self) -> dict:
+    def create_subscription(self, n_days: str = None, valid_till: str = None, shared_by: str = None) -> dict:
 
         if self.get_payment_id() is not None:
 
@@ -445,7 +421,7 @@ class SubscriptionImpl(SubscriptionManager):
             transaction_instance = transaction_validation['transaction']
 
             generate_subscription = self._generate_subscription_against_transaction(transaction_instance,
-                                                                                    self.get_user_id())
+                                                                                    self.get_member_id())
 
             if 'error_message' in generate_subscription:
                 return {'error_message': generate_subscription['error_message']}
@@ -454,21 +430,20 @@ class SubscriptionImpl(SubscriptionManager):
 
         elif self.get_community_id() is not None and self.get_subscription_type() is not None:
 
-            authenticator = CoreServiceUtilities.is_owner(self.get_community_id(), self.get_user_id())
+            has_permission_check = CoreServiceUtilities.has_permission(self.get_community_id(), self.get_member_id())
 
-            if 'error_message' in authenticator:
-                return {'error_message': authenticator['error_message']}
+            if 'error_message' in has_permission_check:
+                return {'error_message': has_permission_check['error_message']}
 
-            if 'is_owner' in authenticator:
-                if authenticator['is_owner'] is False and self.get_shared_by() is None:
+            if 'has_permission' in has_permission_check:
+                if has_permission_check['has_permission'] is False and shared_by is None:
                     return {'error_message': 'You are not the Owner/CM of the community'}
 
                 if self.get_subscription_type() == DASHBOARD:
 
-                    add_free_days = self._add_free_days_to_subscription(self.get_member_id(),
+                    add_free_days = self._add_free_days_to_subscription(self.get_user_id(),
                                                                         self.get_community_id(),
-                                                                        self.get_valid_till(),
-                                                                        self.get_n_days())
+                                                                        valid_till, n_days)
 
                     if 'error_message' in add_free_days:
                         return {'error_message': add_free_days['error_message']}
@@ -477,9 +452,9 @@ class SubscriptionImpl(SubscriptionManager):
 
                 if self.get_subscription_type() == FREE_SUBSCRIPTION:
 
-                    if self.get_shared_by() is None:
+                    if shared_by is None:
 
-                        generate_free_subscription = self._generate_free_subscription(self.get_member_id(),
+                        generate_free_subscription = self._generate_free_subscription(self.get_user_id(),
                                                                                       self.get_community_id())
 
                         if 'error_message' in generate_free_subscription:
@@ -487,13 +462,13 @@ class SubscriptionImpl(SubscriptionManager):
 
                         return {'success': True}
 
-                    authenticator = CoreServiceUtilities.is_owner(self.get_community_id(), self.get_shared_by())
+                    has_permission_check = CoreServiceUtilities.has_permission(self.get_community_id(), shared_by)
 
-                    if 'error_message' in authenticator:
-                        return {'error_message': authenticator['error_message']}
+                    if 'error_message' in has_permission_check:
+                        return {'error_message': has_permission_check['error_message']}
 
-                    if 'is_owner' in authenticator:
-                        if authenticator['is_owner'] is False:
+                    if 'has_permission' in has_permission_check:
+                        if has_permission_check['has_permission'] is False:
                             return {'error_message': 'shared_by user is not the Owner/CM of the community'}
 
                         generate_free_subscription = self._generate_free_subscription(self.get_user_id(),
@@ -508,7 +483,7 @@ class SubscriptionImpl(SubscriptionManager):
 
     def start_subscription(self) -> dict:
 
-        subscription_instance = Subscription.get_subscription_or_None(user_id=self.get_user_id(),
+        subscription_instance = Subscription.get_subscription_or_None(user_id=self.get_member_id(),
                                                                       community_id=self.get_community_id())
 
         if subscription_instance is None:
@@ -541,26 +516,26 @@ class SubscriptionImpl(SubscriptionManager):
     def _serialize_subscriptions_list(subscriptions):
         return SubscriptionListSerializer(subscriptions)
 
-    def fetch_subscription(self) -> dict:
+    def fetch_subscription(self, member_ids: list = None) -> dict:
 
-        if self.get_member_ids() is not None:
+        if member_ids is not None:
 
-            authenticator = CoreServiceUtilities.is_owner(self.get_community_id(), self.get_user_id())
+            has_permission_check = CoreServiceUtilities.has_permission(self.get_community_id(), self.get_member_id())
 
-            if 'error_message' in authenticator:
-                return {'error_message': authenticator['error_message']}
+            if 'error_message' in has_permission_check:
+                return {'error_message': has_permission_check['error_message']}
 
-            if 'is_owner' in authenticator and authenticator['is_owner'] is False:
+            if 'has_permission' in has_permission_check and has_permission_check['has_permission'] is False:
                 return {'error_message': 'You are not the Owner/CM of the community'}
 
             member_subscriptions = {}
 
-            for member_id in self.get_member_ids():
+            for member_id in member_ids:
                 member_subscriptions[member_id] = self._fetch_subscriptions(member_id, self.get_community_id())
 
             return {'subscriptions': self._serialize_subscriptions_list(member_subscriptions)}
 
-        subscriptions = self._fetch_subscriptions(self.get_user_id(), self.get_community_id())
+        subscriptions = self._fetch_subscriptions(self.get_member_id(), self.get_community_id())
 
         if len(subscriptions) == 0:
             return {'error_message': 'no subscriptions exist with provided user_id'}
@@ -569,22 +544,22 @@ class SubscriptionImpl(SubscriptionManager):
 
     def cancel_subscription(self) -> dict:
 
-        if self.get_member_id() is not None:
+        if self.get_user_id() is not None:
 
-            authenticator = CoreServiceUtilities.is_owner(self.get_community_id(), self.get_user_id())
+            has_permission_check = CoreServiceUtilities.has_permission(self.get_community_id(), self.get_member_id())
 
-            if 'error_message' in authenticator:
-                return {'error_message': authenticator['error_message']}
+            if 'error_message' in has_permission_check:
+                return {'error_message': has_permission_check['error_message']}
 
-            if 'is_owner' in authenticator and authenticator['is_owner'] is False:
+            if 'has_permission' in has_permission_check and has_permission_check['has_permission'] is False:
                 return {'error_message': 'You are not the Owner/CM of the community'}
 
-            subscription_instance = Subscription.get_subscription_or_None(user_id=self.get_member_id(),
+            subscription_instance = Subscription.get_subscription_or_None(user_id=self.get_user_id(),
                                                                           community_id=self.get_community_id())
 
         else:
 
-            is_pending_member = CoreServiceUtilities.is_pending_member(self.get_community_id(), self.get_user_id())
+            is_pending_member = CoreServiceUtilities.is_pending_member(self.get_community_id(), self.get_member_id())
 
             if 'error_message' in is_pending_member:
                 return {'error_message': is_pending_member['error_message']}
@@ -592,7 +567,7 @@ class SubscriptionImpl(SubscriptionManager):
             if is_pending_member['is_pending_member'] is False:
                 return {'error_message': 'Your are not a pending member'}
 
-            subscription_instance = Subscription.get_subscription_or_None(self.get_user_id(), self.get_community_id())
+            subscription_instance = Subscription.get_subscription_or_None(self.get_member_id(), self.get_community_id())
 
         if subscription_instance is None:
             return {'error_message': 'no subscription exists for this user_id and community_id'}

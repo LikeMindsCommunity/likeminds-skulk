@@ -20,9 +20,9 @@ class CreateSubscriptionView(TransactionMixin, APIView):
     def post(request, *args, **kwargs):
 
         request_body = RequestUtilities.load_request_body(request)
-        user_id = RequestUtilities.get_parameter_from_headers(request, 'HTTP_X_MEMBER_ID')
+        member_id = RequestUtilities.get_parameter_from_headers(request, 'HTTP_X_MEMBER_ID')
 
-        validated_request_body = SubscriptionViewHelper.create_subscription_body_validator(request_body, user_id)
+        validated_request_body = SubscriptionViewHelper.create_subscription_body_validator(request_body, member_id)
 
         if 'error_message' in validated_request_body:
             return JsonResponse(
@@ -32,12 +32,11 @@ class CreateSubscriptionView(TransactionMixin, APIView):
 
         subscription_manager = SubscriptionImpl(payment_id=validated_request_body['payment_id'],
                                                 community_id=validated_request_body['community_id'],
-                                                user_id=user_id, subscription_type=validated_request_body['type'],
-                                                member_id=validated_request_body['user_id'],
-                                                valid_till=validated_request_body['valid_till'],
-                                                n_days=validated_request_body['n_days'],
-                                                shared_by=validated_request_body['shared_by'])
-        response_data = subscription_manager.create_subscription()
+                                                member_id=member_id, subscription_type=validated_request_body['type'],
+                                                user_id=validated_request_body['user_id'])
+        response_data = subscription_manager.create_subscription(valid_till=validated_request_body['valid_till'],
+                                                                 n_days=validated_request_body['n_days'],
+                                                                 shared_by=validated_request_body['shared_by'])
 
         if 'error_message' in response_data:
             return JsonResponse(
@@ -69,7 +68,7 @@ class StartSubscriptionView(TransactionMixin, APIView):
                 status=status_codes.HTTP_400_BAD_REQUEST
             )
 
-        subscription_manager = SubscriptionImpl(user_id=validated_request_body['user_id'],
+        subscription_manager = SubscriptionImpl(member_id=validated_request_body['user_id'],
                                                 community_id=validated_request_body['community_id'])
         response_data = subscription_manager.start_subscription()
 
@@ -91,7 +90,7 @@ class FetchSubscriptionView(TransactionMixin, APIView):
     def get(request, *args, **kwargs):
 
         query_params = SubscriptionViewHelper.get_subscription_filter_params(request)
-        user_id = RequestUtilities.get_parameter_from_headers(request, 'HTTP_X_MEMBER_ID')
+        member_id = RequestUtilities.get_parameter_from_headers(request, 'HTTP_X_MEMBER_ID')
 
         if 'error_message' in query_params:
             return JsonResponse(
@@ -99,15 +98,14 @@ class FetchSubscriptionView(TransactionMixin, APIView):
                 status=status_codes.HTTP_400_BAD_REQUEST
             )
 
-        if not user_id:
+        if not member_id:
             return JsonResponse(
                 {'success': False, 'error_message': 'send x-member-id in headers'},
                 status=status_codes.HTTP_400_BAD_REQUEST
             )
 
-        subscription_manager = SubscriptionImpl(user_id=user_id, community_id=query_params['community_id'],
-                                                member_ids=query_params['member_ids'])
-        response_data = subscription_manager.fetch_subscription()
+        subscription_manager = SubscriptionImpl(member_id=member_id, community_id=query_params['community_id'])
+        response_data = subscription_manager.fetch_subscription(member_ids=query_params['member_ids'])
 
         if 'error_message' in response_data:
             return JsonResponse(
@@ -131,9 +129,9 @@ class CancelSubscriptionView(TransactionMixin, APIView):
     def post(request, *args, **kwargs):
 
         request_body = RequestUtilities.load_request_body(request)
-        user_id = RequestUtilities.get_parameter_from_headers(request, 'HTTP_X_MEMBER_ID')
+        member_id = RequestUtilities.get_parameter_from_headers(request, 'HTTP_X_MEMBER_ID')
 
-        validated_request_body = SubscriptionViewHelper.cancel_subscription_body_validator(request_body, user_id)
+        validated_request_body = SubscriptionViewHelper.cancel_subscription_body_validator(request_body, member_id)
 
         if 'error_message' in validated_request_body:
             return JsonResponse(
@@ -141,8 +139,10 @@ class CancelSubscriptionView(TransactionMixin, APIView):
                 status=status_codes.HTTP_400_BAD_REQUEST
             )
 
-        subscription_manager = SubscriptionImpl(user_id=user_id, community_id=validated_request_body['community_id'],
-                                                member_id=validated_request_body['user_id'])
+        subscription_manager = SubscriptionImpl(member_id=member_id,
+                                                community_id=validated_request_body['community_id'],
+                                                user_id=validated_request_body['user_id'])
+
         response_data = subscription_manager.cancel_subscription()
 
         if 'error_message' in response_data:

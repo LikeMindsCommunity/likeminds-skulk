@@ -102,7 +102,7 @@ class FetchCountryCodeView(APIView):
     @staticmethod
     def get(request, *args, **kwargs):
 
-        ip = IpUtilities.get_ip(request)
+        ip = OrderViewHelper.get_ip(request)
         country_code = IpWrapper.get_country_code_from_ip(ip)
 
         return JsonResponse(

@@ -38,7 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'subscription',
-    'corsheaders'
+    'corsheaders',
+    'django_crontab'
 ]
 
 CORS_ORIGIN_ALLOW_ALL = True
@@ -169,3 +170,10 @@ STATIC_URL = '/static/'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+CRONJOB_LOG_FILE = ">> " + str(BASE_DIR) + "/scheduled_job.log"
+CRONJOBS = [
+    ('* * * * *', 'subscription.management.commands.remove_expired_subscriptions', CRONJOB_LOG_FILE)
+]
+CRONTAB_COMMAND_SUFFIX = '2>&1'
+

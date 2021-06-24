@@ -36,6 +36,13 @@ class Transaction(models.Model):
             return None
 
     @staticmethod
+    def get_transaction_with_id_or_None(transaction_id):
+        try:
+            return Transaction.objects.get(pk=transaction_id)
+        except:
+            return None
+
+    @staticmethod
     def create_instance(transaction_body):
         instance = Transaction()
         instance.plan_id = transaction_body['plan_id']

@@ -47,3 +47,14 @@ def SubscriptionSerializer(subscriptions) -> list:
         output.append(subscription_object)
 
     return output
+
+
+def SubscriptionListSerializer(member_subscriptions) -> dict:
+
+    output = {}
+
+    for key in member_subscriptions.keys():
+
+        output[key] = SubscriptionSerializer(member_subscriptions[key])
+
+    return output

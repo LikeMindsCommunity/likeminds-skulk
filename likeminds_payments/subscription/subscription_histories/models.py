@@ -9,8 +9,8 @@ class SubscriptionHistory(models.Model):
     description = models.TextField(default='')
     transaction = models.ForeignKey(Transaction, on_delete=models.CASCADE, null=True)
     type = models.CharField(max_length=8)
-    user_id = models.IntegerField(default=0)
-    community_id = models.IntegerField(default=0)
+    user_id = models.IntegerField()
+    community_id = models.IntegerField()
     created_at = models.BigIntegerField(default=0)
     updated_at = models.BigIntegerField(default=0)
 

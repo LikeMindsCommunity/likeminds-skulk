@@ -20,8 +20,9 @@ class CreatePlanView(TransactionMixin, APIView):
     def post(request, *args, **kwargs):
 
         plan_body = RequestUtilities.load_request_body(request)
+        user_id = RequestUtilities.get_parameter_from_headers(request, 'HTTP_X_MEMBER_ID')
 
-        validated_request_body = PlanViewHelper.create_plan_body_validator(plan_body)
+        validated_request_body = PlanViewHelper.create_plan_body_validator(plan_body, user_id)
 
         if 'error_message' in validated_request_body:
             return JsonResponse(
@@ -29,7 +30,7 @@ class CreatePlanView(TransactionMixin, APIView):
                 status=status_codes.HTTP_400_BAD_REQUEST
             )
 
-        instance_data = PlanViewHelper.create_plan_instance_helper(validated_request_body)
+        instance_data = PlanViewHelper.create_plan_instance_helper(validated_request_body, user_id)
 
         if 'error_message' in instance_data:
             return JsonResponse(
@@ -90,8 +91,9 @@ class DeletePlanView(TransactionMixin, APIView):
     def post(request, *args, **kwargs):
 
         request_body = RequestUtilities.load_request_body(request)
+        user_id = RequestUtilities.get_parameter_from_headers(request, 'HTTP_X_MEMBER_ID')
 
-        validated_request_body = PlanViewHelper.delete_plan_body_validator(request_body)
+        validated_request_body = PlanViewHelper.delete_plan_body_validator(request_body, user_id)
 
         if 'error_message' in validated_request_body:
             return JsonResponse(
@@ -99,7 +101,15 @@ class DeletePlanView(TransactionMixin, APIView):
                 status=status_codes.HTTP_400_BAD_REQUEST
             )
 
-        plan_manager = PlanImpl(plan_id=validated_request_body['plan_id'])
+        instance_data = PlanViewHelper.delete_plan_instance_helper(validated_request_body, user_id)
+
+        if 'error_message' in instance_data:
+            return JsonResponse(
+                {'success': False, 'error_message': instance_data['error_message']},
+                status=status_codes.HTTP_200_OK
+            )
+
+        plan_manager = PlanImpl(plan_instance=instance_data['plan_instance'])
         response_data = plan_manager.delete_plan()
 
         if 'error_message' in response_data:

@@ -78,10 +78,9 @@ class VerifyOrderView(APIView):
                 status=status_codes.HTTP_200_OK
             )
 
-        order_manager = OrderImpl(razorpay_order_id=validated_request_body['razorpay_order_id'],
+        order_manager = OrderImpl(order_instance=order_instance['order_instance'],
                                   razorpay_payment_id=validated_request_body['razorpay_payment_id'],
-                                  razorpay_signature=validated_request_body['razorpay_signature'],
-                                  order_instance=order_instance)
+                                  razorpay_signature=validated_request_body['razorpay_signature'])
         response_data = order_manager.verify_order()
 
         if 'error_message' in response_data:

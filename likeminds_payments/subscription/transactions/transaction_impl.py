@@ -8,9 +8,11 @@ from ..plans.models import SubscriptionPlan
 from ..subscriptions.models import Subscription
 from ..subscription_histories.models import SubscriptionHistory
 from ..subscriptions.subscription_view_impl import SubscriptionImpl
+from .serializers import TransactionSerializer
 
 import hmac
 import hashlib
+import razorpay
 
 
 class TransactionImpl(TransactionManager):
@@ -18,21 +20,37 @@ class TransactionImpl(TransactionManager):
     transaction_body = None
     transaction_raw_body = None
     transaction_signature = None
+    user_id = None
+    community_id = None
+    transaction_instance = None
 
     def __init__(self, transaction_body: dict = None, transaction_raw_body: bytes = None,
-                 transaction_signature: str = None):
+                 transaction_signature: str = None, user_id: str = None, community_id: str = None,
+                 transaction_instance: Transaction = None):
         self.transaction_body = transaction_body
         self.transaction_raw_body = transaction_raw_body
         self.transaction_signature = transaction_signature
+        self.user_id = user_id
+        self.community_id = community_id
+        self.transaction_instance = transaction_instance
 
     def get_transaction_body(self) -> dict:
-        return self.get_transaction_body()
+        return self.transaction_body
 
     def get_transaction_raw_body(self) -> bytes:
         return self.transaction_raw_body
 
     def get_transaction_signature(self) -> str:
         return self.transaction_signature
+
+    def get_user_id(self) -> str:
+        return self.user_id
+
+    def get_community_id(self) -> str:
+        return self.community_id
+
+    def get_transaction_instance(self) -> Transaction:
+        return self.transaction_instance
 
     @staticmethod
     def _verify_transaction_signature(payload, signature: str) -> dict:
@@ -177,3 +195,38 @@ class TransactionImpl(TransactionManager):
                     return {'error_message': create_subscription['error_message']}
 
         return {'success': True}
+
+    @staticmethod
+    def _serialize_transactions(transactions):
+        return TransactionSerializer(transactions)
+
+    @staticmethod
+    def _fetch_transactions(user_id: str, community_id: str):
+        output = []
+        transactions = Transaction.objects.filter(user_id=user_id).order_by('created_at')
+        for transaction in transactions:
+            plan = SubscriptionPlan.get_plan_or_None(transaction.plan_id)
+            if plan.community_id == community_id:
+                output.append(transaction)
+        return output
+
+    def fetch_transactions(self) -> dict:
+
+        transactions = self._fetch_transactions(self.get_user_id(), self.get_community_id())
+
+        if len(transactions) == 0:
+            return {'error_message': 'no transaction exist for this user in this community'}
+
+        return {'transactions': self._serialize_transactions(transactions)}
+
+    def refund_transaction(self) -> dict:
+
+        razorpay_client = RazorpayWrapper.get_instance()
+        transaction_instance = self.get_transaction_instance()
+
+        try:
+            response = razorpay_client.payment.refund(transaction_instance.payment_id, transaction_instance.amount)
+        except razorpay.errors.BadRequestError as e:
+            return {'error_message': e.__str__()}
+
+        return response

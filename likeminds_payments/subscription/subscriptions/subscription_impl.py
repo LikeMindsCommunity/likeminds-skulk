@@ -4,14 +4,16 @@ from .models import Subscription
 from ..subscription_histories.models import SubscriptionHistory
 from ..plans.models import SubscriptionPlan
 from .constants import *
-from .serializers import SubscriptionSerializer
+from .serializers import SubscriptionSerializer, SubscriptionListSerializer
 
 from ..utility.time_utilities import TimeUtilities
-from ..utility.api_utilities import ApiUtilities
 from ..utility.number_utilities import NumberUtilities
+from ..utility.core_service_utilities import CoreServiceUtilities
+from ..external_services.razorpay.razorpay_wrapper import RazorpayWrapper
 from ..plans.constants import *
 from ..transactions.constants import *
-from ..orders.constants import *
+
+import razorpay
 
 
 class SubscriptionImpl(SubscriptionManager):
@@ -20,15 +22,15 @@ class SubscriptionImpl(SubscriptionManager):
     user_id = None
     community_id = None
     subscription_type = None
-    free_user_id = None
+    member_id = None
 
     def __init__(self, payment_id: str = None, user_id: str = None, community_id: str = None,
-                 subscription_type: str = None, free_user_id: str = None):
+                 subscription_type: str = None, member_id: str = None):
         self.payment_id = payment_id
         self.user_id = user_id
         self.community_id = community_id
         self.subscription_type = subscription_type
-        self.free_user_id = free_user_id
+        self.member_id = member_id
 
     def get_payment_id(self) -> str:
         return self.payment_id
@@ -42,8 +44,8 @@ class SubscriptionImpl(SubscriptionManager):
     def get_subscription_type(self) -> str:
         return self.subscription_type
 
-    def get_free_user_id(self) -> str:
-        return self.free_user_id
+    def get_member_id(self) -> str:
+        return self.member_id
 
     @staticmethod
     def _check_if_transaction_is_used(payment_id: str) -> dict:
@@ -255,8 +257,9 @@ class SubscriptionImpl(SubscriptionManager):
         return {'success': True}
 
     @staticmethod
-    def _generate_subscription_against_transaction(transaction_instance: dict, user_id: int) -> dict:
+    def _generate_subscription_against_transaction(transaction_instance: dict, user_id: str) -> dict:
 
+        user_id = NumberUtilities.get_integer_from_string(user_id)
         plan_instance = SubscriptionPlan.get_plan_or_None(plan_id=transaction_instance.plan_id)
 
         if plan_instance is None:
@@ -307,7 +310,10 @@ class SubscriptionImpl(SubscriptionManager):
         return data
 
     @staticmethod
-    def _generate_free_subscription(user_id: int, community_id: int):
+    def _generate_free_subscription(user_id: str, community_id: str):
+
+        user_id = NumberUtilities.get_integer_from_string(user_id)
+        community_id = NumberUtilities.get_integer_from_string(community_id)
 
         subscription_instance = Subscription.get_subscription_or_None(user_id, community_id)
 
@@ -348,53 +354,45 @@ class SubscriptionImpl(SubscriptionManager):
             return {'success': True}
 
     @staticmethod
-    def _get_member_state(community_id: int, member_id: int) -> dict:
+    def _add_free_days_to_subscription(user_id: str, community_id: str, valid_till: str, n_days: str):
 
-        if not community_id or not member_id:
-            return {'error_message': 'send community_id and user_id'}
+        user_id = NumberUtilities.get_integer_from_string(user_id)
+        community_id = NumberUtilities.get_integer_from_string(community_id)
+        valid_till = NumberUtilities.get_integer_from_string(valid_till)
+        n_days = NumberUtilities.get_integer_from_string(n_days)
+        subscription_instance = Subscription.get_subscription_or_None(user_id, community_id)
 
-        url = MEMBER_STATE_API
-        query_params = {
-            'community_id': community_id,
-            'member_id': member_id
-        }
-        response = ApiUtilities.generate_get_request(url=url, query_params=query_params)
+        if subscription_instance is not None:
 
-        if 'error_message' in response:
-            return {'error_message': 'error getting member state'}
+            if valid_till is not None and valid_till > subscription_instance.valid_till and n_days is None:
+                subscription_instance.valid_till = valid_till
 
-        data = {'is_owner': False}
+            if valid_till is None and n_days is not None:
+                subscription_instance.valid_till = TimeUtilities.add_days_in_epoch_time(
+                    subscription_instance.valid_till, n_days)
 
-        if response['state'] == 1:
-            data = {'is_owner': True}
+            subscription_instance.save()
 
-        return data
+            subscription_history_data = {
+                "start_date": subscription_instance.date_subscribed,
+                "end_date": subscription_instance.valid_till,
+                "description": 'free limited subscription',
+                "transaction": None,
+                "type": "free",
+                "user_id": user_id,
+                "community_id": community_id
+            }
 
-    @staticmethod
-    def _verify_aj(community_id: int, user_id: int, aj: int):
+            subscription_history_instance = SubscriptionHistory.create_instance(subscription_history_data)
 
-        if not community_id or not user_id or not aj:
-            return {'error_message': 'insufficient values sent'}
+            if not subscription_history_instance:
+                return {'error_message': 'error creating subscription history'}
 
-        url = COMMUNITY_QUESTIONS_API
-        query_params = {
-            'community_id': community_id,
-            'aj': aj
-        }
-        headers = {
-            'x-member-id': '{}'.format(user_id)
-        }
+            return {'success': True}
 
-        response = ApiUtilities.generate_get_request(url=url, headers=headers, query_params=query_params)
+        return {'error_message': 'invalid user_id and community_id pair'}
 
-        if 'error_message' in response:
-            return {'error_message': 'error getting member state'}
-
-        return {'aj_expired': response['aj_expired']}
-
-    def create_subscription(self) -> dict:
-
-        user_id = NumberUtilities.get_integer_from_string(self.get_user_id())
+    def create_subscription(self, n_days: str = None, valid_till: str = None) -> dict:
 
         if self.get_payment_id() is not None:
 
@@ -408,7 +406,8 @@ class SubscriptionImpl(SubscriptionManager):
 
             transaction_instance = transaction_validation['transaction']
 
-            generate_subscription = self._generate_subscription_against_transaction(transaction_instance, user_id)
+            generate_subscription = self._generate_subscription_against_transaction(transaction_instance,
+                                                                                    self.get_member_id())
 
             if 'error_message' in generate_subscription:
                 return {'error_message': generate_subscription['error_message']}
@@ -417,33 +416,41 @@ class SubscriptionImpl(SubscriptionManager):
 
         elif self.get_community_id() is not None and self.get_subscription_type() is not None:
 
-            community_id = NumberUtilities.get_integer_from_string(self.get_community_id())
-            free_user_id = NumberUtilities.get_integer_from_string(self.get_free_user_id())
+            has_permission_check = CoreServiceUtilities.has_permission(self.get_community_id(), self.get_member_id())
 
-            member_state = self._get_member_state(community_id, user_id)
+            if 'error_message' in has_permission_check:
+                return {'error_message': has_permission_check['error_message']}
 
-            if 'error_message' in member_state:
-                return {'error_message': member_state['error_message']}
+            if 'has_permission' in has_permission_check:
+                if has_permission_check['has_permission'] is False:
+                    return {'error_message': 'You are not the Owner/CM of the community'}
 
-            is_owner = member_state['is_owner']
+                if self.get_subscription_type() == DASHBOARD:
+                    add_free_days = self._add_free_days_to_subscription(self.get_user_id(),
+                                                                        self.get_community_id(),
+                                                                        valid_till, n_days)
 
-            if is_owner:
+                    if 'error_message' in add_free_days:
+                        return {'error_message': add_free_days['error_message']}
 
-                generate_free_subscription = self._generate_free_subscription(free_user_id, community_id)
+                    return {'success': True}
 
-                if 'error_message' in generate_free_subscription:
-                    return {'error_message': generate_free_subscription['error_message']}
+                if self.get_subscription_type() == FREE_SUBSCRIPTION:
 
-                return {'success': True}
+                    generate_free_subscription = self._generate_free_subscription(self.get_user_id(),
+                                                                                  self.get_community_id())
+
+                    if 'error_message' in generate_free_subscription:
+                        return {'error_message': generate_free_subscription['error_message']}
+
+                    return {'success': True}
 
             return {'error_message': 'You are not Owner/CM of this community'}
 
     def start_subscription(self) -> dict:
 
-        user_id = NumberUtilities.get_integer_from_string(self.get_user_id())
-        community_id = NumberUtilities.get_integer_from_string(self.get_community_id())
-
-        subscription_instance = Subscription.get_subscription_or_None(user_id=user_id, community_id=community_id)
+        subscription_instance = Subscription.get_subscription_or_None(user_id=self.get_member_id(),
+                                                                      community_id=self.get_community_id())
 
         if subscription_instance is None:
             return {'error_message': 'no subscription exists for provided user_id and community_id'}
@@ -471,14 +478,78 @@ class SubscriptionImpl(SubscriptionManager):
     def _serialize_subscriptions(subscriptions):
         return SubscriptionSerializer(subscriptions)
 
-    def fetch_subscription(self) -> dict:
+    @staticmethod
+    def _serialize_subscriptions_list(subscriptions):
+        return SubscriptionListSerializer(subscriptions)
 
-        subscriptions = self._fetch_subscriptions(self.get_user_id(), self.get_community_id())
+    def fetch_subscription(self, member_ids: list = None) -> dict:
+
+        if member_ids is not None:
+
+            has_permission_check = CoreServiceUtilities.has_permission(self.get_community_id(), self.get_member_id())
+
+            if 'error_message' in has_permission_check:
+                return {'error_message': has_permission_check['error_message']}
+
+            if 'has_permission' in has_permission_check and has_permission_check['has_permission'] is False:
+                return {'error_message': 'You are not the Owner/CM of the community'}
+
+            member_subscriptions = {}
+
+            for member_id in member_ids:
+                member_subscriptions[member_id] = self._fetch_subscriptions(member_id, self.get_community_id())
+
+            return {'subscriptions': self._serialize_subscriptions_list(member_subscriptions)}
+
+        subscriptions = self._fetch_subscriptions(self.get_member_id(), self.get_community_id())
 
         if len(subscriptions) == 0:
             return {'error_message': 'no subscriptions exist with provided user_id'}
 
         return {'subscriptions': self._serialize_subscriptions(subscriptions)}
+
+    def cancel_subscription(self) -> dict:
+
+        if self.get_user_id() is not None:
+
+            has_permission_check = CoreServiceUtilities.has_permission(self.get_community_id(), self.get_member_id())
+
+            if 'error_message' in has_permission_check:
+                return {'error_message': has_permission_check['error_message']}
+
+            if 'has_permission' in has_permission_check and has_permission_check['has_permission'] is False:
+                return {'error_message': 'You are not the Owner/CM of the community'}
+
+            subscription_instance = Subscription.get_subscription_or_None(user_id=self.get_user_id(),
+                                                                          community_id=self.get_community_id())
+
+        else:
+
+            is_pending_member = CoreServiceUtilities.is_pending_member(self.get_community_id(), self.get_member_id())
+
+            if 'error_message' in is_pending_member:
+                return {'error_message': is_pending_member['error_message']}
+
+            if is_pending_member['is_pending_member'] is False:
+                return {'error_message': 'Your are not a pending member'}
+
+            subscription_instance = Subscription.get_subscription_or_None(self.get_member_id(), self.get_community_id())
+
+        if subscription_instance is None:
+            return {'error_message': 'no subscription exists for this user_id and community_id'}
+
+        if subscription_instance.transaction is None:
+            return {'error_message': 'no active payment associated with this user subscription to be refunded'}
+
+        razorpay_client = RazorpayWrapper.get_instance()
+
+        try:
+            response = razorpay_client.payment.refund(subscription_instance.transaction.payment_id,
+                                                      subscription_instance.transaction.amount)
+        except razorpay.errors.BadRequestError as e:
+            return {'error_message': e.__str__()}
+
+        return response
 
     def fetch_community_meta(self) -> dict:
 

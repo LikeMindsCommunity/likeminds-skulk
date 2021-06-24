@@ -1,4 +1,3 @@
-from django.conf import settings
 from .order_manager import OrderManager
 
 import razorpay.resources.order as order
@@ -11,22 +10,16 @@ import hashlib
 class OrderImpl(OrderManager):
 
     order_instance = None
-    razorpay_order_id = None
     razorpay_payment_id = None
     razorpay_signature = None
 
-    def __init__(self, order_instance: order = None, razorpay_order_id: str = None,
-                 razorpay_payment_id: str = None, razorpay_signature: str = None):
+    def __init__(self, order_instance: order = None, razorpay_payment_id: str = None, razorpay_signature: str = None):
         self.order_instance = order_instance
-        self.razorpay_order_id = razorpay_order_id
         self.razorpay_payment_id = razorpay_payment_id
         self.razorpay_signature = razorpay_signature
 
     def get_order_instance(self) -> order:
         return self.order_instance
-
-    def get_razorpay_order_id(self) -> str:
-        return self.razorpay_order_id
 
     def get_razorpay_payment_id(self) -> str:
         return self.razorpay_payment_id
@@ -57,7 +50,7 @@ class OrderImpl(OrderManager):
 
     def _verify_payment_signature(self):
 
-        message = "{}|{}".format(self.get_razorpay_order_id(), self.get_razorpay_payment_id())
+        message = "{}|{}".format(self.get_order_instance()['id'], self.get_razorpay_payment_id())
         digest = hmac.new(
             key=bytes(settings.RAZORPAY_SECRET, 'utf-8'),
             msg=bytes(message, 'utf-8'),

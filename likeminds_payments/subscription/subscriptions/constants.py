@@ -6,6 +6,7 @@ ONETIME_DESCRIPTION = 'onetime payment'
 LIFETIME_DESCRIPTION = 'lifetime payment'
 RENEWAL_DESCRIPTION = 'renewal payment'
 FREE_DESCRIPTION = 'free subscription'
+DASHBOARD = 'dashboard'
 STATUS_ACTIVE = 0
 STATUS_EXPIRED = 1
 STATUS_GRACE_PERIOD = 2

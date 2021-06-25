@@ -1,7 +1,8 @@
 from ..plans.models import SubscriptionPlan
-from ..orders.constants import *
-from ..utility.api_utilities import ApiUtilities
+from ..utility.core_service_utilities import CoreServiceUtilities
+from ..utility.request_utilities import RequestUtilities
 from ..external_services.razorpay.razorpay_wrapper import RazorpayWrapper
+from .constants import *
 
 
 class OrderViewHelper:
@@ -21,28 +22,10 @@ class OrderViewHelper:
         return request_body
 
     @staticmethod
-    def _get_community_data(community_id: int) -> dict:
-
-        if not community_id:
-            return {'error_message': 'send community_id'}
-
-        url = '{url}/{community_id}'.format(url=COMMUNITY_API, community_id=community_id)
-        response = ApiUtilities.generate_get_request(url)
-
-        if 'error_message' in response:
-            return {'error_message': 'error getting community name'}
-
-        data = {'name': response['community']['name'], 'grace_period': 0}
-        if 'grace_period' in response['community']:
-            data['grace_period'] = response['community']['grace_period']
-
-        return data
-
-    @staticmethod
     def _create_order_object_data(plan_instance: SubscriptionPlan, order_body: dict, community_data: dict) -> dict:
 
         order_data = {
-            "amount": float(plan_instance.cost) * 100,
+            "amount": plan_instance.cost,
             "currency": "INR",
             "receipt": "receipt#1",
             "notes": {
@@ -54,9 +37,14 @@ class OrderViewHelper:
                 "buddy_emails": plan_instance.buddy_emails,
                 "payment_page_url": order_body['payment_page_url'],
                 "renew": False,
-                "grace_period": community_data['grace_period']
+                "grace_period": 0
             }
         }
+
+        if 'country_code' in order_body and order_body['country_code'] != INDIA_CODE:
+            if plan_instance.cost_usd is not None:
+                order_data['amount'] = plan_instance.cost_usd
+                order_data['currency'] = USD_CURRENCY
 
         if 'renew' in order_body:
             order_data['notes']['renew'] = order_body['renew']
@@ -66,6 +54,9 @@ class OrderViewHelper:
 
         if 'shared_by' in order_body:
             order_data['notes']['shared_by'] = order_body['shared_by']
+
+        if 'grace_period' in community_data:
+            order_data['notes']['grace_period'] = community_data['grace_period']
 
         return order_data
 
@@ -80,12 +71,12 @@ class OrderViewHelper:
         if plan_instance.is_deleted:
             return {'error_message': 'plan no longer exists'}
 
-        community_data = OrderViewHelper._get_community_data(plan_instance.community_id)
+        community_data = CoreServiceUtilities.get_community_data(plan_instance.community_id)
 
         if 'error_message' in community_data:
             return {'error_message': community_data['error_message']}
 
-        order_data = OrderViewHelper._create_order_object_data(plan_instance, order_body, community_data)
+        order_data = OrderViewHelper._create_order_object_data(plan_instance, order_body, community_data['community'])
 
         razorpay_client = RazorpayWrapper.get_instance()
 
@@ -130,3 +121,15 @@ class OrderViewHelper:
             return {'error_message': 'invalid razorpay_order_id'}
 
         return {'order_instance': order_instance}
+
+    @staticmethod
+    def get_ip(request) -> str:
+
+        x_forwarded_for = RequestUtilities.get_parameter_from_headers(request, 'HTTP_X_FORWARDED_FOR')
+
+        if x_forwarded_for:
+            ip = x_forwarded_for.split(',')[0]
+        else:
+            ip = RequestUtilities.get_parameter_from_headers(request, 'REMOTE_ADDR')
+
+        return ip

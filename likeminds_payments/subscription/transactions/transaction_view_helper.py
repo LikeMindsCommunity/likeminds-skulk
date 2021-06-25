@@ -1,4 +1,7 @@
 from .constants import *
+from ..utility.core_service_utilities import CoreServiceUtilities
+from .models import Transaction
+from ..plans.models import SubscriptionPlan
 
 
 class TransactionViewHelper:
@@ -26,3 +29,70 @@ class TransactionViewHelper:
             return {'error_message': 'no entity object detected'}
 
         return request_body
+
+    @staticmethod
+    def get_transactions_body_validator(request_body, user_id):
+
+        if not request_body:
+            return {'error_message': 'invalid request body'}
+
+        if not user_id:
+            return {'error_message': 'send x-member-id in headers'}
+
+        if 'user_id' not in request_body or not request_body['user_id']:
+            return {'error_message': 'send user_id in body'}
+
+        if 'community_id' not in request_body or not request_body['community_id']:
+            return {'error_message': 'send community_id in body'}
+
+        return request_body
+
+    @staticmethod
+    def get_transactions_instance_authenticator(community_id, user_id):
+
+        has_permission_check = CoreServiceUtilities.has_permission(community_id, user_id)
+
+        if 'error_message' in has_permission_check:
+            return {'error_message': has_permission_check['error_message']}
+
+        if 'has_permission' in has_permission_check and has_permission_check['has_permission'] is False:
+            return {'error_message': 'You are not the Owner/CM of the community'}
+
+        return {'success': True}
+
+    @staticmethod
+    def refund_transaction_body_validator(request_body, user_id):
+
+        if not request_body:
+            return {'error_message': 'invalid request body'}
+
+        if not user_id:
+            return {'error_message': 'send x-member-id in headers'}
+
+        if 'transaction_id' not in request_body or not request_body['transaction_id']:
+            return {'error_message': 'send transaction_id'}
+
+        return request_body
+
+    @staticmethod
+    def refund_transaction_instance_authenticator(transaction_id, user_id):
+
+        transaction_instance = Transaction.get_transaction_with_id_or_None(transaction_id)
+
+        if transaction_instance is None:
+            return {'error_message': 'invalid transaction id'}
+
+        plan_instance = SubscriptionPlan.get_plan_or_None(transaction_instance.plan_id)
+
+        if plan_instance is None:
+            return {'error_message': 'malformed transaction'}
+
+        has_permission_check = CoreServiceUtilities.has_permission(plan_instance.community_id, user_id)
+
+        if 'error_message' in has_permission_check:
+            return {'error_message': has_permission_check['error_message']}
+
+        if 'has_permission' in has_permission_check and has_permission_check['has_permission'] is False:
+            return {'error_message': 'You are not the Owner/CM of the community'}
+
+        return {'transaction_instance': transaction_instance}

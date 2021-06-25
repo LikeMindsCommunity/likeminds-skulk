@@ -1,6 +1,5 @@
 from .subscription_history_manager import SubscriptionHistoryManager
 from .serializers import SubscriptionHistorySerializer
-from ..utility.number_utilities import NumberUtilities
 
 from .models import SubscriptionHistory
 
@@ -21,7 +20,7 @@ class SubscriptionHistoryImpl(SubscriptionHistoryManager):
         return self.community_id
 
     @staticmethod
-    def _fetch_subscription_history(user_id: int, community_id: int):
+    def _fetch_subscription_history(user_id: str, community_id: str):
         return SubscriptionHistory.objects.filter(user_id=user_id, community_id=community_id).order_by('created_at')
 
     @staticmethod
@@ -30,10 +29,7 @@ class SubscriptionHistoryImpl(SubscriptionHistoryManager):
 
     def fetch_subscription_history(self) -> dict:
 
-        user_id = NumberUtilities.get_integer_from_string(self.get_user_id())
-        community_id = NumberUtilities.get_integer_from_string(self.get_community_id())
-
-        subscription_history = self._fetch_subscription_history(user_id, community_id)
+        subscription_history = self._fetch_subscription_history(self.get_user_id(), self.get_community_id())
 
         if len(subscription_history) == 0:
             return {'error_message': 'no subscription history exist with provided user_id and community_id'}

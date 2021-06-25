@@ -10,7 +10,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
 
         current_time = TimeUtilities.current_time_in_milliseconds()
-        subscriptions = Subscription.objects.all()
+        subscriptions = Subscription.objects.all(is_removed=False)
 
         for subscription in subscriptions:
 

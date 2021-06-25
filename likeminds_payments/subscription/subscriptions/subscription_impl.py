@@ -22,7 +22,6 @@ class SubscriptionImpl(SubscriptionManager):
     payment_id = None
     user_id = None
     community_id = None
-    member_ids = None
     subscription_type = None
     member_id = None
 

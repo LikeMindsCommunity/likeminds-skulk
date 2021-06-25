@@ -39,6 +39,7 @@ class Subscription(models.Model):
         instance.type = subscription_body['type']
         instance.renewal_due = subscription_body['renewal_due']
         instance.transaction = subscription_body['transaction']
+        instance.is_removed = False
         instance.save()
 
         return instance

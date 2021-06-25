@@ -185,6 +185,12 @@ class SubscriptionImpl(SubscriptionManager):
             transaction_instance.user_id = user_id
             transaction_instance.save()
 
+            subscription_instance = Subscription.get_subscription_or_None(user_id, plan_instance.community_id)
+
+            if subscription_instance is not None:
+                renewal = SubscriptionImpl._generate_renewal_transaction(transaction_instance, plan_instance, user_id)
+                return renewal
+
             data = SubscriptionImpl._generate_data_for_new_subscription_against_transaction(
                 transaction_instance, plan_instance, user_id)
 

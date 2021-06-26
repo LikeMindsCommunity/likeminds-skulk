@@ -10,24 +10,35 @@ class Command(BaseCommand):
     help = 'send events to users based on their membership state'
 
     @staticmethod
-    def check_existence(user_id, community_id, code):
+    def send_event(user_id, community_id, event):
 
         notification_instance = MemberNotification.get_membership_notification_or_None(user_id=user_id,
                                                                                        community_id=community_id,
-                                                                                       code=code)
+                                                                                       code=event['code'])
         if notification_instance is None:
-            return False
-        return True
+
+            analytics.track(user_id, event['event'], {
+                'user_id': user_id,
+                'community_id': community_id
+            })
+
+            MemberNotification.create_instance(user_id=user_id, community_id=community_id, code=event['code'])
 
     @staticmethod
-    def send_event(user_id, community_id, event):
+    def handle_renewal_due(subscription):
+        Command.send_event(subscription.user_id, subscription.community_id, EVENTS['SUBSCRIPTION_DUE'])
 
-        analytics.track(user_id, event['event'], {
-            'user_id': user_id,
-            'community_id': community_id
-        })
+    @staticmethod
+    def handle_grace_period_start(subscription):
+        if subscription.transaction is not None and subscription.transaction.grace_period > 0:
+            Command.send_event(subscription.user_id, subscription.community_id, EVENTS['GRACE_PERIOD_STARTED'])
 
-        MemberNotification.create_instance(user_id=user_id, community_id=community_id, code=event['code'])
+        Command.send_event(subscription.user_id, subscription.community_id, EVENTS['SUBSCRIPTION_ENDED'])
+
+    @staticmethod
+    def handle_grace_period_end(subscription):
+        Command.send_event(subscription.user_id, subscription.community_id, EVENTS['GRACE_PERIOD_ENDED'])
+        Command.send_event(subscription.user_id, subscription.community_id, EVENTS['SUBSCRIPTION_ENDED'])
 
     def handle(self, *args, **options):
 
@@ -43,28 +54,11 @@ class Command(BaseCommand):
                 valid_till_with_grace_period = TimeUtilities.add_milliseconds_in_epoch_time(
                     subscription.valid_till, subscription.transaction.grace_period)
 
-            if current_time >= subscription.renewal_due and not self.check_existence(
-                    subscription.user_id, subscription.community_id, EVENTS['SUBSCRIPTION_DUE']['code']):
-                self.send_event(subscription.user_id, subscription.community_id, EVENTS['SUBSCRIPTION_DUE'])
+            if current_time >= subscription.renewal_due:
+                self.handle_renewal_due(subscription)
 
-            elif current_time >= subscription.valid_till:
+            if current_time >= subscription.valid_till:
+                self.handle_grace_period_start(subscription)
 
-                if subscription.transaction is not None:
-
-                    if subscription.transaction.grace_period > 0 and not self.check_existence(
-                            subscription.user_id, subscription.community_id, EVENTS['GRACE_PERIOD_STARTED']['code']):
-                        self.send_event(subscription.user_id, subscription.community_id, EVENTS['GRACE_PERIOD_STARTED'])
-
-                if not self.check_existence(subscription.user_id, subscription.community_id,
-                                            EVENTS['SUBSCRIPTION_ENDED']['code']):
-                    self.send_event(subscription.user_id, subscription.community_id, EVENTS['SUBSCRIPTION_ENDED'])
-
-            elif current_time >= valid_till_with_grace_period:
-
-                if not self.check_existence(subscription.user_id, subscription.community_id,
-                                            EVENTS['GRACE_PERIOD_ENDED']['code']):
-                    self.send_event(subscription.user_id, subscription.community_id, EVENTS['GRACE_PERIOD_ENDED'])
-
-                if not self.check_existence(subscription.user_id, subscription.community_id,
-                                            EVENTS['SUBSCRIPTION_ENDED']['code']):
-                    self.send_event(subscription.user_id, subscription.community_id, EVENTS['SUBSCRIPTION_ENDED'])
+            if current_time >= valid_till_with_grace_period:
+                self.handle_grace_period_end(subscription)

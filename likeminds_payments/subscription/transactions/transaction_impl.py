@@ -187,7 +187,7 @@ class TransactionImpl(TransactionManager):
             if transaction_data['renew'] and transaction_data['user_id'] is not None:
 
                 subscription_manager = SubscriptionImpl(payment_id=transaction_data['payment_id'],
-                                                        user_id=transaction_data['user_id'])
+                                                        member_id=transaction_data['user_id'])
 
                 create_subscription = subscription_manager.create_subscription()
 

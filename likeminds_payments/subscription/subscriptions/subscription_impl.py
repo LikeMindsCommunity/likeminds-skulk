@@ -575,6 +575,11 @@ class SubscriptionImpl(SubscriptionManager):
         except razorpay.errors.BadRequestError as e:
             return {'error_message': e.__str__()}
 
+        try:
+            subscription_instance.delete()
+        except:
+            return {'error_message': 'something went wrong'}
+
         return response
 
     def fetch_community_meta(self) -> dict:

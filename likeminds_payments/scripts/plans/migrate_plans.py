@@ -1,6 +1,5 @@
 from subscription.plans.models import SubscriptionPlan
 import time
-import psycopg2
 import pandas as pd
 
 
@@ -43,10 +42,6 @@ def generate_data():
         "lifetime": "https://global-uploads.webflow.com/605033ad58253a624fdb1964/605033ad58253a9534db19c7_Price%20Icon%2003.svg"
     }
 
-    # con = psycopg2.connect(database="lmpaymentdb", user="postgres", password="TheLikeMinds!1990",
-    #                        host="payment-beta.cgx3gr7xnezq.ap-south-1.rds.amazonaws.com", port="5432")
-    # print("Database opened successfully")
-    # cur = con.cursor()
     count = 1
     for i in range(len(planId)):
         current_time = int(time.time() * 1000)
@@ -91,7 +86,7 @@ def generate_data():
         instance.image = plan['image']
         instance.created_at = plan['created_at']
         instance.updated_at = plan['updated_at']
-        instance.save(using="test")
+        instance.save()
         print(count)
         count += 1
 

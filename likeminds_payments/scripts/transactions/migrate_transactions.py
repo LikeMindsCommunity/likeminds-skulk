@@ -28,8 +28,6 @@ def generate_transactions():
     planDuration = df['plan_duration']
     paymentPageUrl = df['payment_page_url']
 
-    data = []
-
     PLAN_IMAGES = {
         "monthly": "https://global-uploads.webflow.com/605033ad58253a624fdb1964/605033ad58253a772ddb19c5_Price%20Icon%2001.svg",
         "quarterly": "https://global-uploads.webflow.com/605033ad58253a624fdb1964/605033ad58253a251adb19c6_Price%20Icon%2002.svg",
@@ -161,7 +159,7 @@ def generate_transactions():
         instance.grace_period = transaction['grace_period']
         instance.created_at = transaction['created_at']
         instance.updated_at = transaction['updated_at']
-        instance.save(using='test')
+        instance.save()
 
 
 if __name__ == "__main__":

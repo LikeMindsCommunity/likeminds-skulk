@@ -66,13 +66,13 @@ LOGGING = {
             'class': 'logging.handlers.RotatingFileHandler',
             'maxBytes': 1024 * 10 * 10,  # 10 MB
             'backupCount': 5,
-            'filename': 'logs/custom.log',
+            'filename': str(BASE_DIR) + '/custom.log',
             'formatter': 'large',
         },
         'console': {
             'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': 'logs/subscription.log',
+            'filename': str(BASE_DIR) + '/subscription.log',
             'maxBytes': 1024 * 10 * 10,  # 10 MB
             'backupCount': 5,
             'formatter': 'tiny',

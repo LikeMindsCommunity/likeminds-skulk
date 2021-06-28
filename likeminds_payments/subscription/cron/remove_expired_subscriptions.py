@@ -4,12 +4,10 @@ from subscription.utility.core_service_utilities import CoreServiceUtilities
 
 
 def handle():
-    print("this is running")
     current_time = TimeUtilities.current_time_in_milliseconds()
     subscriptions = Subscription.objects.filter(is_removed=False)
 
     for subscription in subscriptions:
-        print(subscription.id)
 
         valid_till_grace_period = subscription.valid_till
 

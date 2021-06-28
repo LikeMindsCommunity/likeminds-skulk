@@ -87,7 +87,6 @@ class CoreServiceUtilities:
             return {'error_message': 'no state field in member state response'}
 
         if response['state'] == PENDING_MEMBER:
-
             return {'is_pending_member': True}
 
         return {'is_pending_member': False}
@@ -113,3 +112,31 @@ class CoreServiceUtilities:
             return {'error_message': 'no community object in community data response'}
 
         return {'community': response['community']}
+
+    @staticmethod
+    def remove_member(community_id: str, member_id: str):
+
+        if not community_id:
+            return {'error_message': 'send community_id'}
+
+        if not member_id:
+            return {'error_message': 'send member_id'}
+
+        community_id = NumberUtilities.get_integer_from_string(community_id)
+        member_id = NumberUtilities.get_integer_from_string(member_id)
+
+        url = REMOVE_MEMBER_API
+        data = {
+            'community_id': community_id,
+            'member_id': member_id
+        }
+
+        response = ApiUtilities.generate_post_request(url, data)
+
+        if 'error_message' in response:
+            return {'error_message': response['error_message']}
+
+        if 'success' not in response:
+            return {'error_message': 'invalid response from remove member api'}
+
+        return {'success': response['success']}

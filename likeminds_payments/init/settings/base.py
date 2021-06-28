@@ -38,7 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'subscription',
-    'corsheaders'
+    'corsheaders',
+    'django_crontab'
 ]
 
 CORS_ORIGIN_ALLOW_ALL = True
@@ -65,13 +66,13 @@ LOGGING = {
             'class': 'logging.handlers.RotatingFileHandler',
             'maxBytes': 1024 * 10 * 10,  # 10 MB
             'backupCount': 5,
-            'filename': 'logs/custom.log',
+            'filename': str(BASE_DIR) + '/custom.log',
             'formatter': 'large',
         },
         'console': {
             'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': 'logs/subscription.log',
+            'filename': str(BASE_DIR) + '/subscription.log',
             'maxBytes': 1024 * 10 * 10,  # 10 MB
             'backupCount': 5,
             'formatter': 'tiny',
@@ -169,3 +170,11 @@ STATIC_URL = '/static/'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+CRONJOB_LOG_FILE = ">> " + str(BASE_DIR) + "/scheduled_job.log"
+CRONJOBS = [
+    ('*/5 * * * *', 'subscription.cron.remove_expired_subscriptions.handle', CRONJOB_LOG_FILE),
+    ('*/5 * * * *', 'subscription.cron.send_events.handle', CRONJOB_LOG_FILE)
+]
+CRONTAB_COMMAND_SUFFIX = '2>&1'
+

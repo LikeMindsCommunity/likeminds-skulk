@@ -10,9 +10,10 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
 
         current_time = TimeUtilities.current_time_in_milliseconds()
-        subscriptions = Subscription.objects.all(is_removed=False)
+        subscriptions = Subscription.objects.filter(is_removed=False)
 
         for subscription in subscriptions:
+            print(subscription.id)
 
             valid_till_grace_period = subscription.valid_till
 

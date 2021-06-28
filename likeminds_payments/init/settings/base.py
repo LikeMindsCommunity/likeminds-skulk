@@ -173,8 +173,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CRONJOB_LOG_FILE = ">> " + str(BASE_DIR) + "/scheduled_job.log"
 CRONJOBS = [
-    ('*/5 * * * *', 'subscription.management.commands.remove_expired_subscriptions', CRONJOB_LOG_FILE),
-    ('*/5 * * * *', 'subscription.management.commands.send_events', CRONJOB_LOG_FILE)
+    # ('* * * * *', 'django.core.management.call_command', ['remove_expired_subscriptions'], CRONJOB_LOG_FILE),
+    ('* * * * *', 'subscription.management.commands.test_remove.handle', CRONJOB_LOG_FILE),
+    # ('*/5 * * * *', 'subscription.management.commands.send_events', CRONJOB_LOG_FILE)
 ]
 CRONTAB_COMMAND_SUFFIX = '2>&1'
 

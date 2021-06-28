@@ -28,8 +28,6 @@ def generate_transactions():
     planDuration = df['plan_duration']
     paymentPageUrl = df['payment_page_url']
 
-    data = []
-
     PLAN_IMAGES = {
         "monthly": "https://global-uploads.webflow.com/605033ad58253a624fdb1964/605033ad58253a772ddb19c5_Price%20Icon%2001.svg",
         "quarterly": "https://global-uploads.webflow.com/605033ad58253a624fdb1964/605033ad58253a251adb19c6_Price%20Icon%2002.svg",
@@ -76,7 +74,7 @@ def generate_transactions():
     for i in range(len(paymentId)):
 
         print(communityId[i], values[planDuration[i]], updatedUserIds[i])
-        plans = SubscriptionPlan.objects.using('test').filter(
+        plans = SubscriptionPlan.objects.filter(
             community_id=communityId[i], duration_name=values[planDuration[i]])
         if len(plans) == 0:
             current_time = int(time.time())*1000
@@ -99,9 +97,9 @@ def generate_transactions():
             instance.image = PLAN_IMAGES[values[planDuration[i]]]
             instance.created_at = current_time
             instance.updated_at = current_time
-            instance.save(using="test")
+            instance.save()
 
-            plans = SubscriptionPlan.objects.using('test').filter(
+            plans = SubscriptionPlan.objects.filter(
                 community_id=communityId[i], duration_name=values[planDuration[i]])
         plan = plans.last()
 
@@ -161,7 +159,7 @@ def generate_transactions():
         instance.grace_period = transaction['grace_period']
         instance.created_at = transaction['created_at']
         instance.updated_at = transaction['updated_at']
-        instance.save(using='test')
+        instance.save()
 
 
 if __name__ == "__main__":

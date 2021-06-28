@@ -47,7 +47,7 @@ def generate_subscriptions():
 
     for i in range(len(member_id)):
 
-        subscription = Subscription.objects.using('test').filter(user_id=member_id[i], community_id=community_id[i])
+        subscription = Subscription.objects.filter(user_id=member_id[i], community_id=community_id[i])
 
         if len(subscription) == 0:
 
@@ -67,7 +67,7 @@ def generate_subscriptions():
                     instance.type = 'free'
                     instance.renewal_due = TimeUtilities.subtract_days_in_epoch_time(1924972199000, 3)
                     instance.transaction = None
-                    instance.save(using='test')
+                    instance.save()
 
                     instance2 = SubscriptionHistory()
                     instance2.start_date = instance.date_subscribed
@@ -77,7 +77,7 @@ def generate_subscriptions():
                     instance2.type = 'free'
                     instance2.user_id = instance.user_id
                     instance2.community_id = instance.community_id
-                    instance2.save(using='test')
+                    instance2.save()
 
                 else:
 
@@ -91,7 +91,7 @@ def generate_subscriptions():
                     instance.type = 'free'
                     instance.renewal_due = TimeUtilities.subtract_days_in_epoch_time(1625183940, 3)
                     instance.transaction = None
-                    instance.save(using='test')
+                    instance.save()
 
                     instance2 = SubscriptionHistory()
                     instance2.start_date = instance.date_subscribed
@@ -101,18 +101,19 @@ def generate_subscriptions():
                     instance2.type = 'free'
                     instance2.user_id = instance.user_id
                     instance2.community_id = instance.community_id
-                    instance2.save(using='test')
+                    instance2.save()
+
 
             else:
 
                 for transaction in transaction_list:
 
-                    transaction_instance = Transaction.objects.using('test').get(payment_id=transaction)
+                    transaction_instance = Transaction.objects.get(payment_id=transaction)
 
-                    plan_instance = SubscriptionPlan.objects.using('test').get(plan_id=transaction_instance.plan_id)
+                    plan_instance = SubscriptionPlan.objects.get(plan_id=transaction_instance.plan_id)
 
-                    subscription_instance = Subscription.objects.using('test').filter(user_id=member_id[i],
-                                                                                      community_id=community_id[i])
+                    subscription_instance = Subscription.objects.filter(user_id=member_id[i],
+                                                                        community_id=community_id[i])
 
                     if len(subscription_instance) == 0:
 
@@ -126,7 +127,8 @@ def generate_subscriptions():
                         instance.type = 'onetime'
                         instance.renewal_due = TimeUtilities.subtract_days_in_epoch_time(instance.valid_till, 3)
                         instance.transaction = transaction_instance
-                        instance.save(using='test')
+                        instance.save()
+
 
                         instance2 = SubscriptionHistory()
                         instance2.start_date = instance.date_subscribed
@@ -136,7 +138,7 @@ def generate_subscriptions():
                         instance2.type = 'paid'
                         instance2.user_id = instance.user_id
                         instance2.community_id = instance.community_id
-                        instance2.save(using='test')
+                        instance2.save()
 
                     else:
 
@@ -151,7 +153,7 @@ def generate_subscriptions():
                         else:
                             instance.valid_till = TimeUtilities.add_months_in_epoch_time(current_time, plan_instance.duration_in_months)
 
-                        instance.save(using='test')
+                        instance.save()
 
                         instance2 = SubscriptionHistory()
                         instance2.start_date = instance.date_subscribed
@@ -161,7 +163,7 @@ def generate_subscriptions():
                         instance2.type = 'paid'
                         instance2.user_id = instance.user_id
                         instance2.community_id = instance.community_id
-                        instance2.save(using='test')
+                        instance2.save()
 
         print(count)
         count += 1

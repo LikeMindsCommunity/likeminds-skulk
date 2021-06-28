@@ -50,11 +50,11 @@ def handle():
             valid_till_with_grace_period = TimeUtilities.add_milliseconds_in_epoch_time(
                 subscription.valid_till, subscription.transaction.grace_period)
 
-        if current_time >= subscription.renewal_due:
-            handle_renewal_due(subscription)
-
-        if current_time >= subscription.valid_till:
-            handle_grace_period_start(subscription)
-
         if current_time >= valid_till_with_grace_period:
             handle_grace_period_end(subscription)
+
+        elif current_time >= subscription.valid_till:
+            handle_grace_period_start(subscription)
+
+        elif current_time >= subscription.renewal_due:
+            handle_renewal_due(subscription)

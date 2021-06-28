@@ -74,7 +74,7 @@ def generate_transactions():
     for i in range(len(paymentId)):
 
         print(communityId[i], values[planDuration[i]], updatedUserIds[i])
-        plans = SubscriptionPlan.objects.using('test').filter(
+        plans = SubscriptionPlan.objects.filter(
             community_id=communityId[i], duration_name=values[planDuration[i]])
         if len(plans) == 0:
             current_time = int(time.time())*1000
@@ -97,9 +97,9 @@ def generate_transactions():
             instance.image = PLAN_IMAGES[values[planDuration[i]]]
             instance.created_at = current_time
             instance.updated_at = current_time
-            instance.save(using="test")
+            instance.save()
 
-            plans = SubscriptionPlan.objects.using('test').filter(
+            plans = SubscriptionPlan.objects.filter(
                 community_id=communityId[i], duration_name=values[planDuration[i]])
         plan = plans.last()
 

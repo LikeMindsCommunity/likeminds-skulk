@@ -19,7 +19,7 @@ class Transaction(models.Model):
     error_description = models.TextField(default='')
     refund_amount = models.IntegerField(default=0)
     user_id = models.IntegerField(null=True, default=None)
-    payment_page_url = models.CharField(max_length=256)
+    payment_page_url = models.CharField(max_length=1000)
     shared_by = models.IntegerField(null=True, default=None)
     grace_period = models.IntegerField(default=0)
     created_at = models.BigIntegerField(default=0)

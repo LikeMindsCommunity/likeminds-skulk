@@ -32,12 +32,16 @@ class OrderViewHelper:
                 "plan_id": plan_instance.plan_id,
                 "community_name": community_data['name'],
                 "name": plan_instance.name,
-                "cost": plan_instance.cost,
                 "cm_emails": plan_instance.cm_emails,
-                "buddy_emails": plan_instance.buddy_emails,
                 "payment_page_url": order_body['payment_page_url'],
                 "renew": False,
-                "grace_period": 0
+                "grace_period": 0,
+                "community_id": plan_instance.community_id,
+                "duration_in_months": plan_instance.duration_in_months,
+                "duration_name": plan_instance.duration_name,
+                "type": "Subscription",
+                "event_time": '',
+                "join_link": ''
             }
         }
 

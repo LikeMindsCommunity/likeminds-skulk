@@ -177,4 +177,3 @@ CRONJOBS = [
     ('*/5 * * * *', 'subscription.cron.send_events.handle', CRONJOB_LOG_FILE)
 ]
 CRONTAB_COMMAND_SUFFIX = '2>&1'
-

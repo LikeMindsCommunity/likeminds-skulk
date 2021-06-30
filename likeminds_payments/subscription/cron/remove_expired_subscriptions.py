@@ -22,6 +22,6 @@ def handle():
             if 'error_message' in response:
                 print({'error_message': response['error_message']})
 
-            if response['success']:
+            if 'success' in response and response['success']:
                 subscription.is_removed = True
                 subscription.save()

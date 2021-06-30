@@ -131,7 +131,7 @@ class CoreServiceUtilities:
             'member_id': member_id
         }
 
-        response = ApiUtilities.generate_post_request(url, data)
+        response = ApiUtilities.generate_post_request(url=url, data=data)
 
         if 'error_message' in response:
             return {'error_message': response['error_message']}

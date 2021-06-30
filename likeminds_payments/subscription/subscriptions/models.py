@@ -13,6 +13,7 @@ class Subscription(models.Model):
     type = models.CharField(max_length=10)
     renewal_due = models.BigIntegerField(default=0)
     transaction = models.ForeignKey(Transaction, on_delete=models.SET_NULL, null=True)
+    is_removed = models.BooleanField(default=False)
     created_at = models.BigIntegerField(default=0)
     updated_at = models.BigIntegerField(default=0)
 
@@ -38,6 +39,7 @@ class Subscription(models.Model):
         instance.type = subscription_body['type']
         instance.renewal_due = subscription_body['renewal_due']
         instance.transaction = subscription_body['transaction']
+        instance.is_removed = False
         instance.save()
 
         return instance

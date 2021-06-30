@@ -3,6 +3,7 @@ from ..transactions.models import Transaction
 from .models import Subscription
 from ..subscription_histories.models import SubscriptionHistory
 from ..plans.models import SubscriptionPlan
+from ..member_notifications.models import MemberNotification
 from .constants import *
 from .serializers import SubscriptionSerializer, SubscriptionListSerializer
 
@@ -46,6 +47,11 @@ class SubscriptionImpl(SubscriptionManager):
 
     def get_member_id(self) -> str:
         return self.member_id
+
+    @staticmethod
+    def _remove_member_notifications(user_id: str, community_id: str):
+
+        MemberNotification.objects.filter(user_id=user_id, community_id=community_id).delete()
 
     @staticmethod
     def _check_if_transaction_is_used(payment_id: str) -> dict:
@@ -253,7 +259,10 @@ class SubscriptionImpl(SubscriptionManager):
         subscription_instance.type = data["subscription_data"]["type"]
         subscription_instance.valid_till = data["subscription_data"]["valid_till"]
         subscription_instance.renewal_due = data["subscription_data"]["renewal_due"]
+        subscription_instance.is_removed = False
         subscription_instance.save()
+
+        SubscriptionImpl._remove_member_notifications(subscription_instance.user_id, subscription_instance.community_id)
 
         subscription_history_instance = SubscriptionHistory.create_instance(data['subscription_history_data'])
 
@@ -349,7 +358,11 @@ class SubscriptionImpl(SubscriptionManager):
             subscription_instance.type = data['subscription_data']['type']
             subscription_instance.renewal_due = data['subscription_data']['renewal_due']
             subscription_instance.transaction = data['subscription_data']['transaction']
+            subscription_instance.is_removed = False
             subscription_instance.save()
+
+            SubscriptionImpl._remove_member_notifications(subscription_instance.user_id,
+                                                          subscription_instance.community_id)
 
             subscription_history_instance = SubscriptionHistory.create_instance(
                 data['subscription_history_data'])

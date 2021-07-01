@@ -119,7 +119,8 @@ class SubscriptionImpl(SubscriptionManager):
         data = {
             "subscription_data": {
                 "type": "onetime",
-                "valid_till": 0
+                "valid_till": 0,
+                "transaction": transaction_instance
             }
         }
 
@@ -259,6 +260,7 @@ class SubscriptionImpl(SubscriptionManager):
         subscription_instance.type = data["subscription_data"]["type"]
         subscription_instance.valid_till = data["subscription_data"]["valid_till"]
         subscription_instance.renewal_due = data["subscription_data"]["renewal_due"]
+        subscription_instance.transaction = data["subscription_data"]["transaction"]
         subscription_instance.is_removed = False
         subscription_instance.save()
 

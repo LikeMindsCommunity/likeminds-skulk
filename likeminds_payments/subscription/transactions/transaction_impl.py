@@ -90,7 +90,7 @@ class TransactionImpl(TransactionManager):
             "payment_id": payment_instance['id'],
             "community_name": order_notes['community_name'],
             "plan_name": order_notes['name'],
-            "plan_cost": order_notes['cost'],
+            "plan_cost": payment_instance['amount'],
             "renew": False,
             "amount": payment_instance['amount'],
             "payment_email": payment_instance['email'],

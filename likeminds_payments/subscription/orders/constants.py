@@ -7,5 +7,6 @@ COMPANY_NAME = "Collabmates Pvt. Ltd."
 COMMUNITY_API = "{}/api/community/fetch".format(settings.CORE_SERVICE_URL)
 MEMBER_STATE_API = "{}/api/members_state".format(settings.CORE_SERVICE_URL)
 COMMUNITY_QUESTIONS_API = "{}/api/questions".format(settings.CORE_SERVICE_URL)
+REMOVE_MEMBER_API = "{}/api/community_membership/remove_member".format(settings.CORE_SERVICE_URL)
 INDIA_CODE = "IN"
 USD_CURRENCY = "USD"

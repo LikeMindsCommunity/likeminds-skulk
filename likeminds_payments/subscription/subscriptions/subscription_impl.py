@@ -394,6 +394,9 @@ class SubscriptionImpl(SubscriptionManager):
 
             subscription_instance.save()
 
+            SubscriptionImpl._remove_member_notifications(subscription_instance.user_id,
+                                                          subscription_instance.community_id)
+
             subscription_history_data = {
                 "start_date": subscription_instance.date_subscribed,
                 "end_date": subscription_instance.valid_till,

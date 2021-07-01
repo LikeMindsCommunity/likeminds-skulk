@@ -17,7 +17,13 @@ def send_event(user_id, community_id, event):
             'community_id': community_id
         })
 
-        MemberNotification.create_instance(user_id=user_id, community_id=community_id, code=event['code'])
+        data = {
+            'user_id': user_id,
+            'community_id': community_id,
+            'code': event['code']
+        }
+
+        MemberNotification.create_instance(data)
 
 
 def handle_renewal_due(subscription):

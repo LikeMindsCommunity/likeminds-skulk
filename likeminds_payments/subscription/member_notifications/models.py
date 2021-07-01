@@ -10,9 +10,9 @@ class MemberNotification(models.Model):
         return self.pk
 
     @staticmethod
-    def get_membership_notification_or_None(user_id, community_id):
+    def get_membership_notification_or_None(user_id, community_id, code):
         try:
-            return MemberNotification.objects.get(user_id=user_id, community_id=community_id)
+            return MemberNotification.objects.get(user_id=user_id, community_id=community_id, code=code)
         except:
             return None
 

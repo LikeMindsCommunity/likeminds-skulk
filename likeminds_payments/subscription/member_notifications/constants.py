@@ -9,7 +9,7 @@ EVENTS = {
     },
     'GRACE_PERIOD_STARTED': {
         'code': 'grace_period_started',
-        'event': 'Grace period ended'
+        'event': 'Grace period started'
     },
     'GRACE_PERIOD_ENDED': {
         'code': 'grace_period_ended',

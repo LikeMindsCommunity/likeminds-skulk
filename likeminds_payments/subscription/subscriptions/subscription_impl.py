@@ -505,7 +505,8 @@ class SubscriptionImpl(SubscriptionManager):
             difference = current_time - subscription_instance.date_subscribed
 
             subscription_instance.date_subscribed = current_time
-            subscription_instance.valid_till = TimeUtilities.add_milliseconds_in_epoch_time(current_time, difference)
+            subscription_instance.valid_till = TimeUtilities.add_milliseconds_in_epoch_time(
+                subscription_instance.valid_till, difference)
             subscription_instance.save()
 
             return {'success': True}

@@ -11,7 +11,7 @@ def SubscriptionHistorySerializer(subscription_history) -> list:
             'start_date': entry.start_date,
             'end_date': entry.end_date,
             'description': entry.description,
-            'transaction': entry.transaction.id,
+            'transaction': None,
             'type': entry.type
         }
 
@@ -22,6 +22,7 @@ def SubscriptionHistorySerializer(subscription_history) -> list:
             history_object['duration_name'] = 'referral'
 
         if entry.transaction is not None:
+            history_object['transaction'] = entry.transaction.id
             history_object['order_id'] = entry.transaction.payment_id
 
             subscription_plan = SubscriptionPlan.get_plan_or_None(plan_id=entry.transaction.plan_id)

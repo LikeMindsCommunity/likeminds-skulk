@@ -11,7 +11,7 @@ def PlanSerializer(plans) -> list:
             'community_id': plan.community_id,
             'name': plan.name,
             'duration_name': plan.duration_name,
-            'cost': plan.cost,
+            'cost': plan.cost // 100,
             'strike_cost': plan.strike_cost,
             'cost_usd': plan.cost_usd,
             'strike_cost_usd': plan.strike_cost_usd,
@@ -23,6 +23,15 @@ def PlanSerializer(plans) -> list:
             'image': plan.image,
             'url': PlanUtilities.generate_plan_url(plan.plan_id)
         }
+
+        if plan.strike_cost is not None:
+            plan_object['strike_cost'] = plan.strike_cost // 100
+
+        if plan.cost_usd is not None:
+            plan_object['cost_usd'] = plan.cost_usd // 100
+
+        if plan.strike_cost_usd is not None:
+            plan_object['strike_cost_usd'] = plan.strike_cost_usd // 100
 
         output.append(plan_object)
 

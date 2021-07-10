@@ -8,7 +8,8 @@ class SubscriptionManager(metaclass=abc.ABCMeta):
         return ((hasattr(subclass, 'create_subscription') and callable(subclass.create_subscription)) and
                 (hasattr(subclass, 'start_subscription') and callable(subclass.start_subscription)) and
                 (hasattr(subclass, 'fetch_subscription') and callable(subclass.fetch_subscription)) and
-                (hasattr(subclass, 'fetch_community_meta') and callable(subclass.fetch_community_meta)) or
+                (hasattr(subclass, 'fetch_community_meta') and callable(subclass.fetch_community_meta)) and
+                (hasattr(subclass, 'convert_to_paid') and callable(subclass.convert_to_paid)) or
                 NotImplemented)
 
     @abc.abstractmethod
@@ -37,5 +38,12 @@ class SubscriptionManager(metaclass=abc.ABCMeta):
     def fetch_community_meta(self) -> dict:
         """
         get community meta details for given payment_id
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def convert_to_paid(self) -> dict:
+        """
+        convert free internal communities to paid
         """
         raise NotImplementedError

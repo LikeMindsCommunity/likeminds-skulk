@@ -31,7 +31,7 @@ class ApiUtilities:
         if not url:
             return {'error_message': 'send url'}
 
-        response = requests.post(url=url, data=data, headers=headers)
+        response = requests.post(url=url, json=data, headers=headers)
 
         validated_response = ApiUtilities.validate_response(response)
 

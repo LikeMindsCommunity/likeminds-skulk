@@ -120,3 +120,17 @@ class SubscriptionViewHelper:
             return {'error_message': 'send payment_id in query params'}
 
         return query_params
+
+    @staticmethod
+    def convert_to_paid_body_validator(request_body, user_id):
+
+        if not request_body:
+            return {'error_message': 'invalid request body'}
+
+        if not user_id:
+            return {'error_message': 'send x-member-id in headers'}
+
+        if 'community_id' not in request_body or not request_body['community_id']:
+            return {'error_message': 'send community_id'}
+
+        return request_body

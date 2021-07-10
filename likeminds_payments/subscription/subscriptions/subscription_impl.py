@@ -7,6 +7,7 @@ from ..member_notifications.models import MemberNotification
 from .constants import *
 from .serializers import SubscriptionSerializer, SubscriptionListSerializer
 
+from ..utility.constants import *
 from ..utility.time_utilities import TimeUtilities
 from ..utility.number_utilities import NumberUtilities
 from ..utility.core_service_utilities import CoreServiceUtilities
@@ -617,3 +618,116 @@ class SubscriptionImpl(SubscriptionManager):
             return {'error_message': 'cannot retrieve community_id'}
 
         return {'community_id': plan_instance.community_id}
+
+    @staticmethod
+    def _get_all_members(community_id, member_id):
+
+        members = []
+        page = 1
+        done = False
+
+        while not done:
+
+            get_members = CoreServiceUtilities.get_all_members(community_id, member_id, page)
+
+            if 'error_message' in get_members:
+                continue
+
+            if 'members' in get_members:
+
+                if len(get_members['members']) == 0:
+                    done = True
+
+                members += get_members['members']
+
+            page += 1
+
+        return members
+
+    @staticmethod
+    def _generate_new_free_subscription(community_id, user_id, date_subscribed):
+
+        subscription_instance = Subscription.get_subscription_or_None(user_id, community_id)
+
+        if subscription_instance is None:
+
+            subscription_data = {
+                "user_id": user_id,
+                "community_id": community_id,
+                "plan_id": None,
+                "date_subscribed": date_subscribed,
+                "valid_till": TimeUtilities.add_days_in_epoch_time(date_subscribed, DAYS_FOR_FREE_USERS),
+                "type": "free",
+                "transaction": None,
+            }
+
+            subscription_data["renewal_due"] = TimeUtilities.subtract_days_in_epoch_time(
+                subscription_data["valid_till"], NOTIFY_PERIOD)
+
+            subscription_history_data = {
+                "start_date": date_subscribed,
+                "end_date": subscription_data["valid_till"],
+                "description": FREE_DESCRIPTION,
+                "transaction": None,
+                "type": "free",
+                "user_id": user_id,
+                "community_id": community_id
+            }
+
+            subscription_instance = Subscription.create_instance(subscription_data)
+            subscription_history_instance = SubscriptionHistory.create_instance(subscription_history_data)
+
+            if not subscription_instance:
+                return {'error_message': 'error creating subscription'}
+
+            if not subscription_history_instance:
+                return {'error_message': 'error creating subscription history'}
+
+            return {'success': True}
+
+        return {'error_message': 'subscription already exists'}
+
+    def convert_to_paid(self, exempt_user_ids: list = None) -> dict:
+
+        if self.get_member_id() is not None:
+
+            has_permission_check = CoreServiceUtilities.has_permission(self.get_community_id(), self.get_member_id())
+
+            if 'error_message' in has_permission_check:
+                return {'error_message': has_permission_check['error_message']}
+
+            if 'has_permission' in has_permission_check and has_permission_check['has_permission'] is False:
+                return {'error_message': 'You are not the Owner/CM of the community'}
+
+            community_update = CoreServiceUtilities.edit_community(self.get_community_id(), self.get_member_id())
+
+            if 'error_message' in community_update:
+                return {'error_message': community_update['error_message']}
+
+            if 'success' in community_update and community_update['success']:
+
+                members = self._get_all_members(self.get_community_id(), self.get_member_id())
+
+                for member in members:
+
+                    if member['state'] == ADMIN or member['id'] in exempt_user_ids:
+
+                        generate_free_lifetime_subscription = self._generate_free_subscription(member['id'],
+                                                                                               self.get_community_id())
+
+                        if 'error_message' in generate_free_lifetime_subscription:
+                            continue
+
+                    else:
+
+                        current_time = TimeUtilities.current_time_in_milliseconds()
+
+                        generate_free_limited_subscription = self._generate_new_free_subscription(
+                            self.get_community_id(), member['id'], current_time)
+
+                        if 'error_message' in generate_free_limited_subscription:
+                            continue
+
+                return {'success': True}
+
+        return {'error_message': 'something went wrong'}

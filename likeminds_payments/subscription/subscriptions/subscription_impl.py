@@ -121,7 +121,8 @@ class SubscriptionImpl(SubscriptionManager):
             "subscription_data": {
                 "type": "onetime",
                 "valid_till": 0,
-                "transaction": transaction_instance
+                "transaction": transaction_instance,
+                "plan_id": subscription_plan_instance.plan_id
             }
         }
 
@@ -262,6 +263,7 @@ class SubscriptionImpl(SubscriptionManager):
         subscription_instance.valid_till = data["subscription_data"]["valid_till"]
         subscription_instance.renewal_due = data["subscription_data"]["renewal_due"]
         subscription_instance.transaction = data["subscription_data"]["transaction"]
+        subscription_instance.plan_id = data["subscription_data"]["plan_id"]
         subscription_instance.is_removed = False
         subscription_instance.save()
 
@@ -392,6 +394,9 @@ class SubscriptionImpl(SubscriptionManager):
             if valid_till is None and n_days is not None:
                 subscription_instance.valid_till = TimeUtilities.add_days_in_epoch_time(
                     subscription_instance.valid_till, n_days)
+
+            subscription_instance.renewal_due = TimeUtilities.subtract_days_in_epoch_time(
+                subscription_instance.valid_till, NOTIFY_PERIOD)
 
             subscription_instance.save()
 

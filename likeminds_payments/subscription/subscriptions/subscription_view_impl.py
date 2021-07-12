@@ -183,3 +183,40 @@ class FetchCommunityMetaView(TransactionMixin, APIView):
             {'success': True, 'community_id': response_data['community_id']},
             status=status_codes.HTTP_200_OK
         )
+
+
+class ConvertToPaidView(TransactionMixin, APIView):
+
+    @method_decorator(csrf_exempt)
+    def dispatch(self, request, *args, **kwargs):
+        return super(ConvertToPaidView, self).dispatch(request, *args, **kwargs)
+
+    @staticmethod
+    def post(request, *args, **kwargs):
+
+        request_body = RequestUtilities.load_request_body(request)
+        member_id = RequestUtilities.get_parameter_from_headers(request, 'HTTP_X_MEMBER_ID')
+
+        validated_request_body = SubscriptionViewHelper.convert_to_paid_body_validator(request_body, member_id)
+
+        if 'error_message' in validated_request_body:
+            return JsonResponse(
+                {'success': False, 'error_message': validated_request_body['error_message']},
+                status=status_codes.HTTP_400_BAD_REQUEST
+            )
+
+        subscription_manager = SubscriptionImpl(member_id=member_id,
+                                                community_id=validated_request_body['community_id'])
+
+        response_data = subscription_manager.convert_to_paid(exempt_user_ids=validated_request_body['exempt_user_ids'])
+
+        if 'error_message' in response_data:
+            return JsonResponse(
+                {'success': False, 'error_message': response_data['error_message']},
+                status=status_codes.HTTP_200_OK
+            )
+
+        return JsonResponse(
+            {'success': True},
+            status=status_codes.HTTP_200_OK
+        )

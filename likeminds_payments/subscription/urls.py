@@ -22,5 +22,6 @@ urlpatterns = [
     path('fetch', FetchSubscriptionView.as_view(), name="fetch-subscription"),
     path('cancel', CancelSubscriptionView.as_view(), name="cancel-subscription"),
     path('fetch_history', FetchSubscriptionHistoryView.as_view(), name='fetch-subscription-history'),
-    path('fetch_community_meta', FetchCommunityMetaView.as_view(), name='fetch-community-meta')
+    path('fetch_community_meta', FetchCommunityMetaView.as_view(), name='fetch-community-meta'),
+    path('convert_to_paid', ConvertToPaidView.as_view(), name='convert-to-paid')
 ]

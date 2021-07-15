@@ -3,7 +3,38 @@ from subscription.transactions.models import Transaction
 from subscription.utility.core_service_utilities import CoreServiceUtilities
 import pandas as pd
 import uuid
+import time
 from datetime import datetime
+
+
+def generate_transaction_instance(transaction):
+
+    instance = Transaction()
+    instance.plan_id = transaction['plan_id']
+    instance.payment_id = transaction['payment_id']
+    instance.community_name = transaction['community_name']
+    instance.plan_name = transaction['plan_name']
+    instance.plan_cost = transaction['plan_cost']
+    instance.renew = transaction['renew']
+    instance.amount = transaction['amount']
+    instance.payment_email = transaction['payment_email']
+    instance.payment_phone = transaction['payment_phone']
+    instance.currency = transaction['currency']
+    instance.is_international = transaction['is_international']
+    instance.method = transaction['method']
+    instance.status = transaction['status']
+    instance.error_description = transaction['error_description']
+    instance.refund_amount = transaction['refund_amount']
+    instance.user_id = transaction['user_id']
+    instance.payment_page_url = transaction['payment_page_url']
+    instance.shared_by = transaction['shared_by']
+    instance.grace_period = transaction['grace_period']
+    instance.created_at = transaction['created_at']
+    instance.updated_at = transaction['updated_at']
+    instance.save()
+
+    # 10 ms delay time
+    time.sleep(0.01)
 
 
 def generate_transactions():
@@ -21,6 +52,8 @@ def generate_transactions():
     phones = []
     emails = []
     otls = []
+
+    print("Script Process Started")
 
     for i in range(len(member_email)):
 
@@ -65,29 +98,9 @@ def generate_transactions():
             "updated_at": current_time
         }
 
-        instance = Transaction()
-        instance.plan_id = transaction['plan_id']
-        instance.payment_id = transaction['payment_id']
-        instance.community_name = transaction['community_name']
-        instance.plan_name = transaction['plan_name']
-        instance.plan_cost = transaction['plan_cost']
-        instance.renew = transaction['renew']
-        instance.amount = transaction['amount']
-        instance.payment_email = transaction['payment_email']
-        instance.payment_phone = transaction['payment_phone']
-        instance.currency = transaction['currency']
-        instance.is_international = transaction['is_international']
-        instance.method = transaction['method']
-        instance.status = transaction['status']
-        instance.error_description = transaction['error_description']
-        instance.refund_amount = transaction['refund_amount']
-        instance.user_id = transaction['user_id']
-        instance.payment_page_url = transaction['payment_page_url']
-        instance.shared_by = transaction['shared_by']
-        instance.grace_period = transaction['grace_period']
-        instance.created_at = transaction['created_at']
-        instance.updated_at = transaction['updated_at']
-        instance.save()
+        generate_transaction_instance(transaction)
+
+        print("{}: transaction with id: {} created".format(i, payment_id))
 
         otl_url = CoreServiceUtilities.fetch_otl_url(community_id=community_id[i], payment_id=transaction['payment_id'])
 
@@ -104,3 +117,6 @@ def generate_transactions():
     final_data = pd.DataFrame({'phone': phones, 'email': emails, 'otl': otls})
     file_name = 'otl_data_{}.csv'.format(datetime.today().strftime('%Y-%m-%d'))
     final_data.to_csv(file_name, index=False)
+    print("OTL data exported to file with name {}".format(file_name))
+
+    print("Script Process Completed")

@@ -11,20 +11,20 @@ def generate_transactions():
     print('script process started')
 
     input_csv_path = r'./scripts/members_data.csv'
-    output_file_path = 'otl_data_{}.csv'.format(datetime.today().strftime('%Y-%m-%d'))
+    output_csv_path = 'otl_data_{}.csv'.format(datetime.today().strftime('%Y-%m-%d'))
 
     print('reading csv data from: {}'.format(input_csv_path))
 
-    csv_data = get_csv_data(input_csv_path)
+    data = get_csv_data(input_csv_path)
     print('got data from csv')
 
-    row_count = len(csv_data['member_email'])
+    row_count = len(data['member_email'])
 
-    final_lists_dict = process_csv_data(row_count, csv_data)
+    final_lists_dict = process_csv_data(row_count, data)
     output_data = create_output_data(final_lists_dict)
 
-    write_data_to_file(output_data, output_file_path)
-    print("OTL data exported to file with name {}".format(output_file_path))
+    write_data_to_file(output_data, output_csv_path)
+    print("OTL data exported to file with name {}".format(output_csv_path))
 
     print("script process completed")
 
@@ -136,6 +136,7 @@ def create_transaction_object(plan_instance, community_data, user_phone, data, i
 
 def create_transaction_instance(transaction):
     instance = Transaction()
+
     instance.plan_id = transaction['plan_id']
     instance.payment_id = transaction['payment_id']
     instance.community_name = transaction['community_name']
@@ -157,6 +158,7 @@ def create_transaction_instance(transaction):
     instance.grace_period = transaction['grace_period']
     instance.created_at = transaction['created_at']
     instance.updated_at = transaction['updated_at']
+    
     instance.save()
 
 

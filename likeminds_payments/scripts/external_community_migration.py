@@ -15,7 +15,7 @@ def generate_transactions():
     member_phone = df['member_phone (with country code)']
     start_date = df['start_date (dd/mm/yyyy)']
     community_id = df['community_id']
-    # payment_page_url = df['payment_page_url']
+    payment_page_url = df['payment_page_url']
     amount = df['amount']
 
     phones = []
@@ -58,7 +58,7 @@ def generate_transactions():
             "error_description": '',
             "refund_amount": 0,
             "user_id": None,
-            "payment_page_url": 'payment_page_url[i]',
+            "payment_page_url": payment_page_url[i],
             "shared_by": None,
             "grace_period": 0,
             "created_at": current_time,

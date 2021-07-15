@@ -75,14 +75,13 @@ class SubscriptionImpl(SubscriptionManager):
                                                                 subscription_plan_instance: dict,
                                                                 user_id: int) -> dict:
 
-        current_time = TimeUtilities.current_time_in_milliseconds()
         data = {
             "subscription_data": {
                 "user_id": transaction_instance.user_id,
                 "community_id": subscription_plan_instance.community_id,
                 "plan_id": subscription_plan_instance.plan_id,
-                "date_subscribed": current_time,
-                "valid_till": TimeUtilities.add_months_in_epoch_time(current_time,
+                "date_subscribed": transaction_instance.created_at,
+                "valid_till": TimeUtilities.add_months_in_epoch_time(transaction_instance.created_at,
                                                                      subscription_plan_instance.duration_in_months),
                 "type": "onetime",
                 "transaction": transaction_instance,
@@ -97,7 +96,7 @@ class SubscriptionImpl(SubscriptionManager):
             data["subscription_data"]["valid_till"], NOTIFY_PERIOD)
 
         data["subscription_history_data"] = {
-            "start_date": current_time,
+            "start_date": transaction_instance.created_at,
             "end_date": data["subscription_data"]["valid_till"],
             "description": ONETIME_DESCRIPTION,
             "transaction": transaction_instance,

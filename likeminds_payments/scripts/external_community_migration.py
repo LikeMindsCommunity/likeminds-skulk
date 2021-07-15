@@ -19,6 +19,7 @@ def generate_transactions():
     print('got data from csv')
 
     row_count = len(data['member_email'])
+    print('number of transactions to create: {}'.format(row_count))
 
     final_lists_dict = process_csv_data(row_count, data)
     output_data = create_output_data(final_lists_dict)
@@ -158,7 +159,7 @@ def create_transaction_instance(transaction):
     instance.grace_period = transaction['grace_period']
     instance.created_at = transaction['created_at']
     instance.updated_at = transaction['updated_at']
-    
+
     instance.save()
 
 

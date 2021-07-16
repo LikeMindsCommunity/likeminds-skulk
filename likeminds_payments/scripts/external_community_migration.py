@@ -82,7 +82,7 @@ def loop_over_data_and_create_transactions(count, data, final_lists_dict):
         plan_instance = plan_instances[0]
         community_data = CoreServiceUtilities.get_community_data(plan_instance.community_id)
 
-        transaction_object = create_transaction_object(plan_instance, community_data, user_phone, data, i)
+        transaction_object = create_transaction_object(plan_instance, community_data, payment_id, user_phone, data, i)
         create_transaction_instance(transaction_object)
 
         print("{}: transaction with id: {} created".format(i, payment_id))
@@ -104,18 +104,18 @@ def add_to_lists(lists_dict, user_phone, user_email, otl):
     lists_dict['otls'].append(otl)
 
 
-def create_transaction_object(plan_instance, community_data, user_phone, data, iterator):
+def create_transaction_object(plan_instance, community_data, payment_id, user_phone, data, iterator):
     transaction_timestamp = int(datetime.strptime(str(data['start_date'][iterator]), "%d/%m/%Y").timestamp() * 1000)
     amount = data['amount'][iterator] * 100,
 
     transaction = {
         "plan_id": plan_instance.plan_id,
-        "payment_id": data['payment_id'],
+        "payment_id": payment_id,
         "community_name": community_data['community']['name'],
         "plan_name": plan_instance.name,
         "plan_cost": plan_instance.cost,
         "renew": False,
-        "amount": amount,
+        "amount": amount[0],
         "payment_email": data['member_email'][iterator],
         "payment_phone": user_phone,
         "currency": "INR",

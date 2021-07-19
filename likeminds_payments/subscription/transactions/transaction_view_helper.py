@@ -39,13 +39,20 @@ class TransactionViewHelper:
         if not user_id:
             return {'error_message': 'send x-member-id in headers'}
 
-        if 'user_id' not in request_body or not request_body['user_id']:
-            return {'error_message': 'send user_id in body'}
+        body = {
+            'community_id': None,
+            'user_id': None
+        }
 
         if 'community_id' not in request_body or not request_body['community_id']:
             return {'error_message': 'send community_id in body'}
 
-        return request_body
+        body['community_id'] = request_body['community_id']
+
+        if 'user_id' in request_body:
+            body['user_id'] = request_body['user_id']
+
+        return body
 
     @staticmethod
     def get_transactions_instance_authenticator(community_id, user_id):

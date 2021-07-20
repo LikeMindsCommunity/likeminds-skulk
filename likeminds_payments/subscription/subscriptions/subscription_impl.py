@@ -8,7 +8,6 @@ from .constants import *
 from .serializers import SubscriptionSerializer, SubscriptionListSerializer
 
 from ..utility.constants import *
-from ..utility.states import EventDiscountType
 from ..utility.time_utilities import TimeUtilities
 from ..utility.number_utilities import NumberUtilities
 from ..utility.core_service_utilities import CoreServiceUtilities

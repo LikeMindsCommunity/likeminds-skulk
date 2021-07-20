@@ -1,6 +1,7 @@
 from .transaction_manager import TransactionManager
 from django.conf import settings
 from ..external_services.razorpay.razorpay_wrapper import RazorpayWrapper
+from ..utility.states import TransactionType
 from ..utility.time_utilities import TimeUtilities
 from .constants import *
 from .models import Transaction
@@ -69,21 +70,7 @@ class TransactionImpl(TransactionManager):
         return {'success': True}
 
     @staticmethod
-    def _create_transaction_data(transaction_body):
-        payment_instance = transaction_body['payload']['payment']['entity']
-        refund_instance = {}
-
-        if 'refund' in transaction_body['payload']:
-            refund_instance = transaction_body['payload']['refund']['entity']
-
-        razorpay_client = RazorpayWrapper.get_instance()
-
-        order_instance = razorpay_client.order.fetch(payment_instance['order_id'])
-
-        if not order_instance:
-            return {'error_message': 'no order exists for given payment'}
-
-        order_notes = order_instance['notes']
+    def _fill_transaction_data_for_community_subscription(order_notes, payment_instance, refund_instance):
 
         transaction_data = {
             "plan_id": order_notes['plan_id'],
@@ -104,7 +91,8 @@ class TransactionImpl(TransactionManager):
             "user_id": None,
             "payment_page_url": order_notes['payment_page_url'],
             "shared_by": None,
-            "grace_period": 0
+            "grace_period": 0,
+            "type": TransactionType.COMMUNITY_SUBSCRIPTION
         }
 
         if payment_instance['error_description'] is not None:
@@ -127,6 +115,76 @@ class TransactionImpl(TransactionManager):
 
         return transaction_data
 
+    @staticmethod
+    def _fill_transaction_data_for_event(order_notes, payment_instance, refund_instance):
+
+        transaction_data = {
+            "plan_id": order_notes['event_plan_id'],
+            "payment_id": payment_instance['id'],
+            "community_name": order_notes['community_name'],
+            "community_id": order_notes['community_id'],
+            "plan_cost": payment_instance['amount'],
+            "renew": False,
+            "amount": payment_instance['amount'],
+            "payment_email": payment_instance['email'],
+            "payment_phone": payment_instance['contact'],
+            "currency": payment_instance['currency'],
+            "is_international": payment_instance['international'],
+            "method": payment_instance['method'],
+            "status": payment_instance['status'],
+            "error_description": "",
+            "refund_amount": 0,
+            "user_id": order_notes['user_id'],
+            "payment_page_url": order_notes['payment_page_url'],
+            "grace_period": 0,
+            "type": TransactionType.EVENT
+        }
+
+        if payment_instance['error_description'] is not None:
+            transaction_data["error_description"] = payment_instance['error_description']
+
+        if 'renew' in order_notes and order_notes['renew'] == "true":
+            transaction_data['renew'] = True
+
+        if 'amount' in refund_instance:
+            transaction_data['refund_amount'] = refund_instance['amount']
+
+        if 'user_id' in order_notes:
+            transaction_data['user_id'] = order_notes['user_id']
+
+        if 'shared_by' in order_notes:
+            transaction_data['shared_by'] = order_notes['shared_by']
+
+        if 'grace_period' in order_notes:
+            transaction_data['grace_period'] = order_notes['grace_period']
+
+        return transaction_data
+
+    def _create_transaction_data(self, transaction_body):
+        payment_instance = transaction_body['payload']['payment']['entity']
+        refund_instance = {}
+
+        if 'refund' in transaction_body['payload']:
+            refund_instance = transaction_body['payload']['refund']['entity']
+
+        razorpay_client = RazorpayWrapper.get_instance()
+
+        order_instance = razorpay_client.order.fetch(payment_instance['order_id'])
+
+        if not order_instance:
+            return {'error_message': 'no order exists for given payment'}
+
+        order_notes = order_instance['notes']
+        is_event_transaction = order_notes['type'] == "event"
+
+        if is_event_transaction:
+            transaction_data = self._fill_transaction_data_for_event(order_notes, payment_instance, refund_instance)
+        else:
+            transaction_data = self._fill_transaction_data_for_community_subscription(order_notes,
+                                                                                      payment_instance, refund_instance)
+
+        return transaction_data
+
     def create_transaction(self) -> dict:
 
         transaction_raw_body = self.get_transaction_raw_body()
@@ -142,7 +200,8 @@ class TransactionImpl(TransactionManager):
             transaction_body['payload']['payment']['entity']['id']
         )
 
-        if existing_transaction_instance:
+        if existing_transaction_instance and \
+                existing_transaction_instance.type == TransactionType.COMMUNITY_SUBSCRIPTION:
 
             plan_instance = SubscriptionPlan.get_plan_or_None(plan_id=existing_transaction_instance.plan_id)
 
@@ -182,7 +241,7 @@ class TransactionImpl(TransactionManager):
         if not transaction_instance:
             return {'error_message': 'error while creating transaction'}
 
-        if transaction_body['event'] == 'payment.captured':
+        if transaction_body['event'] == 'payment.captured' and TransactionType.COMMUNITY_SUBSCRIPTION:
 
             if transaction_data['renew'] and transaction_data['user_id'] is not None:
 

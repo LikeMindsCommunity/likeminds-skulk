@@ -131,4 +131,3 @@ class CreateEventOrderView(APIView):
         response_data = order_manager.create_event_order()
 
         return JsonResponse({'success': True, "order": response_data})
-

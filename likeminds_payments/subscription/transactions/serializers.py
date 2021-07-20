@@ -23,7 +23,8 @@ def TransactionSerializer(transactions) -> list:
             'user_id': transaction.user_id,
             'payment_page_url': transaction.payment_page_url,
             'shared_by': transaction.shared_by,
-            'grace_period': transaction.grace_period
+            'grace_period': transaction.grace_period,
+            'type': transaction.type
         }
 
         output.append(transaction_object)

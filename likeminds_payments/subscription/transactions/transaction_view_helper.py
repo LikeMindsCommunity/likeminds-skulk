@@ -1,5 +1,6 @@
 from .constants import *
 from ..utility.core_service_utilities import CoreServiceUtilities
+from ..utility.number_utilities import NumberUtilities
 from .models import Transaction
 from ..plans.models import SubscriptionPlan
 
@@ -41,7 +42,8 @@ class TransactionViewHelper:
 
         body = {
             'community_id': None,
-            'user_id': None
+            'user_id': None,
+            'page': 1
         }
 
         if 'community_id' not in request_body or not request_body['community_id']:
@@ -51,6 +53,9 @@ class TransactionViewHelper:
 
         if 'user_id' in request_body:
             body['user_id'] = request_body['user_id']
+
+        if 'page' in request_body and isinstance(request_body['page'], int):
+            body['page'] = NumberUtilities.get_integer_from_string(request_body['page'])
 
         return body
 

@@ -238,3 +238,28 @@ class CoreServiceUtilities:
             return {'error_message': 'something went wrong'}
 
         return {'private_link': response['private_link']}
+
+    @staticmethod
+    def attend_event(attend_info):
+
+        url = CHATROOM_EVENT_ATTEND
+
+        data = {
+            'chatroom_id': attend_info.get('chatroom_id'),
+            'is_paid': attend_info.get('attending_status', False)
+        }
+
+        headers = {
+            'x-member-id': '{}'.format(attend_info.get('member_id'))
+        }
+
+        response = ApiUtilities.generate_post_request(url=url, data=data, headers=headers)
+
+        if 'error_message' in response:
+            return {'error_message': response['error_message']}
+
+        if 'success' not in response:
+            return {'error_message': 'invalid response from remove member api'}
+
+        return {'success': response['success']}
+

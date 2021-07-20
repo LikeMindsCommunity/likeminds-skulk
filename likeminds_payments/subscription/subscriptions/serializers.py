@@ -66,16 +66,3 @@ def SubscriptionListSerializer(member_subscriptions) -> dict:
 
     return output
 
-
-def EventPlanSerializer(plan_instance) -> dict:
-
-    return {
-            'chatroom_id': plan_instance.chatroom_id,
-            'community_id': plan_instance.community_id,
-            'cost': plan_instance.cost,
-            'strike_cost': plan_instance.strike_cost,
-            'cost_usd': plan_instance.cost_usd,
-            'strike_cost_usd': plan_instance.strike_cost_usd,
-            'discount_type': plan_instance.discount_type,
-            'discount': plan_instance.discount
-        }

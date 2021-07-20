@@ -64,3 +64,43 @@ class SubscriptionPlan(models.Model):
         self.updated_at = current_time
 
         super(SubscriptionPlan, self).save(*args, **kwargs)
+
+
+class SubscriptionEventPlan(models.Model):
+    event_plan_id = models.CharField(unique=True, max_length=64)
+    chatroom_id = models.IntegerField()
+    community_id = models.IntegerField()
+    cost = models.IntegerField(default=0)
+    strike_cost = models.IntegerField(null=True)
+    cost_usd = models.IntegerField(null=True)
+    strike_cost_usd = models.IntegerField(null=True)
+    discount_type = models.IntegerField(null=True)
+    discount = models.IntegerField(null=True)
+    created_at = models.BigIntegerField(default=0)
+    updated_at = models.BigIntegerField(default=0)
+
+    @staticmethod
+    def create_instance(create_info):
+        instance = SubscriptionEventPlan()
+        instance.event_plan_id = str(uuid.uuid4())
+        instance.chatroom_id = create_info.get('chatroom_id')
+        instance.community_id = create_info.get('community_id')
+        instance.cost = create_info.get('cost')
+        instance.strike_cost = create_info.get('strike_cost')
+        instance.cost_usd = create_info.get('cost_usd')
+        instance.strike_cost_usd = create_info.get('strike_cost_usd')
+        instance.discount_type = create_info.get('discount_type')
+        instance.discount = create_info.get('discount')
+        instance.save()
+
+        return instance
+
+    def save(self, *args, **kwargs):
+        current_time = TimeUtilities.current_time_in_milliseconds()
+
+        if self.created_at == 0:
+            self.created_at = current_time
+
+        self.updated_at = current_time
+
+        super(SubscriptionEventPlan, self).save(*args, **kwargs)

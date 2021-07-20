@@ -137,3 +137,51 @@ class OrderViewHelper:
             ip = RequestUtilities.get_parameter_from_headers(request, 'REMOTE_ADDR')
 
         return ip
+
+    @staticmethod
+    def create_event_order_body_validator(request_body) -> dict:
+
+        if not request_body:
+
+            return {'error_message': 'invalid request body'}
+
+        if not request_body.get('event_plan_id'):
+
+            return {'error_message': 'send event_plan_id'}
+
+        if not request_body.get('payment_page_url'):
+
+            return {'error_message': 'send payment_page_url'}
+
+        if not request_body.get('user_id'):
+
+            return {'error_message': 'Invalid user id'}
+
+        return request_body
+
+    @staticmethod
+    def create_event_order_instance_helper(order_body) -> dict:
+
+        plan_instance = SubscriptionPlan.get_plan_or_None(order_body['plan_id'])
+
+        if not plan_instance:
+            return {'error_message': 'invalid plan_id'}
+
+        if plan_instance.is_deleted:
+            return {'error_message': 'plan no longer exists'}
+
+        community_data = CoreServiceUtilities.get_community_data(plan_instance.community_id)
+
+        if 'error_message' in community_data:
+            return {'error_message': community_data['error_message']}
+
+        order_data = OrderViewHelper._create_order_object_data(plan_instance, order_body, community_data['community'])
+
+        razorpay_client = RazorpayWrapper.get_instance()
+
+        order_instance = razorpay_client.order.create(data=order_data)
+
+        if 'error_message' in order_instance:
+            return {'error_message': 'error creating order with razorpay'}
+
+        return {'order_instance': order_instance}

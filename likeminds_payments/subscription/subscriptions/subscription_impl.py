@@ -1,11 +1,11 @@
 from .subscription_manager import SubscriptionManager
 from ..transactions.models import Transaction
-from .models import Subscription, SubscriptionEventPlan
+from .models import Subscription
 from ..subscription_histories.models import SubscriptionHistory
 from ..plans.models import SubscriptionPlan
 from ..member_notifications.models import MemberNotification
 from .constants import *
-from .serializers import SubscriptionSerializer, SubscriptionListSerializer, EventPlanSerializer
+from .serializers import SubscriptionSerializer, SubscriptionListSerializer
 
 from ..utility.constants import *
 from ..utility.states import EventDiscountType
@@ -533,14 +533,6 @@ class SubscriptionImpl(SubscriptionManager):
     def _serialize_subscriptions_list(subscriptions):
         return SubscriptionListSerializer(subscriptions)
 
-    @staticmethod
-    def _serialize_event_plan_list(chatroom_ids):
-
-        event_filter = SubscriptionEventPlan.objects.filter(chatroom_id__in=chatroom_ids).order_by('created_at')
-        event_plans = [EventPlanSerializer(plan_instance) for plan_instance in event_filter]
-
-        return event_plans
-
     def fetch_subscription(self, member_ids: list = None) -> dict:
 
         if member_ids is not None:
@@ -745,51 +737,3 @@ class SubscriptionImpl(SubscriptionManager):
 
         return {'error_message': 'something went wrong'}
 
-    def _process_event_creation_plan(self, req_body):
-
-        cost = NumberUtilities.convert_to_paisa_or_none(req_body.get('cost'))
-        strike_cost = NumberUtilities.convert_to_paisa_or_none(req_body.get('strike_cost'))
-        cost_usd = NumberUtilities.convert_to_paisa_or_none(req_body.get('cost_usd'))
-        strike_cost_usd = NumberUtilities.convert_to_paisa_or_none(req_body.get('cost_usd'))
-        discount_type = req_body.get('discount_type', 0)
-        discount = None
-
-        if discount_type == EventDiscountType.PERCENTAGE:
-            discount = req_body.get('discount')
-
-        elif discount_type == EventDiscountType.FLAT:
-            discount = NumberUtilities.convert_to_paisa_or_none(req_body.get('discount'))
-
-        return {
-            'chatroom_id': req_body.get('chatroom_id'),
-            'community_id': req_body.get('community_id'),
-            'cost': cost,
-            'strike_cost': strike_cost,
-            'cost_usd': cost_usd,
-            'strike_cost_usd': strike_cost_usd,
-            'discount_type': discount_type,
-            'discount': discount
-        }
-
-    def create_event_plan(self, req_body) -> dict:
-
-        chatroom_id = req_body.get('chatroom_id')
-
-        if not chatroom_id:
-            return {'success': False, 'error_message': "In-valid chatroom id"}
-
-        community_id = req_body.get('community_id')
-
-        if not community_id:
-            return {'success': False, 'error_message': "In-valid community id"}
-
-        create_info = self._process_event_creation_plan(req_body)
-        SubscriptionEventPlan.create_instance(create_info)
-
-        return {'success': True}
-
-    def fetch_event_plan(self, chatroom_ids) -> dict:
-
-        event_plans = self._serialize_event_plan_list(chatroom_ids)
-
-        return {'event_plans': event_plans}

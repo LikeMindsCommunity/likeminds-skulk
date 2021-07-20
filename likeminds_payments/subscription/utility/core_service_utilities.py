@@ -1,4 +1,3 @@
-from ..orders.constants import *
 from .constants import *
 from ..utility.api_utilities import ApiUtilities
 from ..utility.number_utilities import NumberUtilities
@@ -203,3 +202,39 @@ class CoreServiceUtilities:
             return {'error_message': 'invalid response from remove member api'}
 
         return {'members': response['members']}
+
+    @staticmethod
+    def fetch_otl_url(community_id: str, payment_id: str, shared_by: str = None):
+
+        if not community_id:
+            return {'error_message': 'send community_id'}
+
+        if not payment_id:
+            return {'error_message': 'send payment_id'}
+
+        community_id = NumberUtilities.get_integer_from_string(community_id)
+        shared_by = NumberUtilities.get_integer_from_string(shared_by)
+
+        url = FETCH_OTL_URL
+        query_params = {
+            'community_id': community_id,
+            'payment_id': payment_id
+        }
+        if shared_by is not None:
+            query_params['shared_by'] = shared_by
+
+        response = ApiUtilities.generate_get_request(url=url, query_params=query_params)
+
+        if 'error_message' in response:
+            return {'error_message': response['error_message']}
+
+        if 'success' not in response:
+            return {'error_message': 'something went wrong'}
+
+        if not response['success']:
+            return {'error_message': response['error_message']}
+
+        if 'private_link' not in response:
+            return {'error_message': 'something went wrong'}
+
+        return {'private_link': response['private_link']}

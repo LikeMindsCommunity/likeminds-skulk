@@ -1,4 +1,5 @@
 from .order_manager import OrderManager
+from django.conf import settings
 
 import razorpay.resources.order as order
 from .constants import *

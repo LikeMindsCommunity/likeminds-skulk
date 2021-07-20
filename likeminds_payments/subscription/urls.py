@@ -27,5 +27,6 @@ urlpatterns = [
     path('create_event_plan', CreateEventPlanView.as_view(), name='create_event_plan'),
     path('fetch_event_plan', FetchEventPlanView.as_view(), name='create_event_plan'),
     path('create_event_order', CreateEventOrderView.as_view(), name='create_event_order'),
+    path('valid_event_transaction', ValidateEventTransactionView.as_view(), name='valid_event_transaction'),
 
 ]

@@ -134,3 +134,28 @@ class RefundTransactionView(TransactionMixin, APIView):
             {'success': True},
             status=status_codes.HTTP_200_OK
         )
+
+
+class ValidateEventTransactionView(TransactionMixin, APIView):
+
+    @staticmethod
+    def get(request, *args, **kwargs):
+
+        user_id = RequestUtilities.get_parameter_from_headers(request, 'HTTP_X_MEMBER_ID')
+
+        if not user_id:
+            return JsonResponse({'error_message': "In-valid user id"}, status=status_codes.HTTP_400_BAD_REQUEST)
+
+        chatroom_id = request.GET.get('chatroom_id')
+
+        if not chatroom_id:
+            return JsonResponse({'error_message': "In-valid chatroom id"}, status=status_codes.HTTP_400_BAD_REQUEST)
+
+        transaction_manager = TransactionImpl()
+
+        response_data = transaction_manager.valid_event_transaction(chatroom_id, user_id)
+
+        if response_data.get('error_message'):
+            return JsonResponse(response_data, status=status_codes.HTTP_400_BAD_REQUEST)
+
+        return JsonResponse(response_data)

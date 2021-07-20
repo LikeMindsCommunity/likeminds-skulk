@@ -5,7 +5,7 @@ from ..utility.states import TransactionType
 from ..utility.time_utilities import TimeUtilities
 from .constants import *
 from .models import Transaction
-from ..plans.models import SubscriptionPlan
+from ..plans.models import SubscriptionPlan, SubscriptionEventPlan
 from ..subscriptions.models import Subscription
 from ..subscription_histories.models import SubscriptionHistory
 from ..subscriptions.subscription_view_impl import SubscriptionImpl
@@ -289,3 +289,18 @@ class TransactionImpl(TransactionManager):
             return {'error_message': e.__str__()}
 
         return response
+
+    def valid_event_transaction(self, chatroom_id, user_id) -> dict:
+
+        event_plan_id = SubscriptionEventPlan.get_event_plan_or_None(chatroom_id)
+
+        if not event_plan_id:
+            return {'error_message': "No event plan exists"}
+
+        has_transaction = Transaction.objects.filter(plan_id=event_plan_id, user_id=user_id)
+
+        if has_transaction:
+            return {'success': True}
+
+        return {'success': False, 'error_message': "Transaction does not exists"}
+

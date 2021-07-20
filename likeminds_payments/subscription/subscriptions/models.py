@@ -68,6 +68,8 @@ class SubscriptionEventPlan(models.Model):
     strike_cost_usd = models.IntegerField(null=True)
     discount_type = models.IntegerField(null=True)
     discount = models.IntegerField(null=True)
+    created_at = models.BigIntegerField(default=0)
+    updated_at = models.BigIntegerField(default=0)
 
     @staticmethod
     def create_instance(create_info):
@@ -81,6 +83,7 @@ class SubscriptionEventPlan(models.Model):
         instance.strike_cost_usd = create_info.get('strike_cost_usd')
         instance.discount_type = create_info.get('discount_type')
         instance.discount = create_info.get('discount')
+        instance.save()
 
         return instance
 

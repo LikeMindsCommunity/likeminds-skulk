@@ -220,3 +220,28 @@ class ConvertToPaidView(TransactionMixin, APIView):
             {'success': True},
             status=status_codes.HTTP_200_OK
         )
+
+
+class CreateEventPlanView(TransactionMixin, APIView):
+
+    @method_decorator(csrf_exempt)
+    def dispatch(self, request, *args, **kwargs):
+        return super(CreateEventPlanView, self).dispatch(request, *args, **kwargs)
+
+    @staticmethod
+    def post(request, *args, **kwargs):
+
+        request_body = RequestUtilities.load_request_body(request)
+
+        if not request_body:
+            return JsonResponse({'success': False, 'error_message': "Invalid request"})
+
+        subscription_manager = SubscriptionImpl()
+
+        response_data = subscription_manager.create_event_plan(request_body)
+
+        if response_data.get('error_message'):
+
+            return JsonResponse(response_data)
+
+        return JsonResponse(response_data)

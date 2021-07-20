@@ -23,5 +23,6 @@ urlpatterns = [
     path('cancel', CancelSubscriptionView.as_view(), name="cancel-subscription"),
     path('fetch_history', FetchSubscriptionHistoryView.as_view(), name='fetch-subscription-history'),
     path('fetch_community_meta', FetchCommunityMetaView.as_view(), name='fetch-community-meta'),
-    path('convert_to_paid', ConvertToPaidView.as_view(), name='convert-to-paid')
+    path('convert_to_paid', ConvertToPaidView.as_view(), name='convert-to-paid'),
+    path('create_event_plan', CreateEventPlanView.as_view(), name='create_event_plan')
 ]

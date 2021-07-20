@@ -10,7 +10,8 @@ class SubscriptionManager(metaclass=abc.ABCMeta):
                 (hasattr(subclass, 'fetch_subscription') and callable(subclass.fetch_subscription)) and
                 (hasattr(subclass, 'fetch_community_meta') and callable(subclass.fetch_community_meta)) and
                 (hasattr(subclass, 'convert_to_paid') and callable(subclass.convert_to_paid)) and
-                (hasattr(subclass, 'create_event_plan') and callable(subclass.create_event_plan)) or
+                (hasattr(subclass, 'create_event_plan') and callable(subclass.create_event_plan)) and
+                (hasattr(subclass, 'fetch_event_plan') and callable(subclass.fetch_event_plan)) or
                 NotImplemented)
 
     @abc.abstractmethod
@@ -56,3 +57,12 @@ class SubscriptionManager(metaclass=abc.ABCMeta):
         """
 
         raise NotImplementedError
+
+    @abc.abstractmethod
+    def fetch_event_plan(self, chatroom_ids) -> dict:
+        """
+        return events of chatroom ids
+        """
+
+        raise NotImplementedError
+

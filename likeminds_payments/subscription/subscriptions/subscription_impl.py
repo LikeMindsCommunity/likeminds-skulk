@@ -5,7 +5,7 @@ from ..subscription_histories.models import SubscriptionHistory
 from ..plans.models import SubscriptionPlan
 from ..member_notifications.models import MemberNotification
 from .constants import *
-from .serializers import SubscriptionSerializer, SubscriptionListSerializer
+from .serializers import SubscriptionSerializer, SubscriptionListSerializer, EventPlanSerializer
 
 from ..utility.constants import *
 from ..utility.states import EventDiscountType
@@ -533,6 +533,14 @@ class SubscriptionImpl(SubscriptionManager):
     def _serialize_subscriptions_list(subscriptions):
         return SubscriptionListSerializer(subscriptions)
 
+    @staticmethod
+    def _serialize_event_plan_list(chatroom_ids):
+
+        event_filter = SubscriptionEventPlan.objects.filter(chatroom_id__in=chatroom_ids).order_by('created_at')
+        event_plans = [EventPlanSerializer(plan_instance) for plan_instance in event_filter]
+
+        return event_plans
+
     def fetch_subscription(self, member_ids: list = None) -> dict:
 
         if member_ids is not None:
@@ -780,3 +788,8 @@ class SubscriptionImpl(SubscriptionManager):
 
         return {'success': True}
 
+    def fetch_event_plan(self, chatroom_ids) -> dict:
+
+        event_plans = self._serialize_event_plan_list(chatroom_ids)
+
+        return {'event_plans': event_plans}

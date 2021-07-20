@@ -5,6 +5,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 
 from ..mixins import TransactionMixin
+from ..utility.json_utilities import JsonUtilities
 from ..utility.request_utilities import RequestUtilities
 from .subscription_impl import SubscriptionImpl
 from .subscription_view_helper import SubscriptionViewHelper
@@ -242,6 +243,26 @@ class CreateEventPlanView(TransactionMixin, APIView):
 
         if response_data.get('error_message'):
 
-            return JsonResponse(response_data)
+            return JsonResponse(response_data, status=status_codes.HTTP_400_BAD_REQUEST)
+
+        return JsonResponse(response_data)
+
+
+class FetchEventPlanView(TransactionMixin, APIView):
+
+    @staticmethod
+    def get(request, *args, **kwargs):
+
+        chatroom_ids = JsonUtilities.load_json(request.GET.get('chatroom_ids'))
+
+        if not chatroom_ids:
+            return JsonResponse({'error_message': "In-valid chatroom ids"}, status=status_codes.HTTP_400_BAD_REQUEST)
+
+        subscription_manager = SubscriptionImpl()
+
+        response_data = subscription_manager.fetch_event_plan(chatroom_ids)
+
+        if response_data.get('error_message'):
+            return JsonResponse(response_data, status=status_codes.HTTP_400_BAD_REQUEST)
 
         return JsonResponse(response_data)

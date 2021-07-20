@@ -1,5 +1,6 @@
 from .constants import *
 from ..utility.core_service_utilities import CoreServiceUtilities
+from ..utility.number_utilities import NumberUtilities
 from .models import Transaction
 from ..plans.models import SubscriptionPlan
 
@@ -39,13 +40,24 @@ class TransactionViewHelper:
         if not user_id:
             return {'error_message': 'send x-member-id in headers'}
 
-        if 'user_id' not in request_body or not request_body['user_id']:
-            return {'error_message': 'send user_id in body'}
+        body = {
+            'community_id': None,
+            'user_id': None,
+            'page': 1
+        }
 
         if 'community_id' not in request_body or not request_body['community_id']:
             return {'error_message': 'send community_id in body'}
 
-        return request_body
+        body['community_id'] = request_body['community_id']
+
+        if 'user_id' in request_body:
+            body['user_id'] = request_body['user_id']
+
+        if 'page' in request_body and isinstance(request_body['page'], int):
+            body['page'] = NumberUtilities.get_integer_from_string(request_body['page'])
+
+        return body
 
     @staticmethod
     def get_transactions_instance_authenticator(community_id, user_id):

@@ -4,3 +4,4 @@ VALID_WEBHOOK_EVENTS = [
     "payment.captured",
     "payment.failed",
 ]
+PAGE_SIZE = 10

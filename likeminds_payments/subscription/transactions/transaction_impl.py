@@ -2,6 +2,7 @@ from .transaction_manager import TransactionManager
 from django.conf import settings
 from ..external_services.razorpay.razorpay_wrapper import RazorpayWrapper
 from ..utility.time_utilities import TimeUtilities
+from ..utility.model_utilities import ModelUtilities
 from .constants import *
 from .models import Transaction
 from ..plans.models import SubscriptionPlan
@@ -210,14 +211,16 @@ class TransactionImpl(TransactionManager):
                 output.append(transaction)
         return output
 
-    def fetch_transactions(self) -> dict:
+    def fetch_transactions(self, page) -> dict:
 
         transactions = self._fetch_transactions(self.get_user_id(), self.get_community_id())
 
         if len(transactions) == 0:
             return {'error_message': 'no transaction exist for this user in this community'}
 
-        return {'transactions': self._serialize_transactions(transactions)}
+        paginated_transactions = ModelUtilities.paginate_queryset(transactions, page, PAGE_SIZE)
+
+        return {'transactions': self._serialize_transactions(paginated_transactions)}
 
     def refund_transaction(self) -> dict:
 

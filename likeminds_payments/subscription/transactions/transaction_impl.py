@@ -302,5 +302,5 @@ class TransactionImpl(TransactionManager):
         if has_transaction:
             return {'success': True}
 
-        return {'success': False, 'error_message': "Transaction does not exists"}
+        return {'success': False, 'error_message': "Invalid transaction"}
 

@@ -1,4 +1,4 @@
-from ..plans.models import SubscriptionPlan
+from ..plans.models import SubscriptionPlan, SubscriptionEventPlan
 from ..utility.core_service_utilities import CoreServiceUtilities
 from ..utility.request_utilities import RequestUtilities
 from ..external_services.razorpay.razorpay_wrapper import RazorpayWrapper
@@ -160,28 +160,45 @@ class OrderViewHelper:
         return request_body
 
     @staticmethod
+    def _create_event_order_object_data(plan_instance, order_body, community_data) -> dict:
+
+        order_data = {
+            "amount": plan_instance.cost,
+            "currency": "INR",
+            "receipt": "receipt#1",
+            "notes": {
+                "event_plan_id": plan_instance.event_plan_id,
+                "community_id": plan_instance.community_id,
+                "community_name": community_data['name'],
+                "payment_page_url": order_body['payment_page_url'],
+                "type": "event",
+                "user_id": order_body['user_id']
+            }
+        }
+
+        return order_data
+
+    @staticmethod
     def create_event_order_instance_helper(order_body) -> dict:
 
-        plan_instance = SubscriptionPlan.get_plan_or_None(order_body['plan_id'])
+        plan_instance = SubscriptionEventPlan.get_event_plan_or_None(order_body.get('event_plan_id'))
 
         if not plan_instance:
-            return {'error_message': 'invalid plan_id'}
-
-        if plan_instance.is_deleted:
-            return {'error_message': 'plan no longer exists'}
+            return {'error_message': 'invalid event_plan_id'}
 
         community_data = CoreServiceUtilities.get_community_data(plan_instance.community_id)
 
-        if 'error_message' in community_data:
+        if community_data.get('error_message'):
             return {'error_message': community_data['error_message']}
 
-        order_data = OrderViewHelper._create_order_object_data(plan_instance, order_body, community_data['community'])
+        order_data = OrderViewHelper._create_event_order_object_data(plan_instance, order_body,
+                                                                     community_data['community'])
 
         razorpay_client = RazorpayWrapper.get_instance()
 
         order_instance = razorpay_client.order.create(data=order_data)
 
-        if 'error_message' in order_instance:
+        if order_instance.get('error_message'):
             return {'error_message': 'error creating order with razorpay'}
 
         return {'order_instance': order_instance}

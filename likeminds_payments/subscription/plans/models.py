@@ -95,6 +95,13 @@ class SubscriptionEventPlan(models.Model):
 
         return instance
 
+    @staticmethod
+    def get_event_plan_or_None(plan_id):
+        try:
+            return SubscriptionEventPlan.objects.get(event_plan_id=plan_id)
+        except:
+            return None
+
     def save(self, *args, **kwargs):
         current_time = TimeUtilities.current_time_in_milliseconds()
 

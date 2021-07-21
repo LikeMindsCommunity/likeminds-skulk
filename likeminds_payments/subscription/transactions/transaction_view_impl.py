@@ -78,7 +78,7 @@ class FetchTransactionsView(APIView):
 
         transaction_manager = TransactionImpl(user_id=validated_request_body['user_id'],
                                               community_id=validated_request_body['community_id'])
-        response_data = transaction_manager.fetch_transactions()
+        response_data = transaction_manager.fetch_transactions(page=validated_request_body['page'])
 
         if 'error_message' in response_data:
             return JsonResponse(

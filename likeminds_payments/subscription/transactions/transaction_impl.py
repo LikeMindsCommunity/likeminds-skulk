@@ -1,6 +1,7 @@
 from .transaction_manager import TransactionManager
 from django.conf import settings
 from ..external_services.razorpay.razorpay_wrapper import RazorpayWrapper
+from ..utility.core_service_utilities import CoreServiceUtilities
 from ..utility.states import TransactionType
 from ..utility.time_utilities import TimeUtilities
 from .constants import *
@@ -70,7 +71,7 @@ class TransactionImpl(TransactionManager):
         return {'success': True}
 
     @staticmethod
-    def _fill_transaction_data_for_community_subscription(order_notes, payment_instance, refund_instance):
+    def _fetch_transaction_data_for_community_subscription(order_notes, payment_instance, refund_instance):
 
         transaction_data = {
             "plan_id": order_notes['plan_id'],
@@ -116,7 +117,7 @@ class TransactionImpl(TransactionManager):
         return transaction_data
 
     @staticmethod
-    def _fill_transaction_data_for_event(order_notes, payment_instance, refund_instance):
+    def _fetch_transaction_data_for_event(order_notes, payment_instance, refund_instance):
 
         transaction_data = {
             "plan_id": order_notes['event_plan_id'],
@@ -160,6 +161,17 @@ class TransactionImpl(TransactionManager):
 
         return transaction_data
 
+    def _attend_event_for_paid_transaction(self, transaction_instance):
+
+        event_plan_id = transaction_instance.plan_id
+        event_plan_instance = SubscriptionEventPlan.get_event_plan_or_None(event_plan_id)
+
+        if not event_plan_instance:
+            return
+
+        chatroom_id = event_plan_id.chatroom_id
+        CoreServiceUtilities.attend_event({'chatroom_id': chatroom_id, 'attending_status': True})
+
     def _create_transaction_data(self, transaction_body):
         payment_instance = transaction_body['payload']['payment']['entity']
         refund_instance = {}
@@ -178,10 +190,11 @@ class TransactionImpl(TransactionManager):
         is_event_transaction = order_notes['type'] == "event"
 
         if is_event_transaction:
-            transaction_data = self._fill_transaction_data_for_event(order_notes, payment_instance, refund_instance)
+            transaction_data = self._fetch_transaction_data_for_event(order_notes, payment_instance, refund_instance)
+
         else:
-            transaction_data = self._fill_transaction_data_for_community_subscription(order_notes,
-                                                                                      payment_instance, refund_instance)
+            transaction_data = self._fetch_transaction_data_for_community_subscription(order_notes,
+                                                                                       payment_instance, refund_instance)
 
         return transaction_data
 
@@ -252,6 +265,9 @@ class TransactionImpl(TransactionManager):
 
                 if 'error_message' in create_subscription:
                     return {'error_message': create_subscription['error_message']}
+
+        if transaction_instance.type == TransactionType.EVENT:
+            self._attend_event_for_paid_transaction(transaction_instance)
 
         return {'success': True}
 

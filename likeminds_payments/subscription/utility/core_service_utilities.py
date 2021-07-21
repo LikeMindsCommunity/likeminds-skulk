@@ -259,7 +259,7 @@ class CoreServiceUtilities:
             return {'error_message': response['error_message']}
 
         if 'success' not in response:
-            return {'error_message': 'invalid response from remove member api'}
+            return {'error_message': 'invalid response from attend event api'}
 
         return {'success': response['success']}
 

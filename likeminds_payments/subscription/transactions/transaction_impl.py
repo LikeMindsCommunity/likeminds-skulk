@@ -173,7 +173,7 @@ class TransactionImpl(TransactionManager):
         chatroom_id = event_plan_id.chatroom_id
         CoreServiceUtilities.attend_event({'chatroom_id': chatroom_id,
                                            'attending_status': True,
-                                           'user_id': transaction_instance.user_id})
+                                           'member_id': transaction_instance.user_id})
 
     def _create_transaction_data(self, transaction_body):
         payment_instance = transaction_body['payload']['payment']['entity']
@@ -324,4 +324,3 @@ class TransactionImpl(TransactionManager):
             return {'success': True}
 
         return {'success': False, 'error_message': "Invalid transaction"}
-

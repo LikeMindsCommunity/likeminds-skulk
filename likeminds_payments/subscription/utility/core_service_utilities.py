@@ -246,7 +246,7 @@ class CoreServiceUtilities:
 
         data = {
             'chatroom_id': attend_info.get('chatroom_id'),
-            'is_paid': attend_info.get('attending_status', False)
+            'attending_status': attend_info.get('attending_status', False)
         }
 
         headers = {

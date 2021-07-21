@@ -170,7 +170,9 @@ class TransactionImpl(TransactionManager):
             return
 
         chatroom_id = event_plan_id.chatroom_id
-        CoreServiceUtilities.attend_event({'chatroom_id': chatroom_id, 'attending_status': True})
+        CoreServiceUtilities.attend_event({'chatroom_id': chatroom_id,
+                                           'attending_status': True,
+                                           'user_id': transaction_instance.user_id})
 
     def _create_transaction_data(self, transaction_body):
         payment_instance = transaction_body['payload']['payment']['entity']

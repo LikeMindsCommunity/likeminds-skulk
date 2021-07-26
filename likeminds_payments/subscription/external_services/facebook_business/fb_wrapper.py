@@ -56,7 +56,7 @@ class FbWrapper(FbManager):
         event_request = EventRequest(
             events=events,
             pixel_id=settings.FB_PIXEL_ID,
-            test_event_code="TEST88709"
+            test_event_code="TEST88709" if settings.IS_BETA else None
         )
 
         event_response = event_request.execute()

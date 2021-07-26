@@ -4,6 +4,7 @@ from .orders.order_view_impl import *
 from .transactions.transaction_view_impl import *
 from .subscriptions.subscription_view_impl import *
 from .subscription_histories.subscription_history_view_impl import *
+from .leads.lead_view_impl import *
 
 app_name = "subscription"
 
@@ -23,5 +24,6 @@ urlpatterns = [
     path('cancel', CancelSubscriptionView.as_view(), name="cancel-subscription"),
     path('fetch_history', FetchSubscriptionHistoryView.as_view(), name='fetch-subscription-history'),
     path('fetch_community_meta', FetchCommunityMetaView.as_view(), name='fetch-community-meta'),
-    path('convert_to_paid', ConvertToPaidView.as_view(), name='convert-to-paid')
+    path('convert_to_paid', ConvertToPaidView.as_view(), name='convert-to-paid'),
+    path('send_facebook_event', SendEventView.as_view(), name='send-facebook-event')
 ]

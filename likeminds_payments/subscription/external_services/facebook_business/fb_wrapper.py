@@ -53,7 +53,7 @@ class FbWrapper(FbManager):
         return event
 
     @staticmethod
-    def send_event(events: list) -> dict:
+    def send_event(events: list):
 
         if not FbWrapper.__instance_created__:
             FbWrapper()
@@ -64,7 +64,4 @@ class FbWrapper(FbManager):
             test_event_code="TEST88709" if settings.IS_BETA else None
         )
 
-        event_response = event_request.execute()
-        print(event_response)
-
-        return {'result': 'event sent successfully'}
+        event_request.execute()

@@ -23,6 +23,7 @@ class SendEventView(APIView):
         validated_request_body = LeadViewHelper.send_facebook_event_body_validator(request_body)
 
         client_ip_address = RequestUtilities.get_parameter_from_headers(request, 'REMOTE_ADDR')
+        event_source_url = RequestUtilities.get_parameter_from_headers(request, 'HTTP_REFERER')
         client_user_agent = request.headers['User-Agent']
 
         if 'error_message' in validated_request_body:
@@ -35,7 +36,7 @@ class SendEventView(APIView):
         response_data = lead_manager.send_facebook_event(
             client_ip_address, client_user_agent, validated_request_body['event_name'],
             validated_request_body['action_source'], validated_request_body['emails'], validated_request_body['phones'],
-            validated_request_body['fbc'], validated_request_body['fbp'], validated_request_body['event_source_url'])
+            validated_request_body['fbc'], validated_request_body['fbp'], event_source_url)
 
         if 'error_message' in response_data:
             return JsonResponse(

@@ -37,12 +37,17 @@ class FbWrapper(FbManager):
     @staticmethod
     def create_event(event_name: str, action_source: str, user_data: UserData, event_source_url: str = None):
 
+        action_source_value = ActionSource.OTHER
+
+        if action_source in ActionSource.__members__:
+            action_source_value = ActionSource[action_source]
+
         event = Event(
             event_name=event_name,
             event_time=int(time.time()),
             user_data=user_data,
             event_source_url=event_source_url if event_source_url is not None else '',
-            action_source=ActionSource.WEBSITE,
+            action_source=action_source_value
         )
 
         return event

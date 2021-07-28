@@ -4,6 +4,7 @@ from .models import Subscription
 from ..subscription_histories.models import SubscriptionHistory
 from ..plans.models import SubscriptionPlan
 from ..member_notifications.models import MemberNotification
+from ..member_acquisition.models import MemberAcquisition
 from .constants import *
 from .serializers import SubscriptionSerializer, SubscriptionListSerializer
 
@@ -437,6 +438,13 @@ class SubscriptionImpl(SubscriptionManager):
 
             generate_subscription = self._generate_subscription_against_transaction(transaction_instance,
                                                                                     self.get_member_id())
+
+            member_acquisition_instance = MemberAcquisition.get_member_acquisition_or_None(self.get_member_id(),
+                                                                                           self.get_community_id())
+
+            if member_acquisition_instance is not None:
+                member_acquisition_instance.user_id = self.get_member_id()
+                member_acquisition_instance.save()
 
             if 'error_message' in generate_subscription:
                 return {'error_message': generate_subscription['error_message']}

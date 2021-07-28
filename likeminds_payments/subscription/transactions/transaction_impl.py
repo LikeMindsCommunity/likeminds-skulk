@@ -264,7 +264,7 @@ class TransactionImpl(TransactionManager):
         transactions = Transaction.objects.filter(user_id=user_id).order_by('created_at')
         for transaction in transactions:
             plan = SubscriptionPlan.get_plan_or_None(transaction.plan_id)
-            if plan.community_id == community_id:
+            if plan is not None and plan.community_id == community_id:
                 output.append(transaction)
         return output
 

@@ -4,13 +4,14 @@ from ..utility.time_utilities import TimeUtilities
 
 class MemberAcquisition(models.Model):
     link_type = models.CharField(max_length=8)
-    user_id = models.IntegerField()
+    user_id = models.IntegerField(null=True, default=None)
     community_id = models.IntegerField()
-    utm_source = models.CharField(max_length=128)
-    utm_campaign = models.CharField(max_length=128)
-    utm_medium = models.CharField(max_length=128)
-    utm_term = models.CharField(max_length=128)
-    utm_content = models.CharField(max_length=128)
+    transaction_id = models.IntegerField()
+    utm_source = models.CharField(max_length=128, null=True, default=None)
+    utm_campaign = models.CharField(max_length=128, null=True, default=None)
+    utm_medium = models.CharField(max_length=128, null=True, default=None)
+    utm_term = models.CharField(max_length=128, null=True, default=None)
+    utm_content = models.CharField(max_length=128, null=True, default=None)
     shared_by = models.IntegerField(null=True, default=None)
     created_at = models.BigIntegerField(default=0)
     updated_at = models.BigIntegerField(default=0)
@@ -19,9 +20,9 @@ class MemberAcquisition(models.Model):
         return str(self.pk)
 
     @staticmethod
-    def get_member_acquisition_or_None(user_id, community_id):
+    def get_member_acquisition_or_None(transaction_id):
         try:
-            return MemberAcquisition.objects.get(user_id=user_id, community_id=community_id)
+            return MemberAcquisition.objects.get(transaction_id=transaction_id)
         except:
             return None
 
@@ -31,6 +32,7 @@ class MemberAcquisition(models.Model):
         instance.link_type = member_acquisition_body['link_type']
         instance.user_id = member_acquisition_body['user_id']
         instance.community_id = member_acquisition_body['community_id']
+        instance.transaction_id = member_acquisition_body['transaction_id']
         instance.utm_source = member_acquisition_body['utm_source']
         instance.utm_campaign = member_acquisition_body['utm_campaign']
         instance.utm_medium = member_acquisition_body['utm_medium']

@@ -439,8 +439,7 @@ class SubscriptionImpl(SubscriptionManager):
             generate_subscription = self._generate_subscription_against_transaction(transaction_instance,
                                                                                     self.get_member_id())
 
-            member_acquisition_instance = MemberAcquisition.get_member_acquisition_or_None(self.get_member_id(),
-                                                                                           self.get_community_id())
+            member_acquisition_instance = MemberAcquisition.get_member_acquisition_or_None(transaction_instance.id)
 
             if member_acquisition_instance is not None:
                 member_acquisition_instance.user_id = self.get_member_id()

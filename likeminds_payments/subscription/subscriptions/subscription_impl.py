@@ -495,7 +495,7 @@ class SubscriptionImpl(SubscriptionManager):
                         if has_permission_check['has_permission'] is False:
                             return {'error_message': 'shared_by user is not the Owner/CM of the community'}
 
-                        generate_free_subscription = self._generate_free_subscription(self.get_user_id(),
+                        generate_free_subscription = self._generate_free_subscription(self.get_member_id(),
                                                                                       self.get_community_id())
 
                         if 'error_message' in generate_free_subscription:

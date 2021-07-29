@@ -388,7 +388,9 @@ class SubscriptionImpl(SubscriptionManager):
 
         if subscription_instance is not None:
 
-            if valid_till is not None and valid_till > subscription_instance.valid_till and n_days is None:
+            existing_valid_till = subscription_instance.valid_till
+
+            if valid_till is not None and valid_till > existing_valid_till and n_days is None:
                 subscription_instance.valid_till = valid_till
 
             if valid_till is None and n_days is not None:
@@ -404,7 +406,7 @@ class SubscriptionImpl(SubscriptionManager):
                                                           subscription_instance.community_id)
 
             subscription_history_data = {
-                "start_date": subscription_instance.date_subscribed,
+                "start_date": existing_valid_till,
                 "end_date": subscription_instance.valid_till,
                 "description": 'free limited subscription',
                 "transaction": None,

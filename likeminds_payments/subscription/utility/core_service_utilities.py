@@ -127,7 +127,6 @@ class CoreServiceUtilities:
         url = REMOVE_MEMBER_API
         data = {
             'community_id': community_id,
-            'member_id': member_id
         }
 
         response = ApiUtilities.generate_post_request(url=url, data=data)
@@ -137,6 +136,36 @@ class CoreServiceUtilities:
 
         if 'success' not in response:
             return {'error_message': 'invalid response from remove member api'}
+
+        return {'success': response['success']}
+
+    @staticmethod
+    def renew_member(community_id: str, member_id: str):
+
+        if not community_id:
+            return {'error_message': 'send community_id'}
+
+        if not member_id:
+            return {'error_message': 'send member_id'}
+
+        community_id = NumberUtilities.get_integer_from_string(community_id)
+        member_id = NumberUtilities.get_integer_from_string(member_id)
+
+        url = RENEW_MEMBER_API
+        data = {
+            'community_id': community_id
+        }
+        headers = {
+            'x-member-id': '{}'.format(member_id)
+        }
+
+        response = ApiUtilities.generate_post_request(url=url, data=data, headers=headers)
+
+        if 'error_message' in response:
+            return {'error_message': response['error_message']}
+
+        if 'success' not in response:
+            return {'error_message': 'invalid response from renew member api'}
 
         return {'success': response['success']}
 

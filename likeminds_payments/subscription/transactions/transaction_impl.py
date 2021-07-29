@@ -3,6 +3,7 @@ from django.conf import settings
 from ..external_services.razorpay.razorpay_wrapper import RazorpayWrapper
 from ..utility.time_utilities import TimeUtilities
 from ..utility.model_utilities import ModelUtilities
+from ..utility.core_service_utilities import CoreServiceUtilities
 from .constants import *
 from .models import Transaction
 from ..plans.models import SubscriptionPlan
@@ -194,6 +195,13 @@ class TransactionImpl(TransactionManager):
 
                 if 'error_message' in create_subscription:
                     return {'error_message': create_subscription['error_message']}
+
+                plan_instance = SubscriptionPlan.get_plan_or_None(transaction_instance.plan_id)
+
+                response = CoreServiceUtilities.renew_member(plan_instance.community_id, transaction_data['user_id'])
+
+                if 'error_message' in response:
+                    print({'error_message': response['error_message']})
 
         return {'success': True}
 

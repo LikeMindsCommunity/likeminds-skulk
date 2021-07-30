@@ -1,6 +1,7 @@
 from .transaction_manager import TransactionManager
 from django.conf import settings
 from ..external_services.razorpay.razorpay_wrapper import RazorpayWrapper
+from ..external_services.logging.logging_wrapper import LoggingWrapper
 from ..utility.time_utilities import TimeUtilities
 from ..utility.model_utilities import ModelUtilities
 from .constants import *

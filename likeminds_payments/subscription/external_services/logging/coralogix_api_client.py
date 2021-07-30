@@ -60,7 +60,7 @@ class CoralogixApiClient(CoralogixApiManager):
 
     def _create_logging_api_payload(self, payload: dict) -> dict:
         log_entry_object = CORALOGIX_CONSTS.get('LOG_ENTRY_SCHEMA')
-        log_entry_object['timestamp'] = TimeUtilities.current_time_in_millis()
+        log_entry_object['timestamp'] = TimeUtilities.current_time_in_milliseconds()
         log_entry_object['severity'] = self._get_log_severity_level(payload['response']['http_response_code'])
         log_entry_object['text'] = payload
 

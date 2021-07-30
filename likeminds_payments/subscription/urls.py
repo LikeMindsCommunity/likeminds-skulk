@@ -4,6 +4,7 @@ from .orders.order_view_impl import *
 from .transactions.transaction_view_impl import *
 from .subscriptions.subscription_view_impl import *
 from .subscription_histories.subscription_history_view_impl import *
+from .leads.lead_view_impl import *
 
 app_name = "subscription"
 
@@ -28,5 +29,5 @@ urlpatterns = [
     path('fetch_event_plan', FetchEventPlanView.as_view(), name='create_event_plan'),
     path('create_event_order', CreateEventOrderView.as_view(), name='create_event_order'),
     path('valid_event_transaction', ValidateEventTransactionView.as_view(), name='valid_event_transaction'),
-
+    path('send_facebook_event', SendEventView.as_view(), name='send-facebook-event')
 ]

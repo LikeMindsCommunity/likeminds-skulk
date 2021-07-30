@@ -130,4 +130,7 @@ class CreateEventOrderView(APIView):
         order_manager = OrderImpl(order_instance=order_instance['order_instance'])
         response_data = order_manager.create_event_order()
 
+        if response_data.get('error_message'):
+            return JsonResponse(response_data, status=status_codes.HTTP_500_INTERNAL_SERVER_ERROR)
+
         return JsonResponse({'success': True, "order": response_data})

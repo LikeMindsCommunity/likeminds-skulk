@@ -32,10 +32,6 @@ class PlanImpl(PlanManager):
 
     def _process_event_creation_plan(self, req_body):
 
-        cost = NumberUtilities.convert_to_paisa_or_none(req_body.get('cost'))
-        strike_cost = NumberUtilities.convert_to_paisa_or_none(req_body.get('strike_cost'))
-        cost_usd = NumberUtilities.convert_to_paisa_or_none(req_body.get('cost_usd'))
-        strike_cost_usd = NumberUtilities.convert_to_paisa_or_none(req_body.get('cost_usd'))
         discount_type = req_body.get('discount_type', 0)
         discount = None
 
@@ -48,10 +44,10 @@ class PlanImpl(PlanManager):
         return {
             'chatroom_id': req_body.get('chatroom_id'),
             'community_id': req_body.get('community_id'),
-            'cost': cost,
-            'strike_cost': strike_cost,
-            'cost_usd': cost_usd,
-            'strike_cost_usd': strike_cost_usd,
+            'cost': NumberUtilities.convert_to_paisa_or_none(req_body.get('cost')),
+            'strike_cost': NumberUtilities.convert_to_paisa_or_none(req_body.get('strike_cost')),
+            'cost_usd': NumberUtilities.convert_to_paisa_or_none(req_body.get('cost_usd')),
+            'strike_cost_usd': NumberUtilities.convert_to_paisa_or_none(req_body.get('strike_cost_usd')),
             'discount_type': discount_type,
             'discount': discount
         }

@@ -164,7 +164,4 @@ class FetchEventPlanView(TransactionMixin, APIView):
 
         response_data = plan_manager.fetch_event_plan(chatroom_ids)
 
-        if response_data.get('error_message'):
-            return JsonResponse(response_data, status=status_codes.HTTP_400_BAD_REQUEST)
-
         return JsonResponse(response_data)

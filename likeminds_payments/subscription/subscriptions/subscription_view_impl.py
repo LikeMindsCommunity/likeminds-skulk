@@ -5,7 +5,6 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 
 from ..mixins import TransactionMixin
-from ..utility.json_utilities import JsonUtilities
 from ..utility.request_utilities import RequestUtilities
 from .subscription_impl import SubscriptionImpl
 from .subscription_view_helper import SubscriptionViewHelper

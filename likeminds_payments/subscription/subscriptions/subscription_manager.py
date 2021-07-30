@@ -9,7 +9,7 @@ class SubscriptionManager(metaclass=abc.ABCMeta):
                 (hasattr(subclass, 'start_subscription') and callable(subclass.start_subscription)) and
                 (hasattr(subclass, 'fetch_subscription') and callable(subclass.fetch_subscription)) and
                 (hasattr(subclass, 'fetch_community_meta') and callable(subclass.fetch_community_meta)) and
-                (hasattr(subclass, 'convert_to_paid') and callable(subclass.convert_to_paid))  or
+                (hasattr(subclass, 'convert_to_paid') and callable(subclass.convert_to_paid)) or
                 NotImplemented)
 
     @abc.abstractmethod
@@ -47,5 +47,4 @@ class SubscriptionManager(metaclass=abc.ABCMeta):
         convert free internal communities to paid
         """
         raise NotImplementedError
-
 

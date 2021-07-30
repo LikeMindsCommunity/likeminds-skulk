@@ -1,5 +1,3 @@
-import uuid
-
 from django.db import models
 from ..utility.time_utilities import TimeUtilities
 from ..transactions.models import Transaction

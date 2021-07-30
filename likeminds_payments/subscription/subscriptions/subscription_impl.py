@@ -4,6 +4,7 @@ from .models import Subscription
 from ..subscription_histories.models import SubscriptionHistory
 from ..plans.models import SubscriptionPlan
 from ..member_notifications.models import MemberNotification
+from ..member_acquisition.models import MemberAcquisition
 from .constants import *
 from .serializers import SubscriptionSerializer, SubscriptionListSerializer
 
@@ -387,7 +388,9 @@ class SubscriptionImpl(SubscriptionManager):
 
         if subscription_instance is not None:
 
-            if valid_till is not None and valid_till > subscription_instance.valid_till and n_days is None:
+            existing_valid_till = subscription_instance.valid_till
+
+            if valid_till is not None and valid_till > existing_valid_till and n_days is None:
                 subscription_instance.valid_till = valid_till
 
             if valid_till is None and n_days is not None:
@@ -403,7 +406,7 @@ class SubscriptionImpl(SubscriptionManager):
                                                           subscription_instance.community_id)
 
             subscription_history_data = {
-                "start_date": subscription_instance.date_subscribed,
+                "start_date": existing_valid_till,
                 "end_date": subscription_instance.valid_till,
                 "description": 'free limited subscription',
                 "transaction": None,
@@ -437,6 +440,12 @@ class SubscriptionImpl(SubscriptionManager):
 
             generate_subscription = self._generate_subscription_against_transaction(transaction_instance,
                                                                                     self.get_member_id())
+
+            member_acquisition_instance = MemberAcquisition.get_member_acquisition_or_None(transaction_instance.id)
+
+            if member_acquisition_instance is not None:
+                member_acquisition_instance.user_id = self.get_member_id()
+                member_acquisition_instance.save()
 
             if 'error_message' in generate_subscription:
                 return {'error_message': generate_subscription['error_message']}

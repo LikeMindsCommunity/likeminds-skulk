@@ -131,37 +131,67 @@ class CreateEventPlanView(TransactionMixin, APIView):
     def dispatch(self, request, *args, **kwargs):
         return super(CreateEventPlanView, self).dispatch(request, *args, **kwargs)
 
-    @staticmethod
-    def post(request, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
 
         request_body = RequestUtilities.load_request_body(request)
 
-        if not request_body:
-            return JsonResponse({'success': False, 'error_message': "Invalid request"})
+        validated_request = self.validate_request_body(request_body)
+
+        if not validated_request:
+            return JsonResponse(validated_request, status=status_codes.HTTP_400_BAD_REQUEST)
 
         plan_manager = PlanImpl()
 
-        response_data = plan_manager.create_event_plan(request_body)
+        try:
+            response_data = plan_manager.create_event_plan(request_body)
 
-        if response_data.get('error_message'):
+        except Exception as e:
 
-            return JsonResponse(response_data, status=status_codes.HTTP_400_BAD_REQUEST)
+            return JsonResponse({'error_message': e.args}, status=status_codes.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return JsonResponse(response_data)
+
+    def validate_request_body(self, req_body):
+
+        if not req_body:
+            return {'success': False, 'error_message': "Invalid request"}
+
+        chatroom_id = req_body.get('chatroom_id')
+
+        if not chatroom_id:
+            return {'success': False, 'error_message': "In-valid chatroom id"}
+
+        community_id = req_body.get('community_id')
+
+        if not community_id:
+            return {'success': False, 'error_message': "In-valid community id"}
 
 
 class FetchEventPlanView(TransactionMixin, APIView):
 
-    @staticmethod
-    def get(request, *args, **kwargs):
+    def get(self, request, *args, **kwargs):
 
-        chatroom_ids = JsonUtilities.load_json(request.GET.get('chatroom_ids'))
+        query_params = self.get_event_plan_params(request)
 
-        if not chatroom_ids:
-            return JsonResponse({'error_message': "In-valid chatroom ids"}, status=status_codes.HTTP_400_BAD_REQUEST)
+        if query_params.get('error_message'):
+            return JsonResponse(query_params, status=status_codes.HTTP_400_BAD_REQUEST)
 
+        chatroom_ids = query_params.get('chatroom_ids')
         plan_manager = PlanImpl()
 
         response_data = plan_manager.fetch_event_plan(chatroom_ids)
 
         return JsonResponse(response_data)
+
+    def get_event_plan_params(self, request):
+
+        query_params = {}
+
+        chatroom_ids = JsonUtilities.load_json(request.GET.get('chatroom_ids'))
+
+        if not chatroom_ids:
+            return {'error_message': "In-valid chatroom ids"}
+
+        query_params['chatroom_ids'] = chatroom_ids
+
+        return query_params

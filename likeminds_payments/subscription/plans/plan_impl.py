@@ -97,16 +97,6 @@ class PlanImpl(PlanManager):
 
     def create_event_plan(self, req_body) -> dict:
 
-        chatroom_id = req_body.get('chatroom_id')
-
-        if not chatroom_id:
-            return {'success': False, 'error_message': "In-valid chatroom id"}
-
-        community_id = req_body.get('community_id')
-
-        if not community_id:
-            return {'success': False, 'error_message': "In-valid community id"}
-
         create_info = self._process_event_creation_plan(req_body)
         SubscriptionEventPlan.create_instance(create_info)
 

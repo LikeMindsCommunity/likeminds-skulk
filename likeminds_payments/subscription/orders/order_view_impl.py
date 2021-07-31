@@ -128,9 +128,11 @@ class CreateEventOrderView(APIView):
 
         order_instance = OrderViewHelper.create_event_order_instance_helper(validated_request_body)
         order_manager = OrderImpl(order_instance=order_instance['order_instance'])
-        response_data = order_manager.create_event_order()
 
-        if response_data.get('error_message'):
-            return JsonResponse(response_data, status=status_codes.HTTP_500_INTERNAL_SERVER_ERROR)
+        try:
+            response_data = order_manager.create_event_order()
+
+        except Exception as e:
+            return JsonResponse({'error_message': e.args}, status=status_codes.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return JsonResponse({'success': True, "order": response_data})

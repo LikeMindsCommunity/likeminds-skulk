@@ -263,3 +263,26 @@ class CoreServiceUtilities:
 
         return {'success': response['success']}
 
+    @staticmethod
+    def get_member_state(community_id, member_id):
+
+        if not community_id or not member_id:
+            return {'error_message': 'send community_id and user_id'}
+
+        community_id = NumberUtilities.get_integer_from_string(community_id)
+        member_id = NumberUtilities.get_integer_from_string(member_id)
+
+        url = MEMBER_STATE_API
+        query_params = {
+            'community_id': community_id,
+            'member_id': member_id
+        }
+        response = ApiUtilities.generate_get_request(url=url, query_params=query_params)
+
+        if 'error_message' in response:
+            return {'error_message': 'error getting member state'}
+
+        if 'state' not in response:
+            return {'error_message': 'no state field in member state response'}
+
+        return response['state']

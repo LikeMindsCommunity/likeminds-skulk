@@ -1,8 +1,10 @@
 from ..plans.models import SubscriptionPlan, SubscriptionEventPlan
 from ..utility.core_service_utilities import CoreServiceUtilities
+from ..utility.number_utilities import NumberUtilities
 from ..utility.request_utilities import RequestUtilities
 from ..external_services.razorpay.razorpay_wrapper import RazorpayWrapper
 from .constants import *
+from ..utility.states import MemberState, EventDiscountType
 
 
 class OrderViewHelper:
@@ -204,3 +206,21 @@ class OrderViewHelper:
             return {'error_message': 'error creating order with razorpay'}
 
         return {'order_instance': order_instance}
+
+    @staticmethod
+    def get_cost_for_event(plan_instance, user_id) -> int:
+
+        member_state = CoreServiceUtilities.get_member_state(plan_instance.community_id, user_id)
+        cost = plan_instance.cost
+
+        if member_state in [MemberState.MEMBER, MemberState.PROFILE_UNAVAILABLE]:
+
+            if plan_instance.discount and plan_instance.discount_type:
+
+                if plan_instance.discount_type == EventDiscountType.PERCENTAGE:
+                    cost = NumberUtilities.get_n_percentage_value(cost, plan_instance.discount)
+
+                elif plan_instance.discount_type == EventDiscountType.FLAT:
+                    cost = cost - plan_instance.discount
+
+        return cost

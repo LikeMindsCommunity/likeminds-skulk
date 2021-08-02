@@ -2,6 +2,7 @@ from .transaction_manager import TransactionManager
 from django.conf import settings
 from ..external_services.razorpay.razorpay_wrapper import RazorpayWrapper
 from ..utility.core_service_utilities import CoreServiceUtilities
+from ..utility.number_utilities import NumberUtilities
 from ..utility.states import TransactionType
 from ..utility.time_utilities import TimeUtilities
 from ..utility.model_utilities import ModelUtilities
@@ -137,7 +138,7 @@ class TransactionImpl(TransactionManager):
             "status": payment_instance['status'],
             "error_description": "",
             "refund_amount": 0,
-            "user_id": order_notes['user_id'],
+            "user_id": order_notes.get('user_id'),
             "payment_page_url": order_notes['payment_page_url'],
             "grace_period": 0,
             "type": TransactionType.EVENT
@@ -321,8 +322,11 @@ class TransactionImpl(TransactionManager):
                 if 'error_message' in create_subscription:
                     return {'error_message': create_subscription['error_message']}
 
-        if transaction_instance.type == TransactionType.EVENT:
+        if transaction_instance.type == TransactionType.EVENT and transaction_instance.user_id:
             self._attend_event_for_paid_transaction(transaction_instance)
+
+        else:
+            pass
 
             if not transaction_data['renew'] and transaction_data['user_id'] is None:
 
@@ -382,3 +386,42 @@ class TransactionImpl(TransactionManager):
             return {'success': True}
 
         return {'success': False, 'error_message': "Invalid transaction"}
+
+    def valid_event_payment_id(self, payment_id, user_id) -> dict:
+
+        transaction_filter = ModelUtilities.get_model_filter(Transaction, {'payment_id': payment_id})
+
+        if transaction_filter:
+            transaction_instance = transaction_filter[0]
+
+            if not transaction_instance.user_id:
+                return {'success': True}
+
+            if transaction_instance.user_id == NumberUtilities.get_integer_from_string(user_id):
+                return {'success': True}
+
+            else:
+                return {'success': False, 'error_message': "Already used payment id"}
+
+        else:
+
+            return {'success': False, 'error_message': "In-valid payment id"}
+
+    def update_payment_id(self, req_body, user_id) -> dict:
+
+        transaction_filter = ModelUtilities.get_model_filter(Transaction, {'payment_id': req_body.get('payment_id')})
+
+        if transaction_filter:
+            transaction_instance = transaction_filter[0]
+
+            if not transaction_instance.user_id:
+                transaction_instance.user_id = user_id
+                transaction_instance.save()
+
+                return {'success': True}
+
+            else:
+
+                return {'success': False, 'error_message': "Already used payment id"}
+
+        return {'success': False, 'error_message': "In-valid payment id"}

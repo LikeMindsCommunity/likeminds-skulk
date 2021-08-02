@@ -167,3 +167,70 @@ class ValidateEventTransactionView(TransactionMixin, APIView):
 
         return {}
 
+
+class ValidateEventPaymentView(TransactionMixin, APIView):
+
+    def get(self, request, *args, **kwargs):
+
+        user_id = RequestUtilities.get_parameter_from_headers(request, 'HTTP_X_MEMBER_ID')
+        payment_id = request.GET.get('payment_id')
+
+        request_validated = self.validate_request_params(user_id, payment_id)
+
+        if request_validated.get('error_message'):
+            return JsonResponse(request_validated, status=status_codes.HTTP_400_BAD_REQUEST)
+
+        transaction_manager = TransactionImpl()
+
+        response_data = transaction_manager.valid_event_payment_id(payment_id, user_id)
+        print(response_data)
+        if response_data.get('error_message'):
+            return JsonResponse(response_data, status=status_codes.HTTP_400_BAD_REQUEST)
+
+        return JsonResponse(response_data)
+
+    def validate_request_params(self, user_id, payment_id):
+
+        if not user_id:
+            return {'error_message': "In-valid user id"}
+
+        if not payment_id:
+            return {'error_message': "In-valid payment id"}
+
+        return {}
+
+
+class UpdatePaymentView(TransactionMixin, APIView):
+
+    @method_decorator(csrf_exempt)
+    def dispatch(self, request, *args, **kwargs):
+        return super(UpdatePaymentView, self).dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+
+        member_id = RequestUtilities.get_parameter_from_headers(request, 'HTTP_X_MEMBER_ID')
+
+        request_body = RequestUtilities.load_request_body(request)
+        validate_request = self.validate_request_body(request_body)
+
+        if validate_request.get('error_message'):
+            return JsonResponse({'error_message': "In-valid request body"},
+                                status=status_codes.HTTP_400_BAD_REQUEST)
+
+        transaction_manager = TransactionImpl()
+        response = transaction_manager.update_payment_id(request_body, member_id)
+
+        if response.get('error_message'):
+            return JsonResponse(response, status=status_codes.HTTP_400_BAD_REQUEST)
+
+        return JsonResponse(response)
+
+    def validate_request_body(self, req_body):
+
+        if not req_body:
+            return {'error_message': "In-valid request body"}
+
+        if not req_body.get('payment_id'):
+            return {'error_message': "In-valid payment id"}
+
+        return {}

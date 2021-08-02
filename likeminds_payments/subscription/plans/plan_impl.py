@@ -1,11 +1,13 @@
+from .constants import EVENT_PAYMENT_LINK
 from ..plans.plan_manager import PlanManager
 from .models import SubscriptionPlan, SubscriptionEventPlan
 from .serializers import PlanSerializer, EventPlanSerializer
+from ..utility.core_service_utilities import CoreServiceUtilities
 from ..utility.number_utilities import NumberUtilities
 
 from ..utility.plan_utilities import PlanUtilities
 from ..utility.states import EventDiscountType
-
+from django.conf import settings
 
 class PlanImpl(PlanManager):
 
@@ -95,10 +97,15 @@ class PlanImpl(PlanManager):
 
         return {'success': True}
 
-    def create_event_plan(self, req_body) -> dict:
+    def create_event_plan(self, req_body, member_id) -> dict:
 
         create_info = self._process_event_creation_plan(req_body)
-        SubscriptionEventPlan.create_instance(create_info)
+        instance = SubscriptionEventPlan.create_instance(create_info)
+        CoreServiceUtilities.update_event({
+            'member_id': member_id,
+            'chatroom_id': instance.chatroom_id,
+            'event_payment_link': EVENT_PAYMENT_LINK % (settings.URL, instance.event_plan_id, instance.community_id)
+        })
 
         return {'success': True}
 

@@ -134,16 +134,16 @@ class CreateEventPlanView(TransactionMixin, APIView):
     def post(self, request, *args, **kwargs):
 
         request_body = RequestUtilities.load_request_body(request)
-
+        member_id = RequestUtilities.get_parameter_from_headers(request, 'HTTP_X_MEMBER_ID')
         validated_request = self.validate_request_body(request_body)
 
-        if not validated_request:
+        if validated_request.get('error_message'):
             return JsonResponse(validated_request, status=status_codes.HTTP_400_BAD_REQUEST)
 
         plan_manager = PlanImpl()
 
         try:
-            response_data = plan_manager.create_event_plan(request_body)
+            response_data = plan_manager.create_event_plan(request_body, member_id)
 
         except Exception as e:
 
@@ -165,6 +165,8 @@ class CreateEventPlanView(TransactionMixin, APIView):
 
         if not community_id:
             return {'success': False, 'error_message': "In-valid community id"}
+
+        return {}
 
 
 class FetchEventPlanView(TransactionMixin, APIView):

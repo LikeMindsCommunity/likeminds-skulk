@@ -286,3 +286,30 @@ class CoreServiceUtilities:
             return {'error_message': 'no state field in member state response'}
 
         return response['state']
+
+    @staticmethod
+    def update_event(update_info):
+
+        if not update_info:
+            return
+
+        url = CHATROOM_EVENT_UPDATE
+
+        data = {
+            'chatroom_id': update_info.get('chatroom_id'),
+            'event_payment_link': update_info.get('event_payment_link')
+        }
+
+        headers = {
+            'x-member-id': '{}'.format(update_info.get('member_id'))
+        }
+
+        response = ApiUtilities.generate_post_request(url=url, data=data, headers=headers)
+
+        if 'error_message' in response:
+            return {'error_message': response['error_message']}
+
+        if 'success' not in response:
+            return {'error_message': 'invalid response from update event api'}
+
+        return {'success': response['success']}

@@ -1,7 +1,15 @@
 EVENTS = {
+    'SUBSCRIPTION_STARTED': {
+        'code': 'subscription_started',
+        'event': 'Subscription started'
+    },
     'SUBSCRIPTION_DUE': {
         'code': 'subscription_due',
         'event': 'Subscription due'
+    },
+    'SUBSCRIPTION_RENEWED': {
+        'code': 'subscription_renewed',
+        'event': 'Subscription renewed'
     },
     'SUBSCRIPTION_ENDED': {
         'code': 'subscription_ended',

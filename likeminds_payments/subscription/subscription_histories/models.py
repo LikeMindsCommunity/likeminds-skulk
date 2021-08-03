@@ -18,6 +18,13 @@ class SubscriptionHistory(models.Model):
         return self.pk
 
     @staticmethod
+    def get_subscription_history_or_None(user_id, community_id):
+        try:
+            return SubscriptionHistory.objects.get(user_id=user_id, community_id=community_id)
+        except:
+            return None
+
+    @staticmethod
     def create_instance(subscription_history_body):
         instance = SubscriptionHistory()
         instance.start_date = subscription_history_body['start_date']

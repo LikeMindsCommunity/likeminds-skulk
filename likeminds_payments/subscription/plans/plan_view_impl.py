@@ -135,7 +135,7 @@ class CreateEventPlanView(TransactionMixin, APIView):
 
         request_body = RequestUtilities.load_request_body(request)
         member_id = RequestUtilities.get_parameter_from_headers(request, 'HTTP_X_MEMBER_ID')
-        validated_request = self.validate_request_body(request_body)
+        validated_request = PlanViewHelper.validate_request_body_for_create_event_plan_view(request_body)
 
         if validated_request.get('error_message'):
             return JsonResponse(validated_request, status=status_codes.HTTP_400_BAD_REQUEST)
@@ -150,23 +150,6 @@ class CreateEventPlanView(TransactionMixin, APIView):
             return JsonResponse({'error_message': e.args}, status=status_codes.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return JsonResponse(response_data)
-
-    def validate_request_body(self, req_body):
-
-        if not req_body:
-            return {'success': False, 'error_message': "Invalid request"}
-
-        chatroom_id = req_body.get('chatroom_id')
-
-        if not chatroom_id:
-            return {'success': False, 'error_message': "In-valid chatroom id"}
-
-        community_id = req_body.get('community_id')
-
-        if not community_id:
-            return {'success': False, 'error_message': "In-valid community id"}
-
-        return {}
 
 
 class FetchEventPlanView(TransactionMixin, APIView):

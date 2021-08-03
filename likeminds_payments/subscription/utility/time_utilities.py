@@ -70,4 +70,4 @@ class TimeUtilities:
 
     @staticmethod
     def convert_epoch_to_date(epoch: int) -> str:
-        return time.strftime('%d %b %Y %H:%M:%S', time.gmtime(epoch // 1000))
+        return time.strftime('%d %b %Y', time.gmtime(epoch // 1000))

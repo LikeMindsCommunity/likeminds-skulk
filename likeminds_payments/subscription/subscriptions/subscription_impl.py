@@ -428,9 +428,11 @@ class SubscriptionImpl(SubscriptionManager):
 
     @staticmethod
     def _send_subscription_event(subscription_history_instance: SubscriptionHistory,
-                                 subscription_instance: Subscription, event: str) -> None:
+                                 subscription_instance: Subscription) -> None:
 
-        if None not in [subscription_instance, subscription_history_instance, event]:
+        if None not in [subscription_instance, subscription_history_instance]:
+
+            event = EVENTS['SUBSCRIPTION_STARTED']['event']
 
             event_data = {
                 'user_id': subscription_history_instance.user_id,
@@ -438,9 +440,9 @@ class SubscriptionImpl(SubscriptionManager):
                 'community_name': '',
                 'plan_name': '',
                 'amount': 0,
-                'end_date': subscription_history_instance.end_date,
+                'end_date': TimeUtilities.convert_epoch_to_date(subscription_history_instance.end_date),
                 'no_of_days': (subscription_history_instance.end_date -
-                               subscription_history_instance.start_date) / MILLISECONDS_IN_A_DAY,
+                               subscription_history_instance.start_date) // MILLISECONDS_IN_A_DAY,
                 'mode_of_payment': FREE_MODE,
                 'type': subscription_instance.type
             }
@@ -455,6 +457,8 @@ class SubscriptionImpl(SubscriptionManager):
                 event_data['plan_name'] = subscription_instance.transaction.plan_name
                 event_data['amount'] = subscription_instance.transaction.amount
                 event_data['mode_of_payment'] = ONLINE_MODE
+                if subscription_instance.transaction.renew:
+                    event = EVENTS['SUBSCRIPTION_RENEWED']['event']
 
             analytics.track(subscription_history_instance.user_id, event, event_data)
 
@@ -490,8 +494,7 @@ class SubscriptionImpl(SubscriptionManager):
             subscription_history_instance = SubscriptionHistory.get_subscription_history_or_None(
                 self.get_member_id(), plan_instance.community_id)
 
-            self._send_subscription_event(subscription_history_instance, subscription_instance,
-                                          EVENTS['SUBSCRIPTION_STARTED']['event'])
+            self._send_subscription_event(subscription_history_instance, subscription_instance)
 
             return {'success': True}
 
@@ -528,12 +531,11 @@ class SubscriptionImpl(SubscriptionManager):
                             return {'error_message': generate_free_subscription['error_message']}
 
                         subscription_instance = Subscription.get_subscription_or_None(
-                            self.get_member_id(), self.get_community_id())
+                            self.get_user_id(), self.get_community_id())
                         subscription_history_instance = SubscriptionHistory.get_subscription_history_or_None(
-                            self.get_member_id(), self.community_id)
+                            self.get_user_id(), self.get_community_id())
 
-                        self._send_subscription_event(subscription_history_instance, subscription_instance,
-                                                      EVENTS['SUBSCRIPTION_STARTED']['event'])
+                        self._send_subscription_event(subscription_history_instance, subscription_instance)
 
                         return {'success': True}
 
@@ -551,6 +553,13 @@ class SubscriptionImpl(SubscriptionManager):
 
                         if 'error_message' in generate_free_subscription:
                             return {'error_message': generate_free_subscription['error_message']}
+
+                        subscription_instance = Subscription.get_subscription_or_None(
+                            self.get_member_id(), self.get_community_id())
+                        subscription_history_instance = SubscriptionHistory.get_subscription_history_or_None(
+                            self.get_member_id(), self.get_community_id())
+
+                        self._send_subscription_event(subscription_history_instance, subscription_instance)
 
                         return {'success': True}
 

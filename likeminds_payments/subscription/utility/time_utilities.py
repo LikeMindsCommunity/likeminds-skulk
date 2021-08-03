@@ -67,3 +67,7 @@ class TimeUtilities:
     @staticmethod
     def add_milliseconds_in_epoch_time(epoch: int, milliseconds: int) -> int:
         return epoch + milliseconds
+
+    @staticmethod
+    def convert_epoch_to_date(epoch: int) -> str:
+        return time.strftime('%d %b %Y %H:%M:%S', time.gmtime(epoch // 1000))

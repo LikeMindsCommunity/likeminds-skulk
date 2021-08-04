@@ -310,7 +310,8 @@ class TransactionImpl(TransactionManager):
         if not transaction_instance:
             return {'error_message': 'error while creating transaction'}
 
-        if transaction_body['event'] == 'payment.captured' and TransactionType.COMMUNITY_SUBSCRIPTION:
+        if transaction_body['event'] == 'payment.captured' and \
+                transaction_instance.type == TransactionType.COMMUNITY_SUBSCRIPTION:
 
             if transaction_data['renew'] and transaction_data['user_id'] is not None:
 

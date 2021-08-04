@@ -19,3 +19,8 @@ class NumberUtilities:
         if number is not None:
             return number // 100
         return None
+
+    @staticmethod
+    def get_n_percentage_value(number, n):
+
+        return (number * n) / 100

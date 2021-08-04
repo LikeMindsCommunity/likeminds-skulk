@@ -238,3 +238,78 @@ class CoreServiceUtilities:
             return {'error_message': 'something went wrong'}
 
         return {'private_link': response['private_link']}
+
+    @staticmethod
+    def attend_event(attend_info):
+
+        url = CHATROOM_EVENT_ATTEND
+
+        data = {
+            'chatroom_id': attend_info.get('chatroom_id'),
+            'attending_status': attend_info.get('attending_status', False)
+        }
+
+        headers = {
+            'x-member-id': '{}'.format(attend_info.get('member_id'))
+        }
+
+        response = ApiUtilities.generate_post_request(url=url, data=data, headers=headers)
+
+        if 'error_message' in response:
+            return {'error_message': response['error_message']}
+
+        if 'success' not in response:
+            return {'error_message': 'invalid response from attend event api'}
+
+        return {'success': response['success']}
+
+    @staticmethod
+    def get_member_state(community_id, member_id):
+
+        if not community_id or not member_id:
+            return {'error_message': 'send community_id and user_id'}
+
+        community_id = NumberUtilities.get_integer_from_string(community_id)
+        member_id = NumberUtilities.get_integer_from_string(member_id)
+
+        url = MEMBER_STATE_API
+        query_params = {
+            'community_id': community_id,
+            'member_id': member_id
+        }
+        response = ApiUtilities.generate_get_request(url=url, query_params=query_params)
+
+        if 'error_message' in response:
+            return {'error_message': 'error getting member state'}
+
+        if 'state' not in response:
+            return {'error_message': 'no state field in member state response'}
+
+        return response['state']
+
+    @staticmethod
+    def update_event(update_info):
+
+        if not update_info:
+            return
+
+        url = CHATROOM_EVENT_UPDATE
+
+        data = {
+            'chatroom_id': update_info.get('chatroom_id'),
+            'event_payment_link': update_info.get('event_payment_link')
+        }
+
+        headers = {
+            'x-member-id': '{}'.format(update_info.get('member_id'))
+        }
+
+        response = ApiUtilities.generate_post_request(url=url, data=data, headers=headers)
+
+        if 'error_message' in response:
+            return {'error_message': response['error_message']}
+
+        if 'success' not in response:
+            return {'error_message': 'invalid response from update event api'}
+
+        return {'success': response['success']}

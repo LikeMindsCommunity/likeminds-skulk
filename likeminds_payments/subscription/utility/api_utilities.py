@@ -39,7 +39,6 @@ class ApiUtilities:
 
     @staticmethod
     def validate_response(response):
-
         if response.status_code == 200:
             return response.json()
 

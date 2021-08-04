@@ -7,7 +7,11 @@ class TransactionManager(metaclass=abc.ABCMeta):
     def __subclasshook__(cls, subclass):
         return ((hasattr(subclass, 'create_transaction') and callable(subclass.create_transaction)) and
                 (hasattr(subclass, 'fetch_transactions') and callable(subclass.fetch_transactions)) and
-                (hasattr(subclass, 'refund_transaction') and callable(subclass.refund_transaction)) or
+                (hasattr(subclass, 'refund_transaction') and callable(subclass.refund_transaction)) and
+                (hasattr(subclass, 'valid_event_transaction') and callable(subclass.valid_event_transaction)) and
+                (hasattr(subclass, 'valid_event_payment_id') and callable(subclass.valid_event_payment_id)) and
+                (hasattr(subclass, 'update_payment_id') and callable(subclass.update_payment_id))
+                or
                 NotImplemented)
 
     @abc.abstractmethod
@@ -29,4 +33,28 @@ class TransactionManager(metaclass=abc.ABCMeta):
         """
         Refunds a transaction
         """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def valid_event_transaction(self, chatroom_id, user_id) -> dict:
+        """
+        create a check if event transaction is valid or not
+        """
+
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def valid_event_payment_id(self, payment_id, user_id) -> dict:
+        """
+        create if the payment id is valid or not
+        """
+
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def update_payment_id(self, req_body, user_id) -> dict:
+        """
+        updates the payment id and user
+        """
+
         raise NotImplementedError

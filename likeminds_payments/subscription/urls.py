@@ -25,5 +25,11 @@ urlpatterns = [
     path('fetch_history', FetchSubscriptionHistoryView.as_view(), name='fetch-subscription-history'),
     path('fetch_community_meta', FetchCommunityMetaView.as_view(), name='fetch-community-meta'),
     path('convert_to_paid', ConvertToPaidView.as_view(), name='convert-to-paid'),
-    path('send_facebook_event', SendEventView.as_view(), name='send-facebook-event')
+    path('create_event_plan', CreateEventPlanView.as_view(), name='create_event_plan'),
+    path('fetch_event_plan', FetchEventPlanView.as_view(), name='create_event_plan'),
+    path('create_event_order', CreateEventOrderView.as_view(), name='create_event_order'),
+    path('valid_event_transaction', ValidateEventTransactionView.as_view(), name='valid_event_transaction'),
+    path('send_facebook_event', SendEventView.as_view(), name='send-facebook-event'),
+    path('valid_event_payment_id', ValidateEventPaymentView.as_view(), name='valid_event_payment_id'),
+    path('update_payment_id', UpdatePaymentView.as_view(), name='update_payment_id')
 ]

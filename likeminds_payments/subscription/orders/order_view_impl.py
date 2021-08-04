@@ -100,7 +100,6 @@ class FetchCountryCodeView(APIView):
 
     @staticmethod
     def get(request, *args, **kwargs):
-
         ip = OrderViewHelper.get_ip(request)
         country_code = IpWrapper.get_country_code_from_ip(ip)
 
@@ -108,3 +107,32 @@ class FetchCountryCodeView(APIView):
             {'success': True, 'country_code': country_code},
             status=status_codes.HTTP_200_OK
         )
+
+
+class CreateEventOrderView(APIView):
+
+    @method_decorator(csrf_exempt)
+    def dispatch(self, request, *args, **kwargs):
+        return super(CreateEventOrderView, self).dispatch(request, *args, **kwargs)
+
+    @staticmethod
+    def post(request, *args, **kwargs):
+
+        request_body = RequestUtilities.load_request_body(request)
+
+        validated_request_body = OrderViewHelper.create_event_order_body_validator(request_body)
+
+        if validated_request_body.get('error_message'):
+            return JsonResponse({'success': False, 'error_message': validated_request_body['error_message']},
+                                status=status_codes.HTTP_400_BAD_REQUEST)
+
+        order_instance = OrderViewHelper.create_event_order_instance_helper(validated_request_body)
+        order_manager = OrderImpl(order_instance=order_instance['order_instance'])
+
+        try:
+            response_data = order_manager.create_event_order()
+
+        except Exception as e:
+            return JsonResponse({'error_message': e.args}, status=status_codes.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return JsonResponse({'success': True, "order": response_data})

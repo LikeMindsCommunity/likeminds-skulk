@@ -65,3 +65,4 @@ def SubscriptionListSerializer(member_subscriptions) -> dict:
         output[key] = SubscriptionSerializer(member_subscriptions[key])
 
     return output
+

@@ -22,3 +22,11 @@ class OrderManager(metaclass=abc.ABCMeta):
         verify the payment for an order
         """
         raise NotImplementedError
+
+    @abc.abstractmethod
+    def create_event_order(self) -> dict:
+        """
+        create an order for an event
+        """
+        raise NotImplementedError
+

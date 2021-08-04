@@ -15,5 +15,7 @@ class NumberUtilities:
         return None
 
     @staticmethod
-    def convert_to_rupee_or_none(number: int) -> int:
-        return number // 100
+    def convert_to_rupee_or_none(number: int):
+        if number is not None:
+            return number // 100
+        return None

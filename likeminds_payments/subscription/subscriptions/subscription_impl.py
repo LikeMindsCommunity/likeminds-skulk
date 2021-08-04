@@ -455,7 +455,8 @@ class SubscriptionImpl(SubscriptionManager):
             else:
                 event_data['community_name'] = subscription_instance.transaction.community_name
                 event_data['plan_name'] = subscription_instance.transaction.plan_name
-                event_data['amount'] = subscription_instance.transaction.amount
+                event_data['amount'] = NumberUtilities.convert_to_rupee_or_none(
+                    subscription_instance.transaction.amount)
                 event_data['mode_of_payment'] = ONLINE_MODE
                 if subscription_instance.transaction.renew:
                     event = EVENTS['SUBSCRIPTION_RENEWED']['event']
@@ -491,7 +492,7 @@ class SubscriptionImpl(SubscriptionManager):
             plan_instance = SubscriptionPlan.get_plan_or_None(transaction_instance.plan_id)
             subscription_instance = Subscription.get_subscription_or_None(
                 self.get_member_id(), plan_instance.community_id)
-            subscription_history_instance = SubscriptionHistory.get_subscription_history_or_None(
+            subscription_history_instance = SubscriptionHistory.get_latest_subscription_history_or_None(
                 self.get_member_id(), plan_instance.community_id)
 
             self._send_subscription_event(subscription_history_instance, subscription_instance)
@@ -532,7 +533,7 @@ class SubscriptionImpl(SubscriptionManager):
 
                         subscription_instance = Subscription.get_subscription_or_None(
                             self.get_user_id(), self.get_community_id())
-                        subscription_history_instance = SubscriptionHistory.get_subscription_history_or_None(
+                        subscription_history_instance = SubscriptionHistory.get_latest_subscription_history_or_None(
                             self.get_user_id(), self.get_community_id())
 
                         self._send_subscription_event(subscription_history_instance, subscription_instance)
@@ -556,7 +557,7 @@ class SubscriptionImpl(SubscriptionManager):
 
                         subscription_instance = Subscription.get_subscription_or_None(
                             self.get_member_id(), self.get_community_id())
-                        subscription_history_instance = SubscriptionHistory.get_subscription_history_or_None(
+                        subscription_history_instance = SubscriptionHistory.get_latest_subscription_history_or_None(
                             self.get_member_id(), self.get_community_id())
 
                         self._send_subscription_event(subscription_history_instance, subscription_instance)

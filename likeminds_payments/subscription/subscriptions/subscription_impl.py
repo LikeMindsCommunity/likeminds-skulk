@@ -804,3 +804,4 @@ class SubscriptionImpl(SubscriptionManager):
                 return {'success': True}
 
         return {'error_message': 'something went wrong'}
+

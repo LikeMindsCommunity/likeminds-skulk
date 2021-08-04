@@ -220,3 +220,4 @@ class ConvertToPaidView(TransactionMixin, APIView):
             {'success': True},
             status=status_codes.HTTP_200_OK
         )
+

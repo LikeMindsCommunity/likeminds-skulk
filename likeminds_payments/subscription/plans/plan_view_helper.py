@@ -238,3 +238,21 @@ class PlanViewHelper:
             return {'error_message': 'error while editing existing plan'}
 
         return {'plan_instance': plan_instance}
+
+    @staticmethod
+    def validate_request_body_for_create_event_plan_view(req_body):
+
+        if not req_body:
+            return {'success': False, 'error_message': "Invalid request"}
+
+        chatroom_id = req_body.get('chatroom_id')
+
+        if not chatroom_id:
+            return {'success': False, 'error_message': "In-valid chatroom id"}
+
+        community_id = req_body.get('community_id')
+
+        if not community_id:
+            return {'success': False, 'error_message': "In-valid community id"}
+
+        return {}

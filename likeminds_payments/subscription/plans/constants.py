@@ -16,3 +16,4 @@ PLAN_IMAGES = {
     "lifetime": "https://global-uploads.webflow.com/605033ad58253a624fdb1964/605033ad58253a9534db19c7_Price%20Icon%2003.svg"
 }
 
+EVENT_PAYMENT_LINK = "%s/event_pay?event_plan_id=%s&community_id=%s"

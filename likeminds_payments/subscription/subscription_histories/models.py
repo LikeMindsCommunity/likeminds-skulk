@@ -18,9 +18,15 @@ class SubscriptionHistory(models.Model):
         return self.pk
 
     @staticmethod
-    def get_subscription_history_or_None(user_id, community_id):
+    def get_latest_subscription_history_or_None(user_id, community_id):
         try:
-            return SubscriptionHistory.objects.get(user_id=user_id, community_id=community_id)
+            histories = SubscriptionHistory.objects.filter(user_id=user_id,
+                                                           community_id=community_id).order_by('-created_at')
+
+            if len(histories) == 0:
+                return None
+            return histories[0]
+
         except:
             return None
 

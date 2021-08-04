@@ -11,5 +11,9 @@ class NumberUtilities:
     @staticmethod
     def convert_to_paisa_or_none(number):
         if isinstance(number, int):
-            return int(number)*100
+            return int(number) * 100
         return None
+
+    @staticmethod
+    def convert_to_rupee_or_none(number: int) -> int:
+        return number // 100

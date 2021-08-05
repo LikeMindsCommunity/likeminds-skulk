@@ -5,6 +5,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 
 from ..mixins import TransactionMixin
+from ..utility.json_utilities import JsonUtilities
 from ..utility.request_utilities import RequestUtilities
 from ..plans.plan_impl import PlanImpl
 from ..plans.plan_view_helper import PlanViewHelper
@@ -122,3 +123,60 @@ class DeletePlanView(TransactionMixin, APIView):
             {'success': True},
             status=status_codes.HTTP_200_OK
         )
+
+
+class CreateEventPlanView(TransactionMixin, APIView):
+
+    @method_decorator(csrf_exempt)
+    def dispatch(self, request, *args, **kwargs):
+        return super(CreateEventPlanView, self).dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+
+        request_body = RequestUtilities.load_request_body(request)
+        member_id = RequestUtilities.get_parameter_from_headers(request, 'HTTP_X_MEMBER_ID')
+        validated_request = PlanViewHelper.validate_request_body_for_create_event_plan_view(request_body)
+
+        if validated_request.get('error_message'):
+            return JsonResponse(validated_request, status=status_codes.HTTP_400_BAD_REQUEST)
+
+        plan_manager = PlanImpl()
+
+        try:
+            response_data = plan_manager.create_event_plan(request_body, member_id)
+
+        except Exception as e:
+
+            return JsonResponse({'error_message': e.args}, status=status_codes.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return JsonResponse(response_data)
+
+
+class FetchEventPlanView(TransactionMixin, APIView):
+
+    def get(self, request, *args, **kwargs):
+
+        query_params = self.get_event_plan_params(request)
+
+        if query_params.get('error_message'):
+            return JsonResponse(query_params, status=status_codes.HTTP_400_BAD_REQUEST)
+
+        chatroom_ids = query_params.get('chatroom_ids')
+        plan_manager = PlanImpl()
+
+        response_data = plan_manager.fetch_event_plan(chatroom_ids)
+
+        return JsonResponse(response_data)
+
+    def get_event_plan_params(self, request):
+
+        query_params = {}
+
+        chatroom_ids = JsonUtilities.load_json(request.GET.get('chatroom_ids'))
+
+        if not chatroom_ids:
+            return {'error_message': "In-valid chatroom ids"}
+
+        query_params['chatroom_ids'] = chatroom_ids
+
+        return query_params

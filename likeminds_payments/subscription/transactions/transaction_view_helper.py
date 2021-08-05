@@ -108,3 +108,36 @@ class TransactionViewHelper:
             return {'error_message': 'You are not the Owner/CM of the community'}
 
         return {'transaction_instance': transaction_instance}
+
+    @staticmethod
+    def validate_request_params_for_event_transaction_view(user_id, chatroom_id):
+
+        if not user_id:
+            return {'error_message': "In-valid user id"}
+
+        if not chatroom_id:
+            return {'error_message': "In-valid chatroom id"}
+
+        return {}
+
+    @staticmethod
+    def validate_request_params_for_event_payment_view(user_id, payment_id):
+
+        if not user_id:
+            return {'error_message': "In-valid user id"}
+
+        if not payment_id:
+            return {'error_message': "In-valid payment id"}
+
+        return {}
+
+    @staticmethod
+    def validate_request_body_for_update_payment_view(req_body):
+
+        if not req_body:
+            return {'error_message': "In-valid request body"}
+
+        if not req_body.get('payment_id'):
+            return {'error_message': "In-valid payment id"}
+
+        return {}

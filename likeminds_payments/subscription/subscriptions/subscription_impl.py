@@ -4,18 +4,21 @@ from .models import Subscription
 from ..subscription_histories.models import SubscriptionHistory
 from ..plans.models import SubscriptionPlan
 from ..member_notifications.models import MemberNotification
+from ..member_acquisition.models import MemberAcquisition
 from .constants import *
 from .serializers import SubscriptionSerializer, SubscriptionListSerializer
 
 from ..utility.constants import *
-from ..utility.time_utilities import TimeUtilities
+from ..utility.time_utilities import TimeUtilities, MILLISECONDS_IN_A_DAY
 from ..utility.number_utilities import NumberUtilities
 from ..utility.core_service_utilities import CoreServiceUtilities
 from ..external_services.razorpay.razorpay_wrapper import RazorpayWrapper
 from ..plans.constants import *
 from ..transactions.constants import *
+from ..member_notifications.constants import *
 
 import razorpay
+import analytics
 
 
 class SubscriptionImpl(SubscriptionManager):
@@ -387,7 +390,9 @@ class SubscriptionImpl(SubscriptionManager):
 
         if subscription_instance is not None:
 
-            if valid_till is not None and valid_till > subscription_instance.valid_till and n_days is None:
+            existing_valid_till = subscription_instance.valid_till
+
+            if valid_till is not None and valid_till > existing_valid_till and n_days is None:
                 subscription_instance.valid_till = valid_till
 
             if valid_till is None and n_days is not None:
@@ -403,7 +408,7 @@ class SubscriptionImpl(SubscriptionManager):
                                                           subscription_instance.community_id)
 
             subscription_history_data = {
-                "start_date": subscription_instance.date_subscribed,
+                "start_date": existing_valid_till,
                 "end_date": subscription_instance.valid_till,
                 "description": 'free limited subscription',
                 "transaction": None,
@@ -420,6 +425,43 @@ class SubscriptionImpl(SubscriptionManager):
             return {'success': True}
 
         return {'error_message': 'invalid user_id and community_id pair'}
+
+    @staticmethod
+    def _send_subscription_event(subscription_history_instance: SubscriptionHistory,
+                                 subscription_instance: Subscription) -> None:
+
+        if None not in [subscription_instance, subscription_history_instance]:
+
+            event = EVENTS['SUBSCRIPTION_STARTED']['event']
+
+            event_data = {
+                'user_id': subscription_history_instance.user_id,
+                'community_id': subscription_history_instance.community_id,
+                'community_name': '',
+                'plan_name': '',
+                'amount': 0,
+                'end_date': TimeUtilities.convert_epoch_to_date(subscription_history_instance.end_date),
+                'no_of_days': (subscription_history_instance.end_date -
+                               subscription_history_instance.start_date) // MILLISECONDS_IN_A_DAY,
+                'mode_of_payment': FREE_MODE,
+                'type': subscription_instance.type
+            }
+
+            if subscription_instance.transaction is None:
+                community_data = CoreServiceUtilities.get_community_data(subscription_instance.community_id)
+
+                if 'error_message' not in community_data:
+                    event_data['community_name'] = community_data['community']['name']
+            else:
+                event_data['community_name'] = subscription_instance.transaction.community_name
+                event_data['plan_name'] = subscription_instance.transaction.plan_name
+                event_data['amount'] = NumberUtilities.convert_to_rupee_or_none(
+                    subscription_instance.transaction.amount)
+                event_data['mode_of_payment'] = ONLINE_MODE
+                if subscription_instance.transaction.renew:
+                    event = EVENTS['SUBSCRIPTION_RENEWED']['event']
+
+            analytics.track(subscription_history_instance.user_id, event, event_data)
 
     def create_subscription(self, n_days: str = None, valid_till: str = None, shared_by: str = None) -> dict:
 
@@ -438,8 +480,22 @@ class SubscriptionImpl(SubscriptionManager):
             generate_subscription = self._generate_subscription_against_transaction(transaction_instance,
                                                                                     self.get_member_id())
 
+            member_acquisition_instance = MemberAcquisition.get_member_acquisition_or_None(transaction_instance.id)
+
+            if member_acquisition_instance is not None:
+                member_acquisition_instance.user_id = self.get_member_id()
+                member_acquisition_instance.save()
+
             if 'error_message' in generate_subscription:
                 return {'error_message': generate_subscription['error_message']}
+
+            plan_instance = SubscriptionPlan.get_plan_or_None(transaction_instance.plan_id)
+            subscription_instance = Subscription.get_subscription_or_None(
+                self.get_member_id(), plan_instance.community_id)
+            subscription_history_instance = SubscriptionHistory.get_latest_subscription_history_or_None(
+                self.get_member_id(), plan_instance.community_id)
+
+            self._send_subscription_event(subscription_history_instance, subscription_instance)
 
             return {'success': True}
 
@@ -475,6 +531,13 @@ class SubscriptionImpl(SubscriptionManager):
                         if 'error_message' in generate_free_subscription:
                             return {'error_message': generate_free_subscription['error_message']}
 
+                        subscription_instance = Subscription.get_subscription_or_None(
+                            self.get_user_id(), self.get_community_id())
+                        subscription_history_instance = SubscriptionHistory.get_latest_subscription_history_or_None(
+                            self.get_user_id(), self.get_community_id())
+
+                        self._send_subscription_event(subscription_history_instance, subscription_instance)
+
                         return {'success': True}
 
                     has_permission_check = CoreServiceUtilities.has_permission(self.get_community_id(), shared_by)
@@ -491,6 +554,13 @@ class SubscriptionImpl(SubscriptionManager):
 
                         if 'error_message' in generate_free_subscription:
                             return {'error_message': generate_free_subscription['error_message']}
+
+                        subscription_instance = Subscription.get_subscription_or_None(
+                            self.get_member_id(), self.get_community_id())
+                        subscription_history_instance = SubscriptionHistory.get_latest_subscription_history_or_None(
+                            self.get_member_id(), self.get_community_id())
+
+                        self._send_subscription_event(subscription_history_instance, subscription_instance)
 
                         return {'success': True}
 
@@ -735,3 +805,4 @@ class SubscriptionImpl(SubscriptionManager):
                 return {'success': True}
 
         return {'error_message': 'something went wrong'}
+

@@ -134,3 +134,74 @@ class RefundTransactionView(TransactionMixin, APIView):
             {'success': True},
             status=status_codes.HTTP_200_OK
         )
+
+
+class ValidateEventTransactionView(TransactionMixin, APIView):
+
+    def get(self, request, *args, **kwargs):
+
+        user_id = RequestUtilities.get_parameter_from_headers(request, 'HTTP_X_MEMBER_ID')
+        chatroom_id = request.GET.get('chatroom_id')
+
+        request_validated = TransactionViewHelper.validate_request_params_for_event_transaction_view(user_id,
+                                                                                                     chatroom_id)
+
+        if not request_validated:
+            return JsonResponse(request_validated, status=status_codes.HTTP_400_BAD_REQUEST)
+
+        transaction_manager = TransactionImpl()
+
+        response_data = transaction_manager.valid_event_transaction(chatroom_id, user_id)
+
+        if response_data.get('error_message'):
+            return JsonResponse(response_data, status=status_codes.HTTP_400_BAD_REQUEST)
+
+        return JsonResponse(response_data)
+
+
+class ValidateEventPaymentView(TransactionMixin, APIView):
+
+    def get(self, request, *args, **kwargs):
+
+        user_id = RequestUtilities.get_parameter_from_headers(request, 'HTTP_X_MEMBER_ID')
+        payment_id = request.GET.get('payment_id')
+
+        request_validated = TransactionViewHelper.validate_request_params_for_event_payment_view(user_id, payment_id)
+
+        if request_validated.get('error_message'):
+            return JsonResponse(request_validated, status=status_codes.HTTP_400_BAD_REQUEST)
+
+        transaction_manager = TransactionImpl()
+
+        response_data = transaction_manager.valid_event_payment_id(payment_id, user_id)
+
+        if response_data.get('error_message'):
+            return JsonResponse(response_data, status=status_codes.HTTP_400_BAD_REQUEST)
+
+        return JsonResponse(response_data)
+
+
+class UpdatePaymentView(TransactionMixin, APIView):
+
+    @method_decorator(csrf_exempt)
+    def dispatch(self, request, *args, **kwargs):
+        return super(UpdatePaymentView, self).dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+
+        member_id = RequestUtilities.get_parameter_from_headers(request, 'HTTP_X_MEMBER_ID')
+
+        request_body = RequestUtilities.load_request_body(request)
+        validate_request = TransactionViewHelper.validate_request_body_for_update_payment_view(request_body)
+
+        if validate_request.get('error_message'):
+            return JsonResponse({'error_message': "In-valid request body"},
+                                status=status_codes.HTTP_400_BAD_REQUEST)
+
+        transaction_manager = TransactionImpl()
+        response = transaction_manager.update_payment_id(request_body, member_id)
+
+        if response.get('error_message'):
+            return JsonResponse(response, status=status_codes.HTTP_400_BAD_REQUEST)
+
+        return JsonResponse(response)

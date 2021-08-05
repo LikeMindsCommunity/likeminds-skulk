@@ -6,7 +6,7 @@ class Transaction(models.Model):
     plan_id = models.CharField(max_length=64)
     payment_id = models.CharField(unique=True, max_length=64)
     community_name = models.CharField(max_length=200)
-    plan_name = models.CharField(max_length=128)
+    plan_name = models.CharField(max_length=128, null=True)
     plan_cost = models.IntegerField(default=0)
     renew = models.BooleanField(default=False)
     amount = models.IntegerField(default=0)
@@ -24,6 +24,8 @@ class Transaction(models.Model):
     grace_period = models.IntegerField(default=0)
     created_at = models.BigIntegerField(default=0)
     updated_at = models.BigIntegerField(default=0)
+    type = models.IntegerField(default=0)
+    community_id = models.IntegerField(default=0)
 
     def __str__(self):
         return str(self.pk)
@@ -48,7 +50,7 @@ class Transaction(models.Model):
         instance.plan_id = transaction_body['plan_id']
         instance.payment_id = transaction_body['payment_id']
         instance.community_name = transaction_body['community_name']
-        instance.plan_name = transaction_body['plan_name']
+        instance.plan_name = transaction_body.get('plan_name')
         instance.plan_cost = transaction_body['plan_cost']
         instance.renew = transaction_body['renew']
         instance.amount = transaction_body['amount']
@@ -64,6 +66,8 @@ class Transaction(models.Model):
         instance.payment_page_url = transaction_body['payment_page_url']
         instance.shared_by = transaction_body['shared_by']
         instance.grace_period = transaction_body['grace_period']
+        instance.type = transaction_body.get('type', 0)
+        instance.community_id = transaction_body.get('community_id', 0)
         instance.save()
 
         return instance

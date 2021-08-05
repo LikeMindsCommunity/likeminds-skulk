@@ -18,6 +18,19 @@ class SubscriptionHistory(models.Model):
         return self.pk
 
     @staticmethod
+    def get_latest_subscription_history_or_None(user_id, community_id):
+        try:
+            histories = SubscriptionHistory.objects.filter(user_id=user_id,
+                                                           community_id=community_id).order_by('-created_at')
+
+            if len(histories) == 0:
+                return None
+            return histories[0]
+
+        except:
+            return None
+
+    @staticmethod
     def create_instance(subscription_history_body):
         instance = SubscriptionHistory()
         instance.start_date = subscription_history_body['start_date']

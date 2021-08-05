@@ -47,3 +47,4 @@ class SubscriptionManager(metaclass=abc.ABCMeta):
         convert free internal communities to paid
         """
         raise NotImplementedError
+

@@ -2,6 +2,7 @@ from subscription.member_notifications.constants import EVENTS
 from subscription.subscriptions.models import Subscription
 from subscription.member_notifications.models import MemberNotification
 from subscription.utility.time_utilities import TimeUtilities
+from subscription.utility.number_utilities import NumberUtilities
 from subscription.utility.core_service_utilities import CoreServiceUtilities
 import analytics
 
@@ -28,9 +29,11 @@ def send_event(user_id, community_id, event, subscription):
         if community_data is not None:
             event_data['community_name'] = community_data['community']['name']
 
-        if subscription.transaction is not None:
-            event_data['plan_name'] = subscription.transaction.plan_name
-            event_data['amount'] = subscription.transaction.amount
+        transaction_instance = subscription.transaction
+
+        if transaction_instance is not None:
+            event_data['plan_name'] = transaction_instance.plan_name
+            event_data['amount'] = NumberUtilities.convert_to_rupee_or_none(transaction_instance.amount)
 
         analytics.track(user_id, event['event'], event_data)
 

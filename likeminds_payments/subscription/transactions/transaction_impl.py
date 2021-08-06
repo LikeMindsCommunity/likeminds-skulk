@@ -6,6 +6,7 @@ from ..utility.number_utilities import NumberUtilities
 from ..utility.states import TransactionType
 from ..utility.time_utilities import TimeUtilities
 from ..utility.model_utilities import ModelUtilities
+from ..utility.core_service_utilities import CoreServiceUtilities
 from .constants import *
 from .models import Transaction
 from ..plans.models import SubscriptionPlan, SubscriptionEventPlan
@@ -164,8 +165,8 @@ class TransactionImpl(TransactionManager):
 
         return transaction_data
 
-
-    def _attend_event_for_paid_transaction(self, transaction_instance):
+    @staticmethod
+    def _attend_event_for_paid_transaction(transaction_instance):
 
         event_plan_id = transaction_instance.plan_id
         event_plan_instance = SubscriptionEventPlan.get_event_plan_or_None(event_plan_id)
@@ -323,17 +324,21 @@ class TransactionImpl(TransactionManager):
                 if 'error_message' in create_subscription:
                     return {'error_message': create_subscription['error_message']}
 
-        if transaction_instance.type == TransactionType.EVENT and transaction_instance.user_id:
-            self._attend_event_for_paid_transaction(transaction_instance)
+                plan_instance = SubscriptionPlan.get_plan_or_None(transaction_instance.plan_id)
 
-        else:
-            pass
+                response = CoreServiceUtilities.renew_member(plan_instance.community_id, transaction_data['user_id'])
+
+                if 'error_message' in response:
+                    return {'error_message': response['error_message']}
 
             if not transaction_data['renew'] and transaction_data['user_id'] is None:
 
                 acquisition_data = self._create_member_acquisition_data(transaction_instance, transaction_data)
 
                 MemberAcquisition.create_instance(acquisition_data)
+
+        if transaction_instance.type == TransactionType.EVENT and transaction_instance.user_id:
+            self._attend_event_for_paid_transaction(transaction_instance)
 
         return {'success': True}
 

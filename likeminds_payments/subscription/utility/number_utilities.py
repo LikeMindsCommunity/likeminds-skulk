@@ -23,4 +23,5 @@ class NumberUtilities:
 
     @staticmethod
     def get_n_percentage_value(number, n):
+
         return (number * n) / 100

@@ -104,7 +104,8 @@ class PlanImpl(PlanManager):
         CoreServiceUtilities.update_event({
             'member_id': member_id,
             'chatroom_id': instance.chatroom_id,
-            'event_payment_link': EVENT_PAYMENT_LINK % (settings.URL, instance.event_plan_id, instance.community_id)
+            'event_payment_link': EVENT_PAYMENT_LINK % (settings.URL, instance.event_plan_id, instance.community_id),
+            'restrict_event_update_notification': True
         })
 
         return {'success': True}

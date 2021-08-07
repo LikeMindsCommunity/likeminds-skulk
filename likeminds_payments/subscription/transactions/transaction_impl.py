@@ -142,7 +142,8 @@ class TransactionImpl(TransactionManager):
             "user_id": order_notes.get('user_id'),
             "payment_page_url": order_notes['payment_page_url'],
             "grace_period": 0,
-            "type": TransactionType.EVENT
+            "type": TransactionType.EVENT,
+            "shared_by": None
         }
 
         if payment_instance['error_description'] is not None:
@@ -174,7 +175,7 @@ class TransactionImpl(TransactionManager):
         if not event_plan_instance:
             return
 
-        chatroom_id = event_plan_id.chatroom_id
+        chatroom_id = event_plan_instance.chatroom_id
         CoreServiceUtilities.attend_event({'chatroom_id': chatroom_id,
                                            'attending_status': True,
                                            'member_id': transaction_instance.user_id})

@@ -1,3 +1,6 @@
+from __future__ import absolute_import, unicode_literals
+from celery import shared_task
+
 from .constants import EVENT_PAYMENT_LINK
 from ..plans.plan_manager import PlanManager
 from .models import SubscriptionPlan, SubscriptionEventPlan
@@ -113,5 +116,12 @@ class PlanImpl(PlanManager):
     def fetch_event_plan(self, chatroom_ids) -> dict:
 
         event_plans = self._serialize_event_plan_list(chatroom_ids)
-
+        PlanImpl.test.delay()
         return {'event_plans': event_plans}
+
+    @staticmethod
+    @shared_task
+    def test():
+        import time
+        SubscriptionEventPlan.objects.filter(id=5).update(created_at=time.time() * 1000)
+        print("hello")

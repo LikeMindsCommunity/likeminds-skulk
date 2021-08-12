@@ -74,8 +74,27 @@ class SubscriptionImpl(SubscriptionManager):
         return {'transaction': transaction_instance}
 
     @staticmethod
-    def _generate_data_for_new_subscription_against_transaction(transaction_instance: dict,
-                                                                subscription_plan_instance: dict,
+    def _get_subscription_valid_till(start_time_epoch: int, subscription_plan_instance: SubscriptionPlan):
+
+        valid_till = start_time_epoch
+
+        if subscription_plan_instance.duration_name in VALID_MONTH_PLAN_NAMES:
+            valid_till = TimeUtilities.add_months_in_epoch_time(start_time_epoch,
+                                                                subscription_plan_instance.duration_in_months)
+
+        if subscription_plan_instance.duration_name == WEEKLY:
+            valid_till = TimeUtilities.add_weeks_in_epoch_time(start_time_epoch,
+                                                               subscription_plan_instance.duration_in_months)
+
+        if subscription_plan_instance.duration_name == DAYS:
+            valid_till = TimeUtilities.add_days_in_epoch_time(start_time_epoch,
+                                                              subscription_plan_instance.duration_in_months)
+
+        return valid_till
+
+    @staticmethod
+    def _generate_data_for_new_subscription_against_transaction(transaction_instance: Transaction,
+                                                                subscription_plan_instance: SubscriptionPlan,
                                                                 user_id: int) -> dict:
 
         data = {
@@ -84,8 +103,8 @@ class SubscriptionImpl(SubscriptionManager):
                 "community_id": subscription_plan_instance.community_id,
                 "plan_id": subscription_plan_instance.plan_id,
                 "date_subscribed": transaction_instance.created_at,
-                "valid_till": TimeUtilities.add_months_in_epoch_time(transaction_instance.created_at,
-                                                                     subscription_plan_instance.duration_in_months),
+                "valid_till": SubscriptionImpl._get_subscription_valid_till(transaction_instance.created_at,
+                                                                            subscription_plan_instance),
                 "type": "onetime",
                 "transaction": transaction_instance,
             }
@@ -114,9 +133,9 @@ class SubscriptionImpl(SubscriptionManager):
         return data
 
     @staticmethod
-    def _generate_data_for_existing_subscription_against_transaction(subscription_instance: dict,
-                                                                     subscription_plan_instance: dict,
-                                                                     transaction_instance: dict) -> dict:
+    def _generate_data_for_existing_subscription_against_transaction(subscription_instance: Subscription,
+                                                                     subscription_plan_instance: SubscriptionPlan,
+                                                                     transaction_instance: Transaction) -> dict:
 
         current_time = TimeUtilities.current_time_in_milliseconds()
         data = {
@@ -131,13 +150,11 @@ class SubscriptionImpl(SubscriptionManager):
         existing_valid_till = subscription_instance.valid_till
 
         if existing_valid_till >= current_time:
-            data["subscription_data"]["valid_till"] = TimeUtilities.add_months_in_epoch_time(
-                existing_valid_till,
-                subscription_plan_instance.duration_in_months)
+            data["subscription_data"]["valid_till"] = SubscriptionImpl._get_subscription_valid_till(
+                existing_valid_till, subscription_plan_instance)
         else:
-            data["subscription_data"]["valid_till"] = TimeUtilities.add_months_in_epoch_time(
-                current_time,
-                subscription_plan_instance.duration_in_months)
+            data["subscription_data"]["valid_till"] = SubscriptionImpl._get_subscription_valid_till(
+                current_time, subscription_plan_instance)
 
         data["subscription_data"]["renewal_due"] = TimeUtilities.subtract_days_in_epoch_time(
             data["subscription_data"]["valid_till"], NOTIFY_PERIOD)
@@ -158,9 +175,9 @@ class SubscriptionImpl(SubscriptionManager):
         return data
 
     @staticmethod
-    def _generate_data_for_existing_subscription_against_referral(subscription_instance: dict,
-                                                                  subscription_plan_instance: dict,
-                                                                  transaction_instance: dict) -> dict:
+    def _generate_data_for_existing_subscription_against_referral(subscription_instance: Subscription,
+                                                                  subscription_plan_instance: SubscriptionPlan,
+                                                                  transaction_instance: Transaction) -> dict:
         current_time = TimeUtilities.current_time_in_milliseconds()
         existing_valid_till = subscription_instance.valid_till
 
@@ -190,7 +207,7 @@ class SubscriptionImpl(SubscriptionManager):
         return data
 
     @staticmethod
-    def _generate_first_transaction(transaction_instance: dict, plan_instance: dict, user_id: int):
+    def _generate_first_transaction(transaction_instance: Transaction, plan_instance: SubscriptionPlan, user_id: int):
 
         if transaction_instance.user_id is None:
             transaction_instance.user_id = user_id
@@ -240,7 +257,7 @@ class SubscriptionImpl(SubscriptionManager):
         return {'error_message': 'Payment ID already used'}
 
     @staticmethod
-    def _generate_renewal_transaction(transaction_instance: dict, plan_instance: dict, user_id):
+    def _generate_renewal_transaction(transaction_instance: Transaction, plan_instance: SubscriptionPlan, user_id):
 
         if transaction_instance.user_id is None:
             return {'error_message': "user ID doesn't exist for renewal transaction"}
@@ -279,7 +296,7 @@ class SubscriptionImpl(SubscriptionManager):
         return {'success': True}
 
     @staticmethod
-    def _generate_subscription_against_transaction(transaction_instance: dict, user_id: str) -> dict:
+    def _generate_subscription_against_transaction(transaction_instance: Transaction, user_id: str) -> dict:
 
         user_id = NumberUtilities.get_integer_from_string(user_id)
         plan_instance = SubscriptionPlan.get_plan_or_None(plan_id=transaction_instance.plan_id)

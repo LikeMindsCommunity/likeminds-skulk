@@ -14,3 +14,6 @@ STATUS_EXPIRED = 1
 STATUS_GRACE_PERIOD = 2
 STATUS_RENEWAL_DUE = 3
 DAYS_FOR_FREE_USERS = 7
+VALID_MONTH_PLAN_NAMES = ['monthly', 'quarterly', 'half_yearly', 'yearly', 'lifetime']
+DAYS = 'days'
+WEEKLY = 'weekly'

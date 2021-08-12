@@ -26,6 +26,9 @@ class PlanViewHelper:
             if plan_body['duration_name'] not in SUBSCRIPTION_PLAN_CHOICES:
                 return {'error_message': 'invalid duration_name'}
 
+            if 'duration_in_months' in plan_body and not isinstance(plan_body['duration_in_months'], int):
+                return {'error_message': 'duration_in_months must be integer'}
+
             if 'cost' not in plan_body or not plan_body['cost']:
                 return {'error_message': 'send cost of plan'}
 
@@ -81,7 +84,7 @@ class PlanViewHelper:
         if 'name' not in plan_body or not plan_body['name']:
             plan_body['name'] = ""
 
-        if plan_body['duration_name'] in SUBSCRIPTION_PLAN_CHOICES:
+        if plan_body['duration_name'] in SUBSCRIPTION_PLAN_CHOICES and 'duration_in_months' not in plan_body:
             plan_body['duration_in_months'] = SUBSCRIPTION_PLAN_CHOICES[plan_body['duration_name']]
 
         if 'description' not in plan_body or not plan_body['description']:
@@ -91,7 +94,10 @@ class PlanViewHelper:
             plan_body['referral_free_days'] = 0
 
         if 'image' not in plan_body or not plan_body['image']:
-            plan_body['image'] = PLAN_IMAGES[plan_body['duration_name']]
+            if plan_body['duration_name'] in PLAN_IMAGES:
+                plan_body['image'] = PLAN_IMAGES[plan_body['duration_name']]
+            else:
+                plan_body['image'] = PLAN_IMAGES['default']
 
         try:
             plan_instance = SubscriptionPlan.create_instance(plan_body)

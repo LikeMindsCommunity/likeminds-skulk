@@ -9,6 +9,7 @@ from ..utility.plan_utilities import PlanUtilities
 from ..utility.states import EventDiscountType
 from django.conf import settings
 
+
 class PlanImpl(PlanManager):
 
     community_id = None
@@ -32,7 +33,8 @@ class PlanImpl(PlanManager):
 
         return {'url': PlanUtilities.generate_plan_url(plan_instance.plan_id)}
 
-    def _process_event_creation_plan(self, req_body):
+    @staticmethod
+    def _process_event_creation_plan(req_body):
 
         discount_type = req_body.get('discount_type', 0)
         discount = None

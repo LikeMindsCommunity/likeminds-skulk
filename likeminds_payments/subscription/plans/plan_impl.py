@@ -1,6 +1,3 @@
-from __future__ import absolute_import, unicode_literals
-from celery import shared_task
-
 from .constants import EVENT_PAYMENT_LINK
 from ..plans.plan_manager import PlanManager
 from .models import SubscriptionPlan, SubscriptionEventPlan
@@ -118,4 +115,3 @@ class PlanImpl(PlanManager):
         event_plans = self._serialize_event_plan_list(chatroom_ids)
 
         return {'event_plans': event_plans}
-

@@ -123,5 +123,6 @@ class PlanImpl(PlanManager):
     @shared_task
     def test():
         import time
-        SubscriptionEventPlan.objects.filter(id=5).update(created_at=time.time() * 1000)
+        c = SubscriptionEventPlan.objects.all().update(updated_at=time.time() * 1000)
+        print(c)
         print("hello")

@@ -116,13 +116,6 @@ class PlanImpl(PlanManager):
     def fetch_event_plan(self, chatroom_ids) -> dict:
 
         event_plans = self._serialize_event_plan_list(chatroom_ids)
-        PlanImpl.test.delay()
+
         return {'event_plans': event_plans}
 
-    @staticmethod
-    @shared_task
-    def test():
-        import time
-        c = SubscriptionEventPlan.objects.all().update(updated_at=time.time() * 1000)
-        print(c)
-        print("hello")

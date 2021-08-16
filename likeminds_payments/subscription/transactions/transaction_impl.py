@@ -457,7 +457,6 @@ class TransactionHelper:
             'event_date': TimeUtilities.convert_epoch_time_to_date_month_year(chatroom_data.get('date_time')),
             'event_time': TimeUtilities.convert_epoch_time_in_hh_mm_am_pm(chatroom_data.get('date_time')),
             'event_type': "paid" if chatroom_data.get('is_paid') else "free",
-            'registered': True,
             'event_link': CHATROOM_LINK % (settings.URL, str(chatroom_data.get('id'))),
             'event_cost': cost_list
         }
@@ -472,6 +471,18 @@ class TransactionHelper:
         if not transaction_instance:
             return
 
+        if transaction_instance.status == 'captured':
+            event_name = "Event payment successful (Subscription Service)"
+
+        elif transaction_instance.status == 'failed':
+            event_name = "Event payment failed (Subscription Service)"
+
+        elif transaction_instance.status == 'refund':
+            event_name = "Event payment refunded (Subscription Service)"
+
+        else:
+            return
+
         event_plan_id = transaction_instance.plan_id
         event_plan_instance = SubscriptionEventPlan.get_event_plan_or_None(event_plan_id)
 
@@ -482,5 +493,4 @@ class TransactionHelper:
         user_id = transaction_instance.user_id
 
         event_metadata = TransactionHelper.compute_event_metadata_for_analytics(chatroom_id, user_id)
-        event_name = ""
         SegmentImpl.track_event(user_id, event_name, event_metadata)

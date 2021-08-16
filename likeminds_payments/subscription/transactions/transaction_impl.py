@@ -340,6 +340,7 @@ class TransactionImpl(TransactionManager):
 
         if transaction_instance.type == TransactionType.EVENT and transaction_instance.user_id:
             self._attend_event_for_paid_transaction(transaction_instance)
+            TransactionHelper.send_analytics_for_event_transaction(transaction_instance.id)
 
         return {'success': True}
 

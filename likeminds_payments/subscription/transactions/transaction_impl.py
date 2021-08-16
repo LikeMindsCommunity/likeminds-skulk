@@ -1,3 +1,6 @@
+from __future__ import absolute_import, unicode_literals
+
+from celery import shared_task
 from .transaction_manager import TransactionManager
 from django.conf import settings
 from ..external_services.razorpay.razorpay_wrapper import RazorpayWrapper
@@ -467,6 +470,7 @@ class TransactionHelper:
         return event_metadata
 
     @staticmethod
+    @shared_task
     def send_analytics_for_event_transaction(transaction_id):
 
         transaction_instance = ModelUtilities.get_model_instance_or_none(Transaction, transaction_id)

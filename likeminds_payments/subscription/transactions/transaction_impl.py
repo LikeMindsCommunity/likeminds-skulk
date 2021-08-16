@@ -338,8 +338,11 @@ class TransactionImpl(TransactionManager):
 
                 MemberAcquisition.create_instance(acquisition_data)
 
-        if transaction_instance.type == TransactionType.EVENT and transaction_instance.user_id:
-            self._attend_event_for_paid_transaction(transaction_instance)
+        if transaction_instance.type == TransactionType.EVENT:
+
+            if transaction_instance.user_id and transaction_instance.status == 'captured':
+                self._attend_event_for_paid_transaction(transaction_instance)
+
             TransactionHelper.send_analytics_for_event_transaction(transaction_instance.id)
 
         return {'success': True}
@@ -450,7 +453,6 @@ class TransactionHelper:
         cost_list = [plan_instance.cost for plan_instance in event_filter]
 
         event_metadata = {
-            'attending': chatroom_data.get('attending_status', False),
             'event_id': chatroom_data.get('id'),
             'community_id': chatroom_data.get('community_id'),
             'community_name': chatroom_data.get('community_name'),

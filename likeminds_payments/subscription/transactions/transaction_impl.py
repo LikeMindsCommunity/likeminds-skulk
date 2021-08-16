@@ -453,7 +453,7 @@ class TransactionHelper:
             return
 
         event_filter = ModelUtilities.get_model_filter(SubscriptionEventPlan, {'chatroom_id': chatroom_id})
-        cost_list = [plan_instance.cost for plan_instance in event_filter]
+        cost_list = [plan_instance.cost/100 for plan_instance in event_filter]
 
         event_metadata = {
             'event_id': chatroom_data.get('id'),
@@ -500,6 +500,4 @@ class TransactionHelper:
         user_id = transaction_instance.user_id
 
         event_metadata = TransactionHelper.compute_event_metadata_for_analytics(chatroom_id, user_id)
-        print(user_id)
-        print(event_metadata)
         SegmentImpl.track_event(user_id, event_name, event_metadata)

@@ -341,9 +341,9 @@ class TransactionImpl(TransactionManager):
 
                 MemberAcquisition.create_instance(acquisition_data)
 
-        if transaction_instance.type == TransactionType.EVENT:
+        if transaction_instance.type == TransactionType.EVENT and transaction_instance.user_id:
 
-            if transaction_instance.user_id and transaction_instance.status == 'captured':
+            if  transaction_instance.status == 'captured':
                 self._attend_event_for_paid_transaction(transaction_instance)
 
             TransactionHelper.send_analytics_for_event_transaction(transaction_instance.id)
@@ -500,4 +500,6 @@ class TransactionHelper:
         user_id = transaction_instance.user_id
 
         event_metadata = TransactionHelper.compute_event_metadata_for_analytics(chatroom_id, user_id)
+        print(user_id)
+        print(event_metadata)
         SegmentImpl.track_event(user_id, event_name, event_metadata)

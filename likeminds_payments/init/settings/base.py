@@ -42,6 +42,14 @@ INSTALLED_APPS = [
     'django_crontab'
 ]
 
+SENDGRID_API_KEY = os.getenv('SENDGRID_API_KEY')
+EMAIL_HOST = os.getenv('EMAIL_HOST')
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+EMAIL_BACKEND = "sgbackend.SendGridBackend"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+
 CORS_ORIGIN_ALLOW_ALL = True
 
 CORS_ALLOW_HEADERS = list(default_headers) + [

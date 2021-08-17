@@ -4,14 +4,17 @@ from subscription.utility.core_service_utilities import CoreServiceUtilities
 import pandas as pd
 import uuid
 import time
+import os
 from datetime import datetime
 
 
-def generate_transactions():
+def generate_transactions(input_file_path: str = r'./scripts/members_data.csv'):
     print('script process started')
 
-    input_csv_path = r'./scripts/members_data.csv'
-    output_csv_path = 'otl_data_{}.csv'.format(datetime.today().strftime('%Y-%m-%d'))
+    input_csv_path = input_file_path
+    output_csv_path = os.path.abspath('otl_data_{}.csv'.format(datetime.today().strftime('%Y-%m-%d')))
+
+    print(output_csv_path)
 
     print('reading csv data from: {}'.format(input_csv_path))
 
@@ -28,6 +31,8 @@ def generate_transactions():
     print("OTL data exported to file with name {}".format(output_csv_path))
 
     print("script process completed")
+
+    return output_csv_path
 
 
 def get_csv_data(file_path):

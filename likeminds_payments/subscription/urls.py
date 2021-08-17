@@ -25,6 +25,7 @@ urlpatterns = [
     path('fetch_history', FetchSubscriptionHistoryView.as_view(), name='fetch-subscription-history'),
     path('fetch_community_meta', FetchCommunityMetaView.as_view(), name='fetch-community-meta'),
     path('convert_to_paid', ConvertToPaidView.as_view(), name='convert-to-paid'),
+    path('external_migrate', ExternalMigrationView.as_view(), name='external_migration'),
     path('create_event_plan', CreateEventPlanView.as_view(), name='create_event_plan'),
     path('fetch_event_plan', FetchEventPlanView.as_view(), name='create_event_plan'),
     path('create_event_order', CreateEventOrderView.as_view(), name='create_event_order'),

@@ -1,3 +1,5 @@
+import pandas
+
 from .subscription_manager import SubscriptionManager
 from ..transactions.models import Transaction
 from .models import Subscription
@@ -16,9 +18,12 @@ from ..external_services.razorpay.razorpay_wrapper import RazorpayWrapper
 from ..plans.constants import *
 from ..transactions.constants import *
 from ..member_notifications.constants import *
+from ..external_services.email.email_wrapper import MailWrapper
+from scripts.external_community_migration import generate_transactions
 
 import razorpay
 import analytics
+import pandas as pd
 
 
 class SubscriptionImpl(SubscriptionManager):
@@ -823,3 +828,30 @@ class SubscriptionImpl(SubscriptionManager):
 
         return {'error_message': 'something went wrong'}
 
+    @staticmethod
+    def _columns_validator(sheet_data: pandas.DataFrame, columns: list) -> dict:
+
+        for column in columns:
+            if column not in sheet_data:
+                return {'error_message': 'missing {} column in sheet'.format(column)}
+
+        return {'sheet_data': sheet_data}
+
+    def external_migration(self, members_data: str = None) -> dict:
+
+        input_csv_url = members_data
+
+        if input_csv_url is None:
+            return {'error_message': 'invalid members_data sheet link'}
+
+        df = pd.read_csv(input_csv_url)
+
+        validated_data = self._columns_validator(df, VALID_SHEET_COLUMNS)
+
+        if 'error_message' in validated_data:
+            return {'error_message': validated_data['error_message']}
+
+        output_file_path = generate_transactions(input_file_path=input_csv_url)
+
+        MailWrapper.send_email_with_attachment(
+            "OTL Migration Data", "", ["mahirgupta98@gmail.com"], [output_file_path])

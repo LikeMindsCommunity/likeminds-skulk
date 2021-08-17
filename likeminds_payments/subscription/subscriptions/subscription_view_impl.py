@@ -221,3 +221,36 @@ class ConvertToPaidView(TransactionMixin, APIView):
             status=status_codes.HTTP_200_OK
         )
 
+
+class ExternalMigrationView(TransactionMixin, APIView):
+
+    @method_decorator(csrf_exempt)
+    def dispatch(self, request, *args, **kwargs):
+        return super(ExternalMigrationView, self).dispatch(request, *args, **kwargs)
+
+    @staticmethod
+    def post(request, *args, **kwargs):
+
+        request_body = RequestUtilities.load_request_body(request)
+        validated_request_body = SubscriptionViewHelper.external_migration_body_validator(request_body)
+
+        if 'error_message' in validated_request_body:
+            return JsonResponse(
+                {'success': False, 'error_message': validated_request_body['error_message']},
+                status=status_codes.HTTP_400_BAD_REQUEST
+            )
+
+        subscription_manager = SubscriptionImpl()
+
+        response_data = subscription_manager.external_migration(members_data=validated_request_body['members_data'])
+
+        if 'error_message' in response_data:
+            return JsonResponse(
+                {'success': False, 'error_message': response_data['error_message']},
+                status=status_codes.HTTP_200_OK
+            )
+
+        return JsonResponse(
+            {'success': True},
+            status=status_codes.HTTP_200_OK
+        )

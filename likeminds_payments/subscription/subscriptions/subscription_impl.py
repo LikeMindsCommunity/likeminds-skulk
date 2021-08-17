@@ -208,13 +208,19 @@ class SubscriptionImpl(SubscriptionManager):
             subscription_instance = Subscription.create_instance(data['subscription_data'])
             subscription_history_instance = SubscriptionHistory.create_instance(data['subscription_history_data'])
 
+            if not subscription_instance:
+                return {'error_message': 'error creating subscription'}
+
+            if not subscription_history_instance:
+                return {'error_message': 'error creating subscription history'}
+
             if transaction_instance.shared_by is not None:
                 referrer_subscription_instance = Subscription.get_subscription_or_None(
                     transaction_instance.shared_by, plan_instance.community_id
                 )
 
                 if referrer_subscription_instance.type != ONETIME_PAYMENT:
-                    return {'error_message': 'referrer user is not having onetime subscription'}
+                    return {'success': True}
 
                 referrer_data = SubscriptionImpl._generate_data_for_existing_subscription_against_referral(
                     referrer_subscription_instance, plan_instance, transaction_instance)
@@ -228,12 +234,6 @@ class SubscriptionImpl(SubscriptionManager):
 
                 if not referrer_subscription_history_instance:
                     return {'error_message': 'error creating subscription history for referrer user'}
-
-            if not subscription_instance:
-                return {'error_message': 'error creating subscription'}
-
-            if not subscription_history_instance:
-                return {'error_message': 'error creating subscription history'}
 
             return {'success': True}
 
@@ -805,4 +805,3 @@ class SubscriptionImpl(SubscriptionManager):
                 return {'success': True}
 
         return {'error_message': 'something went wrong'}
-

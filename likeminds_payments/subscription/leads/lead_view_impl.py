@@ -23,7 +23,7 @@ class SendEventView(APIView):
 
         validated_request_body = LeadViewHelper.send_facebook_event_body_validator(request_body)
 
-        client_ip_address = OrderViewHelper.get_ip(request)
+        client_ip_address = RequestUtilities.get_ip(request)
         event_source_url = RequestUtilities.get_parameter_from_headers(request, 'HTTP_REFERER')
         client_user_agent = RequestUtilities.get_parameter_from_headers(request, 'HTTP_USER_AGENT')
 

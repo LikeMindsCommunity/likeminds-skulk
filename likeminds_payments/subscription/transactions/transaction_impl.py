@@ -444,17 +444,7 @@ class TransactionImpl(TransactionManager):
 class TransactionHelper:
 
     @staticmethod
-    def compute_event_metadata_for_analytics(chatroom_id, user_id):
-
-        chatroom_data = CoreServiceUtilities.chatroom_fetch({'chatroom_id': chatroom_id,
-                                                             'member_id': user_id}).get('chatroom')
-
-        if not chatroom_data or chatroom_data.get('error_message'):
-            return
-
-        event_filter = ModelUtilities.get_model_filter(SubscriptionEventPlan, {'chatroom_id': chatroom_id})
-        cost_list = [plan_instance.cost/100 for plan_instance in event_filter]
-
+    def create_event_metadata(chatroom_data, cost_list):
         event_metadata = {
             'event_id': chatroom_data.get('id'),
             'community_id': chatroom_data.get('community_id'),
@@ -466,6 +456,22 @@ class TransactionHelper:
             'event_link': CHATROOM_LINK % (settings.URL, str(chatroom_data.get('id'))),
             'event_cost': cost_list
         }
+
+        return event_metadata
+
+    @staticmethod
+    def compute_event_metadata_for_analytics(chatroom_id, user_id):
+
+        chatroom_data = CoreServiceUtilities.chatroom_fetch({'chatroom_id': chatroom_id,
+                                                             'member_id': user_id}).get('chatroom')
+
+        if not chatroom_data or chatroom_data.get('error_message'):
+            return
+
+        event_filter = ModelUtilities.get_model_filter(SubscriptionEventPlan, {'chatroom_id': chatroom_id})
+        cost_list = [plan_instance.cost/100 for plan_instance in event_filter]
+
+        event_metadata = TransactionHelper.create_event_metadata(chatroom_data, cost_list)
 
         return event_metadata
 

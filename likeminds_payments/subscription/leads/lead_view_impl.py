@@ -5,6 +5,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 
 from ..utility.request_utilities import RequestUtilities
+from ..orders.order_view_helper import OrderViewHelper
 from .lead_impl import LeadImpl
 from .lead_view_helper import LeadViewHelper
 
@@ -22,9 +23,9 @@ class SendEventView(APIView):
 
         validated_request_body = LeadViewHelper.send_facebook_event_body_validator(request_body)
 
-        client_ip_address = RequestUtilities.get_parameter_from_headers(request, 'REMOTE_ADDR')
+        client_ip_address = OrderViewHelper.get_ip(request)
         event_source_url = RequestUtilities.get_parameter_from_headers(request, 'HTTP_REFERER')
-        client_user_agent = request.headers['User-Agent']
+        client_user_agent = RequestUtilities.get_parameter_from_headers(request, 'HTTP_USER_AGENT')
 
         if 'error_message' in validated_request_body:
             return JsonResponse(

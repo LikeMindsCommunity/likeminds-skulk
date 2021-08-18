@@ -12,3 +12,4 @@ FETCH_OTL_URL = "{}/api/community/fetch_otl_url".format(settings.CORE_SERVICE_UR
 RENEW_MEMBER_API = "{}/api/community_membership/renew_member".format(settings.CORE_SERVICE_URL)
 CHATROOM_EVENT_ATTEND = "{}/api/chatroom/event/attend".format(settings.CORE_SERVICE_URL)
 CHATROOM_EVENT_UPDATE = "{}/api/chatroom/event/update".format(settings.CORE_SERVICE_URL)
+CHATROOM_FETCH = "{}/api/chatroom/fetch".format(settings.CORE_SERVICE_URL)

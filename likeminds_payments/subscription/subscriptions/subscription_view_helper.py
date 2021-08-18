@@ -141,7 +141,7 @@ class SubscriptionViewHelper:
         if not request_body:
             return {'error_message': 'invalid request body'}
 
-        if 'members_data' not in request_body or not request_body['members_data']:
-            return {'error_message': 'send members_data link'}
+        if 'members_data_url' not in request_body or not request_body['members_data_url']:
+            return {'error_message': 'send members_data_url in body'}
 
         return request_body

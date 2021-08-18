@@ -242,7 +242,7 @@ class ExternalMigrationView(TransactionMixin, APIView):
 
         subscription_manager = SubscriptionImpl()
 
-        response_data = subscription_manager.external_migration(members_data=validated_request_body['members_data'])
+        response_data = subscription_manager.external_migration(members_data=validated_request_body['members_data_url'])
 
         if 'error_message' in response_data:
             return JsonResponse(

@@ -1,5 +1,3 @@
-import pandas
-
 from .subscription_manager import SubscriptionManager
 from ..transactions.models import Transaction
 from .models import Subscription
@@ -24,6 +22,8 @@ from scripts.external_community_migration import generate_transactions
 import razorpay
 import analytics
 import pandas as pd
+from django.conf import settings
+from django.template.loader import get_template
 
 
 class SubscriptionImpl(SubscriptionManager):
@@ -829,7 +829,7 @@ class SubscriptionImpl(SubscriptionManager):
         return {'error_message': 'something went wrong'}
 
     @staticmethod
-    def _columns_validator(sheet_data: pandas.DataFrame, columns: list) -> dict:
+    def _columns_validator(sheet_data: pd.DataFrame, columns: list) -> dict:
 
         for column in columns:
             if column not in sheet_data:
@@ -853,5 +853,10 @@ class SubscriptionImpl(SubscriptionManager):
 
         output_file_path = generate_transactions(input_file_path=input_csv_url)
 
-        MailWrapper.send_email_with_attachment(
-            "OTL Migration Data", "", ["mahirgupta98@gmail.com"], [output_file_path])
+        template = get_template("otl_mail.html").render(
+            {"link": "{}/{}".format(settings.URL, output_file_path.split("init/")[1])})
+
+        MailWrapper.send_email(
+            OTL_SUBJECT, template, [OTL_EMAIL])
+
+        return {'success': True}

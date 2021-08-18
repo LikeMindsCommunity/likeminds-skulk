@@ -251,6 +251,6 @@ class ExternalMigrationView(TransactionMixin, APIView):
             )
 
         return JsonResponse(
-            {'success': True},
+            {'success': True, 'message': 'A mail will be sent to you with the details'},
             status=status_codes.HTTP_200_OK
         )

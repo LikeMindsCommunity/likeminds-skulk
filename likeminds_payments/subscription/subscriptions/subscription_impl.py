@@ -17,6 +17,7 @@ from ..plans.constants import *
 from ..transactions.constants import *
 from ..member_notifications.constants import *
 from ..external_services.email.email_wrapper import MailWrapper
+from ..external_services.s3.s3_wrapper import S3Wrapper
 from scripts.external_community_migration import generate_transactions
 
 import razorpay
@@ -837,6 +838,18 @@ class SubscriptionImpl(SubscriptionManager):
 
         return {'sheet_data': sheet_data}
 
+    @staticmethod
+    def _upload_file_to_bucket(file_path):
+
+        object_name = 'utilities/{}'.format(file_path.split('/')[-1])
+        bucket_name = settings.S3_BUCKETS.get('media_bucket').get('name')
+
+        upload_file = S3Wrapper.upload_file(file_path, bucket_name, object_name)
+
+        if upload_file:
+            return {'link': 'https://{}.s3.amazonaws.com/{}'.format(bucket_name, object_name)}
+        return {'error_message': 'error uploading file to s3 bucket'}
+
     def external_migration(self, members_data: str = None) -> dict:
 
         input_csv_url = members_data
@@ -853,8 +866,13 @@ class SubscriptionImpl(SubscriptionManager):
 
         output_file_path = generate_transactions(input_file_path=input_csv_url)
 
+        upload_file = self._upload_file_to_bucket(output_file_path)
+
+        if 'error_message' in upload_file:
+            return {'error_message': upload_file['error_message']}
+
         template = get_template("otl_mail.html").render(
-            {"link": "{}/{}".format(settings.URL, output_file_path.split("init/")[1])})
+            {"link": upload_file['link']})
 
         MailWrapper.send_email(
             OTL_SUBJECT, template, [OTL_EMAIL])

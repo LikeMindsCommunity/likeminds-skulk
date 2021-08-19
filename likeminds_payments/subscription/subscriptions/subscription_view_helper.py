@@ -29,7 +29,7 @@ class SubscriptionViewHelper:
 
                 validated_request_body['community_id'] = request_body['community_id']
 
-                if 'type' not in request_body or not request_body['type'] in [FREE_SUBSCRIPTION, DASHBOARD]:
+                if 'type' not in request_body or not request_body['type'] in [FREE_SUBSCRIPTION, DASHBOARD, PAID]:
                     return {'error_message': 'invalid type value'}
 
                 validated_request_body['type'] = request_body['type']

@@ -7,6 +7,7 @@ LIFETIME_DESCRIPTION = 'lifetime payment'
 RENEWAL_DESCRIPTION = 'renewal payment'
 FREE_DESCRIPTION = 'free subscription'
 DASHBOARD = 'dashboard'
+PAID = 'paid'
 ONLINE_MODE = 'online'
 FREE_MODE = 'free'
 STATUS_ACTIVE = 0

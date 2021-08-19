@@ -463,6 +463,52 @@ class SubscriptionImpl(SubscriptionManager):
 
             analytics.track(subscription_history_instance.user_id, event, event_data)
 
+    @staticmethod
+    def _convert_to_paid_existing_subscription(community_id, user_id):
+
+        subscription_instance = Subscription.get_subscription_or_None(user_id, community_id)
+
+        if subscription_instance is None:
+            return {'error_message': 'Invalid user_id'}
+
+        if (subscription_instance.type != FREE_SUBSCRIPTION or
+                subscription_instance.valid_till != LIFETIME_VALID_TILL):
+            return {'error_message': 'The user is not a free user'}
+
+        if subscription_instance is not None:
+
+            current_time = TimeUtilities.current_time_in_milliseconds()
+            valid_till = TimeUtilities.add_days_in_epoch_time(current_time, DAYS_FOR_FREE_USERS)
+
+            subscription_instance.plan_id = None
+            subscription_instance.valid_till = valid_till
+            subscription_instance.type = FREE_SUBSCRIPTION
+            subscription_instance.transaction = None
+            subscription_instance.renewal_due = TimeUtilities.subtract_days_in_epoch_time(valid_till, NOTIFY_PERIOD)
+            subscription_instance.save()
+
+            subscription_history_data = {
+                "start_date": current_time,
+                "end_date": valid_till,
+                "description": FREE_DESCRIPTION,
+                "transaction": None,
+                "type": "free",
+                "user_id": user_id,
+                "community_id": community_id
+            }
+
+            subscription_history_instance = SubscriptionHistory.create_instance(subscription_history_data)
+
+            if not subscription_instance:
+                return {'error_message': 'error creating subscription'}
+
+            if not subscription_history_instance:
+                return {'error_message': 'error creating subscription history'}
+
+            return {'success': True}
+
+        return {'error_message': 'Invalid user_id'}
+
     def create_subscription(self, n_days: str = None, valid_till: str = None, shared_by: str = None) -> dict:
 
         if self.get_payment_id() is not None:
@@ -518,6 +564,16 @@ class SubscriptionImpl(SubscriptionManager):
 
                     if 'error_message' in add_free_days:
                         return {'error_message': add_free_days['error_message']}
+
+                    return {'success': True}
+
+                if self.get_subscription_type() == PAID:
+
+                    generate_free_limited_subscription = self._convert_to_paid_existing_subscription(
+                        self.get_community_id(), self.get_user_id())
+
+                    if 'error_message' in generate_free_limited_subscription:
+                        return {'error_message': generate_free_limited_subscription['error_message']}
 
                     return {'success': True}
 

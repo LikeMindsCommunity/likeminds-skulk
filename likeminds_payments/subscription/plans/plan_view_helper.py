@@ -256,3 +256,16 @@ class PlanViewHelper:
             return {'success': False, 'error_message': "In-valid community id"}
 
         return {}
+
+    @staticmethod
+    def validate_request_body_for_update_event_plan_view(req_body):
+
+        if not req_body:
+            return {'success': False, 'error_message': "Invalid request"}
+
+        event_plan_id = req_body.get('event_plan_id')
+
+        if not event_plan_id:
+            return {'success': False, 'error_message': "In-valid event plan id"}
+
+        return {}

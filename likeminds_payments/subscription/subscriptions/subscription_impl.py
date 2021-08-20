@@ -1,3 +1,6 @@
+from __future__ import absolute_import, unicode_literals
+
+from celery import shared_task
 from .subscription_manager import SubscriptionManager
 from ..transactions.models import Transaction
 from .models import Subscription
@@ -839,18 +842,25 @@ class SubscriptionImpl(SubscriptionManager):
         return {'sheet_data': sheet_data}
 
     @staticmethod
-    def _upload_file_to_bucket(file_path):
+    @shared_task
+    def _handle_migration(input_csv_url, emails):
 
-        object_name = 'utilities/{}'.format(file_path.split('/')[-1])
-        bucket_name = settings.S3_BUCKETS.get('media_bucket').get('name')
+        output_file_path = generate_transactions(input_file_path=input_csv_url)
 
-        upload_file = S3Wrapper.upload_file(file_path, bucket_name, object_name)
+        if 'error_message' in output_file_path:
+            return {'error_message': output_file_path['error_message']}
 
-        if upload_file:
-            return {'link': 'https://{}.s3.amazonaws.com/{}'.format(bucket_name, object_name)}
-        return {'error_message': 'error uploading file to s3 bucket'}
+        template = get_template("otl_mail.html").render(
+            {"link": output_file_path['link']})
 
-    def external_migration(self, members_data: str = None) -> dict:
+        to_emails = [OTL_EMAIL]
+
+        if emails is not None:
+            to_emails.extend(emails)
+
+        MailWrapper.send_email(OTL_SUBJECT, template, to_emails)
+
+    def external_migration(self, members_data: str = None, emails: list = None) -> dict:
 
         input_csv_url = members_data
 
@@ -864,17 +874,6 @@ class SubscriptionImpl(SubscriptionManager):
         if 'error_message' in validated_data:
             return {'error_message': validated_data['error_message']}
 
-        output_file_path = generate_transactions(input_file_path=input_csv_url)
-
-        upload_file = self._upload_file_to_bucket(output_file_path)
-
-        if 'error_message' in upload_file:
-            return {'error_message': upload_file['error_message']}
-
-        template = get_template("otl_mail.html").render(
-            {"link": upload_file['link']})
-
-        MailWrapper.send_email(
-            OTL_SUBJECT, template, [OTL_EMAIL])
+        self._handle_migration.delay(input_csv_url, emails)
 
         return {'success': True}

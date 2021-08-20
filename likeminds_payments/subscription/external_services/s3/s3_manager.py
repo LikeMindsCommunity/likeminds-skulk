@@ -9,7 +9,7 @@ class S3Manager(metaclass=abc.ABCMeta):
                 NotImplemented)
 
     @staticmethod
-    def upload_file(file_name, bucket, object_name=None):
+    def upload_csv_file(file_name, bucket, csv_object):
         """
         upload file to s3
         """

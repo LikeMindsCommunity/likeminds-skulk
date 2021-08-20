@@ -343,3 +343,21 @@ class CoreServiceUtilities:
             return {'error_message': 'invalid response from update event api'}
 
         return {'success': response['success']}
+
+    @staticmethod
+    def chatroom_fetch(fetch_info):
+
+        chatroom_id = NumberUtilities.get_integer_from_string(fetch_info.get('chatroom_id'))
+
+        headers = {
+            'x-member-id': '{}'.format(fetch_info.get('member_id'))
+        }
+
+        url = CHATROOM_FETCH
+        query_params = {
+            'chatroom_id': chatroom_id
+        }
+
+        response = ApiUtilities.generate_get_request(url=url, query_params=query_params, headers=headers)
+
+        return response

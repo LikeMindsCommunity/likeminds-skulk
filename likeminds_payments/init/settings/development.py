@@ -11,7 +11,6 @@ DATABASES = {
     }
 }
 
-
 TIME_ZONE = 'Asia/Kolkata'
 
 # variable to check for beta server

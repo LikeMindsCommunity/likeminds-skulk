@@ -5,3 +5,4 @@ VALID_WEBHOOK_EVENTS = [
     "payment.failed",
 ]
 PAGE_SIZE = 10
+CHATROOM_LINK = "%s/collabcard/%s"

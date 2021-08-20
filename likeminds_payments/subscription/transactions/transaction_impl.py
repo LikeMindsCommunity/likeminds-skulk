@@ -1,6 +1,10 @@
+from __future__ import absolute_import, unicode_literals
+
+from celery import shared_task
 from .transaction_manager import TransactionManager
 from django.conf import settings
 from ..external_services.razorpay.razorpay_wrapper import RazorpayWrapper
+from ..external_services.segment.segment_impl import SegmentImpl
 from ..utility.core_service_utilities import CoreServiceUtilities
 from ..utility.number_utilities import NumberUtilities
 from ..utility.states import TransactionType
@@ -22,7 +26,6 @@ import razorpay
 
 
 class TransactionImpl(TransactionManager):
-
     transaction_body = None
     transaction_raw_body = None
     transaction_signature = None
@@ -202,7 +205,8 @@ class TransactionImpl(TransactionManager):
 
         else:
             transaction_data = self._fetch_transaction_data_for_community_subscription(order_notes,
-                                                                                       payment_instance, refund_instance)
+                                                                                       payment_instance,
+                                                                                       refund_instance)
 
         return transaction_data
 
@@ -333,13 +337,16 @@ class TransactionImpl(TransactionManager):
                     return {'error_message': response['error_message']}
 
             if not transaction_data['renew'] and transaction_data['user_id'] is None:
-
                 acquisition_data = self._create_member_acquisition_data(transaction_instance, transaction_data)
 
                 MemberAcquisition.create_instance(acquisition_data)
 
         if transaction_instance.type == TransactionType.EVENT and transaction_instance.user_id:
-            self._attend_event_for_paid_transaction(transaction_instance)
+
+            if  transaction_instance.status == 'captured':
+                self._attend_event_for_paid_transaction(transaction_instance)
+
+            TransactionHelper.send_analytics_for_event_transaction(transaction_instance.id)
 
         return {'success': True}
 
@@ -432,3 +439,71 @@ class TransactionImpl(TransactionManager):
                 return {'success': False, 'error_message': "Already used payment id"}
 
         return {'success': False, 'error_message': "In-valid payment id"}
+
+
+class TransactionHelper:
+
+    @staticmethod
+    def create_event_metadata(chatroom_data, cost_list):
+        event_metadata = {
+            'event_id': chatroom_data.get('id'),
+            'community_id': chatroom_data.get('community_id'),
+            'community_name': chatroom_data.get('community_name'),
+            'event_name': chatroom_data.get('header'),
+            'event_date': TimeUtilities.convert_epoch_time_to_date_month_year(chatroom_data.get('date_time')),
+            'event_time': TimeUtilities.convert_epoch_time_in_hh_mm_am_pm(chatroom_data.get('date_time')),
+            'event_type': "paid" if chatroom_data.get('is_paid') else "free",
+            'event_link': CHATROOM_LINK % (settings.URL, str(chatroom_data.get('id'))),
+            'event_cost': cost_list
+        }
+
+        return event_metadata
+
+    @staticmethod
+    def compute_event_metadata_for_analytics(chatroom_id, user_id):
+
+        chatroom_data = CoreServiceUtilities.chatroom_fetch({'chatroom_id': chatroom_id,
+                                                             'member_id': user_id}).get('chatroom')
+
+        if not chatroom_data or chatroom_data.get('error_message'):
+            return
+
+        event_filter = ModelUtilities.get_model_filter(SubscriptionEventPlan, {'chatroom_id': chatroom_id})
+        cost_list = [plan_instance.cost/100 for plan_instance in event_filter]
+
+        event_metadata = TransactionHelper.create_event_metadata(chatroom_data, cost_list)
+
+        return event_metadata
+
+    @staticmethod
+    @shared_task
+    def send_analytics_for_event_transaction(transaction_id):
+
+        transaction_instance = ModelUtilities.get_model_instance_or_none(Transaction, transaction_id)
+
+        if not transaction_instance:
+            return
+
+        if transaction_instance.status == 'captured':
+            event_name = "Event payment successful (Subscription Service)"
+
+        elif transaction_instance.status == 'failed':
+            event_name = "Event payment failed (Subscription Service)"
+
+        elif transaction_instance.status == 'refund':
+            event_name = "Event payment refunded (Subscription Service)"
+
+        else:
+            return
+
+        event_plan_id = transaction_instance.plan_id
+        event_plan_instance = SubscriptionEventPlan.get_event_plan_or_None(event_plan_id)
+
+        if not event_plan_instance:
+            return
+
+        chatroom_id = event_plan_instance.chatroom_id
+        user_id = transaction_instance.user_id
+
+        event_metadata = TransactionHelper.compute_event_metadata_for_analytics(chatroom_id, user_id)
+        SegmentImpl.track_event(user_id, event_name, event_metadata)

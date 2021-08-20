@@ -1,4 +1,6 @@
+from ..utility.number_utilities import NumberUtilities
 from ..utility.plan_utilities import PlanUtilities
+from ..utility.states import EventDiscountType
 
 
 def PlanSerializer(plans) -> list:
@@ -43,10 +45,15 @@ def EventPlanSerializer(plan_instance) -> dict:
         'event_plan_id': plan_instance.event_plan_id,
         'chatroom_id': plan_instance.chatroom_id,
         'community_id': plan_instance.community_id,
-        'cost': plan_instance.cost,
-        'strike_cost': plan_instance.strike_cost,
-        'cost_usd': plan_instance.cost_usd,
-        'strike_cost_usd': plan_instance.strike_cost_usd,
+        'cost': NumberUtilities.convert_to_rupee_or_none(plan_instance.cost),
+        'strike_cost': NumberUtilities.convert_to_rupee_or_none(plan_instance.strike_cost),
+        'cost_usd': NumberUtilities.convert_to_rupee_or_none(plan_instance.cost_usd),
+        'strike_cost_usd': NumberUtilities.convert_to_rupee_or_none(plan_instance.strike_cost_usd),
         'discount_type': plan_instance.discount_type,
         'discount': plan_instance.discount
     }
+
+    if plan_context['discount_type'] == EventDiscountType.FLAT:
+        plan_context['discount'] = NumberUtilities.convert_to_rupee_or_none(plan_instance.discount)
+
+    return plan_context

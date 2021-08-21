@@ -180,3 +180,30 @@ class FetchEventPlanView(TransactionMixin, APIView):
         query_params['chatroom_ids'] = chatroom_ids
 
         return query_params
+
+
+class UpdateEventPlanView(TransactionMixin, APIView):
+
+    @method_decorator(csrf_exempt)
+    def dispatch(self, request, *args, **kwargs):
+        return super(UpdateEventPlanView, self).dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+
+        request_body = RequestUtilities.load_request_body(request)
+        member_id = RequestUtilities.get_parameter_from_headers(request, 'HTTP_X_MEMBER_ID')
+        validated_request = PlanViewHelper.validate_request_body_for_update_event_plan_view(request_body)
+
+        if validated_request.get('error_message'):
+            return JsonResponse(validated_request, status=status_codes.HTTP_400_BAD_REQUEST)
+
+        plan_manager = PlanImpl()
+
+        try:
+            response_data = plan_manager.update_event_plan(request_body)
+
+        except Exception as e:
+
+            return JsonResponse({'error_message': e.args}, status=status_codes.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return JsonResponse(response_data)

@@ -40,7 +40,9 @@ def PlanSerializer(plans) -> list:
 
 
 def EventPlanSerializer(plan_instance) -> dict:
+
     plan_context = {
+        'event_plan_id': plan_instance.event_plan_id,
         'chatroom_id': plan_instance.chatroom_id,
         'community_id': plan_instance.community_id,
         'cost': NumberUtilities.convert_to_rupee_or_none(plan_instance.cost),

@@ -31,5 +31,6 @@ urlpatterns = [
     path('valid_event_transaction', ValidateEventTransactionView.as_view(), name='valid_event_transaction'),
     path('send_facebook_event', SendEventView.as_view(), name='send-facebook-event'),
     path('valid_event_payment_id', ValidateEventPaymentView.as_view(), name='valid_event_payment_id'),
-    path('update_payment_id', UpdatePaymentView.as_view(), name='update_payment_id')
+    path('update_payment_id', UpdatePaymentView.as_view(), name='update_payment_id'),
+    path('update_event_plan', UpdateEventPlanView.as_view(), name='update_event_plan')
 ]

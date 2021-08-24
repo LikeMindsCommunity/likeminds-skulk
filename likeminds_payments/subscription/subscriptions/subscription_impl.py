@@ -12,7 +12,7 @@ from .constants import *
 from .serializers import SubscriptionSerializer, SubscriptionListSerializer
 
 from ..utility.constants import *
-from ..utility.time_utilities import TimeUtilities, MILLISECONDS_IN_A_DAY
+from ..utility.time_utilities import TimeUtilities
 from ..utility.number_utilities import NumberUtilities
 from ..utility.core_service_utilities import CoreServiceUtilities
 from ..external_services.razorpay.razorpay_wrapper import RazorpayWrapper
@@ -20,7 +20,6 @@ from ..plans.constants import *
 from ..transactions.constants import *
 from ..member_notifications.constants import *
 from ..external_services.email.email_wrapper import MailWrapper
-from ..external_services.s3.s3_wrapper import S3Wrapper
 from scripts.external_community_migration import generate_transactions
 
 import razorpay
@@ -468,7 +467,7 @@ class SubscriptionImpl(SubscriptionManager):
                 'amount': 0,
                 'end_date': TimeUtilities.convert_epoch_to_date(subscription_history_instance.end_date),
                 'no_of_days': (subscription_history_instance.end_date -
-                               subscription_history_instance.start_date) // MILLISECONDS_IN_A_DAY,
+                               subscription_history_instance.start_date) // TimeUtilities.MILLISECONDS_IN_A_DAY,
                 'mode_of_payment': FREE_MODE,
                 'type': subscription_instance.type
             }
@@ -858,7 +857,12 @@ class SubscriptionImpl(SubscriptionManager):
         if emails is not None:
             to_emails.extend(emails)
 
-        MailWrapper.send_email(OTL_SUBJECT, template, to_emails)
+        status = MailWrapper.send_email(OTL_SUBJECT, template, to_emails)
+
+        if not status:
+            return {'error_message': 'error sending email'}
+
+        return {'success': True}
 
     def external_migration(self, members_data: str = None, emails: list = None) -> dict:
 
@@ -874,6 +878,9 @@ class SubscriptionImpl(SubscriptionManager):
         if 'error_message' in validated_data:
             return {'error_message': validated_data['error_message']}
 
-        self._handle_migration.delay(input_csv_url, emails)
+        migration = self._handle_migration.delay(input_csv_url, emails)
+
+        if 'error_message' in migration:
+            return {'error_message': migration['error_message']}
 
         return {'success': True}

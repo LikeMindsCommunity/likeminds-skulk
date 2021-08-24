@@ -4,6 +4,8 @@ from django.core.mail import EmailMultiAlternatives
 
 class MailWrapper(MailManager):
 
+    from_email = 'LikeMinds<hello@likeminds.community>'
+
     @staticmethod
     def send_email(subject, template, to_mails_list, categories=None, reply_to=None):
 
@@ -11,7 +13,7 @@ class MailWrapper(MailManager):
         email = EmailMultiAlternatives(
             subject,
             template,
-            'LikeMinds<hello@likeminds.community>',
+            MailWrapper.from_email,
             to_mails_list,
             reply_to=reply_to
         )
@@ -20,6 +22,8 @@ class MailWrapper(MailManager):
         if categories is not None:
             email.categories = categories
 
-        email.send(fail_silently)
+        status = email.send(fail_silently)
 
-        return
+        if status == 1:
+            return True
+        return False

@@ -204,7 +204,7 @@ def upload_csv_to_s3(data, file_name):
     file_path = 'utilities/otl_files/{}'.format(file_name)
     bucket = settings.S3_BUCKETS.get('media_bucket').get('name')
 
-    upload_status = S3Wrapper.upload_csv_file(file_path, bucket, csv_buffer)
+    upload_status = S3Wrapper.upload_csv_file(file_path, bucket, csv_buffer, acl='public-read')
 
     if upload_status:
         return {'link': 'https://{}.s3.amazonaws.com/{}'.format(bucket, file_path)}

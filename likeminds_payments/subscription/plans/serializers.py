@@ -36,7 +36,8 @@ def PlanSerializer(plans) -> list:
             plan_object['strike_cost_usd'] = plan.strike_cost_usd // 100
 
         plan_object['plan_sub_title'] = '{} for {} {}'.format(
-            plan_object['cost'], plan_object['duration_in_months'],
+            plan_object['cost'],
+            plan_object['duration_in_months'],
             SUBSCRIPTION_PLAN_NAMES[plan_object['duration_name']]['subtitle'])
 
         if SUBSCRIPTION_PLAN_NAMES[plan_object['duration_name']]['unique']:

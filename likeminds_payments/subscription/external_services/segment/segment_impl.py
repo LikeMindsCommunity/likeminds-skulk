@@ -7,13 +7,12 @@ import analytics
 error_logger = LoggingWrapper.get_instance()
 info_logger = LoggingWrapper.get_instance()
 
-analytics.write_key = settings.SEGMENT_KEY
-
 
 class SegmentImpl(SegmentManager):
 
     @staticmethod
     def track_event(user_id, event_name, event_data) -> None:
+        analytics.write_key = settings.SEGMENT_KEY
 
         try:
             analytics.track(user_id, event_name, event_data)

@@ -3,6 +3,7 @@ from ..plans.plan_manager import PlanManager
 from .models import SubscriptionPlan, SubscriptionEventPlan
 from .serializers import PlanSerializer, EventPlanSerializer
 from ..utility.core_service_utilities import CoreServiceUtilities
+from ..utility.model_utilities import ModelUtilities
 from ..utility.number_utilities import NumberUtilities
 
 from ..utility.plan_utilities import PlanUtilities
@@ -11,7 +12,6 @@ from django.conf import settings
 
 
 class PlanImpl(PlanManager):
-
     community_id = None
     plan_instance = None
 
@@ -55,6 +55,33 @@ class PlanImpl(PlanManager):
             'discount_type': discount_type,
             'discount': discount
         }
+
+    @staticmethod
+    def update_event_plan_context(event_plan_instance, req_body):
+
+        event_plan_instance.cost = NumberUtilities.convert_to_paisa_or_none(req_body.get('cost',
+                                                                                         event_plan_instance.cost))
+        event_plan_instance.strike_cost = NumberUtilities.convert_to_paisa_or_none(
+            req_body.get('strike_cost', event_plan_instance.strike_cost))
+        event_plan_instance.cost_usd = NumberUtilities.convert_to_paisa_or_none(
+            req_body.get('cost_usd', event_plan_instance.cost_usd))
+        event_plan_instance.strike_cost_usd = NumberUtilities.convert_to_paisa_or_none(
+            req_body.get('strike_cost_usd', event_plan_instance.strike_cost_usd))
+
+        discount_type = req_body.get('discount_type', event_plan_instance.discount_type)
+        discount = event_plan_instance.discount
+
+        if discount_type == EventDiscountType.PERCENTAGE:
+            discount = req_body.get('discount', event_plan_instance.discount)
+
+        elif discount_type == EventDiscountType.FLAT:
+            discount = NumberUtilities.convert_to_paisa_or_none(req_body.get('discount',
+                                                                             event_plan_instance.discount))
+
+        event_plan_instance.discount_type = discount_type
+        event_plan_instance.discount = discount
+
+        event_plan_instance.save()
 
     def create_plan(self) -> dict:
 
@@ -106,7 +133,8 @@ class PlanImpl(PlanManager):
         CoreServiceUtilities.update_event({
             'member_id': member_id,
             'chatroom_id': instance.chatroom_id,
-            'event_payment_link': EVENT_PAYMENT_LINK % (settings.WEB_URL, instance.event_plan_id, instance.community_id),
+            'event_payment_link': EVENT_PAYMENT_LINK % (
+            settings.WEB_URL, instance.event_plan_id, instance.community_id),
             'restrict_event_update_notification': True
         })
 
@@ -117,3 +145,18 @@ class PlanImpl(PlanManager):
         event_plans = self._serialize_event_plan_list(chatroom_ids)
 
         return {'event_plans': event_plans}
+
+    def update_event_plan(self, req_body) -> dict:
+
+        event_plan_id = req_body.get('event_plan_id')
+
+        event_plan_filter = ModelUtilities.get_model_filter(SubscriptionEventPlan,
+                                                            {'event_plan_id': event_plan_id})
+
+        if not event_plan_filter:
+            return {'error_message': "Invalid event plan id", 'success': False}
+
+        event_plan_instance = event_plan_filter[0]
+        self.update_event_plan_context(event_plan_instance, req_body)
+
+        return {'success': True}

@@ -16,6 +16,7 @@ from ..utility.time_utilities import TimeUtilities
 from ..utility.number_utilities import NumberUtilities
 from ..utility.core_service_utilities import CoreServiceUtilities
 from ..external_services.razorpay.razorpay_wrapper import RazorpayWrapper
+from ..external_services.logging.logging_wrapper import LoggingWrapper
 from ..plans.constants import *
 from ..transactions.constants import *
 from ..member_notifications.constants import *
@@ -25,8 +26,10 @@ from scripts.external_community_migration import generate_transactions
 import razorpay
 import analytics
 import pandas as pd
-from django.conf import settings
 from django.template.loader import get_template
+
+error_logger = LoggingWrapper.get_instance()
+info_logger = LoggingWrapper.get_instance()
 
 
 class SubscriptionImpl(SubscriptionManager):
@@ -847,7 +850,7 @@ class SubscriptionImpl(SubscriptionManager):
         output_file_path = generate_transactions(input_file_path=input_csv_url)
 
         if 'error_message' in output_file_path:
-            return {'error_message': output_file_path['error_message']}
+            error_logger.error(output_file_path['error_message'])
 
         template = get_template("otl_mail.html").render(
             {"link": output_file_path['link']})
@@ -860,9 +863,7 @@ class SubscriptionImpl(SubscriptionManager):
         status = MailWrapper.send_email(OTL_SUBJECT, template, to_emails)
 
         if not status:
-            return {'error_message': 'error sending email'}
-
-        return {'success': True}
+            error_logger.error('error sending email')
 
     def external_migration(self, members_data: str = None, emails: list = None) -> dict:
 
@@ -878,9 +879,6 @@ class SubscriptionImpl(SubscriptionManager):
         if 'error_message' in validated_data:
             return {'error_message': validated_data['error_message']}
 
-        migration = self._handle_migration.delay(input_csv_url, emails)
-
-        if 'error_message' in migration:
-            return {'error_message': migration['error_message']}
+        self._handle_migration.delay(input_csv_url, emails)
 
         return {'success': True}

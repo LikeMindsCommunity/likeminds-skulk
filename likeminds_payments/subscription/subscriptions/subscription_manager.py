@@ -9,7 +9,8 @@ class SubscriptionManager(metaclass=abc.ABCMeta):
                 (hasattr(subclass, 'start_subscription') and callable(subclass.start_subscription)) and
                 (hasattr(subclass, 'fetch_subscription') and callable(subclass.fetch_subscription)) and
                 (hasattr(subclass, 'fetch_community_meta') and callable(subclass.fetch_community_meta)) and
-                (hasattr(subclass, 'convert_to_paid') and callable(subclass.convert_to_paid)) or
+                (hasattr(subclass, 'convert_to_paid') and callable(subclass.convert_to_paid)) and
+                (hasattr(subclass, 'external_migration') and callable(subclass.external_migration)) or
                 NotImplemented)
 
     @abc.abstractmethod
@@ -45,6 +46,13 @@ class SubscriptionManager(metaclass=abc.ABCMeta):
     def convert_to_paid(self) -> dict:
         """
         convert free internal communities to paid
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def external_migration(self) -> dict:
+        """
+        migrate external communities
         """
         raise NotImplementedError
 

@@ -1,6 +1,7 @@
 from ..utility.number_utilities import NumberUtilities
 from ..utility.plan_utilities import PlanUtilities
 from ..utility.states import EventDiscountType
+from .constants import *
 
 
 def PlanSerializer(plans) -> list:
@@ -33,6 +34,18 @@ def PlanSerializer(plans) -> list:
 
         if plan.strike_cost_usd is not None:
             plan_object['strike_cost_usd'] = plan.strike_cost_usd // 100
+
+        plan_object['plan_sub_title'] = '{} for {} {}'.format(
+            plan_object['cost'],
+            plan_object['duration_in_months'],
+            SUBSCRIPTION_PLAN_NAMES[plan_object['duration_name']]['subtitle'])
+
+        if SUBSCRIPTION_PLAN_NAMES[plan_object['duration_name']]['unique']:
+            plan_title = SUBSCRIPTION_PLAN_NAMES[plan_object['duration_name']]['title']
+        else:
+            plan_title = '{} "{}" Plan'.format(plan_object['duration_in_months'],
+                                               SUBSCRIPTION_PLAN_NAMES[plan_object['duration_name']]['title'])
+        plan_object['plan_title'] = plan_title
 
         output.append(plan_object)
 

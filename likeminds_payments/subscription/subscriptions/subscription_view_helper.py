@@ -141,3 +141,14 @@ class SubscriptionViewHelper:
             return {'error_message': 'send community_id'}
 
         return request_body
+
+    @staticmethod
+    def external_migration_body_validator(request_body):
+
+        if not request_body:
+            return {'error_message': 'invalid request body'}
+
+        if 'members_data_url' not in request_body or not request_body['members_data_url']:
+            return {'error_message': 'send members_data_url in body'}
+
+        return request_body

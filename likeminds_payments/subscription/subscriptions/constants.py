@@ -14,3 +14,10 @@ STATUS_EXPIRED = 1
 STATUS_GRACE_PERIOD = 2
 STATUS_RENEWAL_DUE = 3
 DAYS_FOR_FREE_USERS = 7
+VALID_MONTH_PLAN_NAMES = ['monthly', 'quarterly', 'half_yearly', 'yearly', 'lifetime']
+DAYS = 'days'
+WEEKLY = 'weekly'
+VALID_SHEET_COLUMNS = ['plan_name', 'plan_duration (in months)', 'member_email', 'member_phone (with country code)',
+                       'start_date (dd/mm/yyyy)', 'community_id', 'payment_page_url', 'amount']
+OTL_SUBJECT = 'OTL Migration Data'
+OTL_EMAIL = 'himanshu@likeminds.community'

@@ -2,6 +2,7 @@ from __future__ import absolute_import, unicode_literals
 
 from celery import shared_task
 from rest_framework import status as status_codes
+from django.template.loader import get_template
 from .subscription_manager import SubscriptionManager
 from ..transactions.models import Transaction
 from .models import Subscription
@@ -24,10 +25,11 @@ from ..member_notifications.constants import *
 from ..external_services.email.email_wrapper import MailWrapper
 from scripts.external_community_migration import generate_transactions
 
+import time
 import razorpay
 import analytics
 import pandas as pd
-from django.template.loader import get_template
+from io import StringIO
 
 error_logger = LoggingWrapper.get_instance()
 info_logger = LoggingWrapper.get_instance()
@@ -804,6 +806,31 @@ class SubscriptionImpl(SubscriptionManager):
         return members
 
     @staticmethod
+    def _get_all_members_detail(community_id, member_id):
+
+        members = []
+        page = 1
+        done = False
+
+        while not done:
+
+            get_members = CoreServiceUtilities.get_all_members_details(community_id, member_id, page)
+
+            if 'error_message' in get_members:
+                continue
+
+            if 'members' in get_members:
+
+                if len(get_members['members']) == 0:
+                    done = True
+
+                members += get_members['members']
+
+            page += 1
+
+        return members
+
+    @staticmethod
     def _generate_new_free_subscription(community_id, user_id, date_subscribed):
 
         subscription_instance = Subscription.get_subscription_or_None(user_id, community_id)
@@ -939,3 +966,126 @@ class SubscriptionImpl(SubscriptionManager):
         self._handle_migration.delay(input_csv_url, emails)
 
         return {'success': True, 'status': status_codes.HTTP_200_OK}
+
+    @staticmethod
+    def _handle_report_data(members_detail, subscription_details, community_questions) -> dict:
+
+        output_data = {
+            'member_name': [],
+            'member_phones': [],
+            'member_emails': [],
+            'join_date': [],
+            'active_plan': [],
+            'subscription_status': [],
+            'subscription_valid_till': []
+        }
+
+        for question in community_questions:
+
+            output_data[question['question_title']] = []
+
+        for member_id in members_detail.keys():
+
+            phones = ''
+            for mobile in members_detail[member_id]['mobiles']:
+                phones += '+{}-{}, '.format(mobile['country_code'], mobile['mobile_no'])
+            phones = phones[:-2]
+
+            emails = ''
+            for email in members_detail[member_id]['emails']:
+                emails += '{}, '.format(email['email'])
+            emails = emails[:-2]
+
+            join_date = time.strftime("%d %b %Y", time.localtime(members_detail[member_id]['created_at']))
+
+            output_data['member_name'].append(members_detail[member_id]['name'])
+            output_data['member_phones'].append(phones)
+            output_data['member_emails'].append(emails)
+            output_data['join_date'].append(join_date)
+
+            for question in community_questions:
+                match = next(filter(lambda entity: entity.get('question_id') == question['id'],
+                                    members_detail[member_id]['question_answers']), None)
+
+                if match is None:
+                    output_data[question['question_title']].append('')
+                else:
+                    output_data[question['question_title']].append(match['value'])
+
+            if len(subscription_details[member_id]) > 0:
+                active_plan = subscription_details[member_id][0]['plan']
+                if subscription_details[member_id][0]['type'] == FREE_SUBSCRIPTION:
+                    active_plan = FREE_SUBSCRIPTION
+
+                membership_state = MEMBERSHIP_STATES[subscription_details[member_id][0]['membership_state']]
+                valid_till = time.strftime(
+                    "%d %b %Y", time.localtime(subscription_details[member_id][0]['valid_till']/1000))
+
+                output_data['active_plan'].append(active_plan)
+                output_data['subscription_status'].append(membership_state)
+                output_data['subscription_valid_till'].append(valid_till)
+            else:
+                output_data['active_plan'].append(None)
+                output_data['subscription_status'].append(None)
+                output_data['subscription_valid_till'].append(None)
+
+        return output_data
+
+    @staticmethod
+    def _send_report(data, email, file_name):
+
+        final_data = pd.DataFrame(data)
+        csv_buffer = StringIO()
+        final_data.to_csv(csv_buffer)
+        file_path = 'utilities/report_files/{}'.format(file_name)
+
+    def _fetch_all_member_data(self):
+
+        members = self._get_all_members_detail(self.get_community_id(), self.get_member_id())
+
+        members_questions = self._get_all_members(self.get_community_id(), self.get_member_id())
+
+        community_questions = CoreServiceUtilities.get_community_questions(
+            self.get_community_id(), self.get_member_id())
+
+        members_data = {}
+
+        email = None
+
+        for member in members:
+
+            if email is not None and member['id'] == self.get_member_id():
+                email = member['emails'][0]['email']
+
+            members_data[member['id']] = member
+
+        for member_questions in members_questions:
+
+            members_data[member_questions['id']]['question_answers'] = member_questions['question_answers']
+
+        subscription_details = self.fetch_subscription(list(members_data.keys()))
+
+        report_data = self._handle_report_data(
+            members_data, subscription_details['subscriptions'], community_questions['questions'])
+
+        file_name = ''
+
+        self._send_report(report_data, email, file_name)
+
+    def members_report(self) -> dict:
+
+        if self.get_member_id() is not None:
+
+            has_permission_check = CoreServiceUtilities.has_permission(self.get_community_id(), self.get_member_id())
+
+            if 'error_message' in has_permission_check:
+                return {'error_message': has_permission_check['error_message']}
+
+            if 'has_permission' in has_permission_check and has_permission_check['has_permission'] is False:
+                return {'error_message': 'You are not the Owner/CM of the community'}
+
+            self._fetch_all_member_data()
+
+            return {'success': True}
+
+        return {'error_message': 'something went wrong'}

@@ -22,3 +22,9 @@ VALID_SHEET_COLUMNS = ['plan_name', 'plan_duration (in months)', 'member_email',
                        'start_date (dd/mm/yyyy)', 'community_id', 'payment_page_url', 'amount']
 OTL_SUBJECT = 'OTL Migration Data'
 OTL_EMAIL = 'himanshu@likeminds.community'
+MEMBERSHIP_STATES = {
+    0: 'Active',
+    1: 'Expired',
+    2: 'Grace Period',
+    3: 'Renewal Due'
+}

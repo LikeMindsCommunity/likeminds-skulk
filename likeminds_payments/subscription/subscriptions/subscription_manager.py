@@ -10,7 +10,8 @@ class SubscriptionManager(metaclass=abc.ABCMeta):
                 (hasattr(subclass, 'fetch_subscription') and callable(subclass.fetch_subscription)) and
                 (hasattr(subclass, 'fetch_community_meta') and callable(subclass.fetch_community_meta)) and
                 (hasattr(subclass, 'convert_to_paid') and callable(subclass.convert_to_paid)) and
-                (hasattr(subclass, 'external_migration') and callable(subclass.external_migration)) or
+                (hasattr(subclass, 'external_migration') and callable(subclass.external_migration)) and
+                (hasattr(subclass, 'members_report') and callable(subclass.members_report)) or
                 NotImplemented)
 
     @abc.abstractmethod
@@ -56,3 +57,8 @@ class SubscriptionManager(metaclass=abc.ABCMeta):
         """
         raise NotImplementedError
 
+    @abc.abstractmethod
+    def members_report(self) -> dict:
+        """
+        sends member details of a community to the cm
+        """

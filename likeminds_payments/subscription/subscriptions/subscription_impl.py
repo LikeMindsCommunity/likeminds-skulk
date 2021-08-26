@@ -531,9 +531,6 @@ class SubscriptionImpl(SubscriptionManager):
 
             subscription_history_instance = SubscriptionHistory.create_instance(subscription_history_data)
 
-            if not subscription_instance:
-                return {'error_message': 'error creating subscription'}
-
             if not subscription_history_instance:
                 return {'error_message': 'error creating subscription history'}
 
@@ -818,6 +815,7 @@ class SubscriptionImpl(SubscriptionManager):
             get_members = CoreServiceUtilities.get_all_members_details(community_id, member_id, page)
 
             if 'error_message' in get_members:
+                page += 1
                 continue
 
             if 'members' in get_members:

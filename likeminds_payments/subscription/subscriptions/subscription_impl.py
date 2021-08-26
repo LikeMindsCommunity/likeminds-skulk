@@ -1,6 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 
 from celery import shared_task
+from rest_framework import status as status_codes
 from .subscription_manager import SubscriptionManager
 from ..transactions.models import Transaction
 from .models import Subscription
@@ -870,15 +871,15 @@ class SubscriptionImpl(SubscriptionManager):
         input_csv_url = members_data
 
         if input_csv_url is None:
-            return {'error_message': 'invalid members_data sheet link'}
+            return {'error_message': 'invalid members_data sheet link', 'status': status_codes.HTTP_400_BAD_REQUEST}
 
         df = pd.read_csv(input_csv_url)
 
         validated_data = self._columns_validator(df, VALID_SHEET_COLUMNS)
 
         if 'error_message' in validated_data:
-            return {'error_message': validated_data['error_message']}
+            return {'error_message': validated_data['error_message'], 'status': status_codes.HTTP_400_BAD_REQUEST}
 
         self._handle_migration.delay(input_csv_url, emails)
 
-        return {'success': True}
+        return {'success': True, 'status': status_codes.HTTP_200_OK}

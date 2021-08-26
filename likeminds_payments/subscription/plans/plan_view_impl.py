@@ -125,7 +125,7 @@ class DeletePlanView(TransactionMixin, APIView):
         )
 
 
-class CreateEventPlanView(TransactionMixin, APIView):
+class CreateEventPlanView(APIView):
 
     @method_decorator(csrf_exempt)
     def dispatch(self, request, *args, **kwargs):
@@ -182,7 +182,7 @@ class FetchEventPlanView(TransactionMixin, APIView):
         return query_params
 
 
-class UpdateEventPlanView(TransactionMixin, APIView):
+class UpdateEventPlanView(APIView):
 
     @method_decorator(csrf_exempt)
     def dispatch(self, request, *args, **kwargs):
@@ -200,7 +200,7 @@ class UpdateEventPlanView(TransactionMixin, APIView):
         plan_manager = PlanImpl()
 
         try:
-            response_data = plan_manager.update_event_plan(request_body)
+            response_data = plan_manager.update_event_plan(request_body, member_id)
 
         except Exception as e:
 

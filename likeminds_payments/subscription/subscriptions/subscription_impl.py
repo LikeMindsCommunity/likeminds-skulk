@@ -1033,7 +1033,7 @@ class SubscriptionImpl(SubscriptionManager):
         return output_data
 
     @staticmethod
-    def _send_report(data, email, file_name):
+    def _send_report(data, file_name):
 
         final_data = pd.DataFrame(data)
         csv_buffer = StringIO()
@@ -1083,7 +1083,7 @@ class SubscriptionImpl(SubscriptionManager):
             community_name,
             time.strftime("%d-%b-%Y", time.localtime(time.time())))
 
-        upload_status = SubscriptionImpl._send_report(report_data, email, file_name)
+        upload_status = SubscriptionImpl._send_report(report_data, file_name)
 
         if 'error_message' in upload_status:
             error_logger.error(upload_status['error_message'])

@@ -222,7 +222,7 @@ class ConvertToPaidView(TransactionMixin, APIView):
         )
 
 
-class ExternalMigrationView(TransactionMixin, APIView):
+class ExternalMigrationView(APIView):
 
     @method_decorator(csrf_exempt)
     def dispatch(self, request, *args, **kwargs):
@@ -257,7 +257,7 @@ class ExternalMigrationView(TransactionMixin, APIView):
         )
 
 
-class MembersReportView(TransactionMixin, APIView):
+class MembersReportView(APIView):
 
     @method_decorator(csrf_exempt)
     def dispatch(self, request, *args, **kwargs):

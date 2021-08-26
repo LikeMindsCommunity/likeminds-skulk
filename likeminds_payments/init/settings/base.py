@@ -186,3 +186,8 @@ CRONJOBS = [
     ('*/5 * * * *', 'subscription.cron.send_events.handle', CRONJOB_LOG_FILE)
 ]
 CRONTAB_COMMAND_SUFFIX = '2>&1'
+
+WEBFLOW_KEYS = {
+    'collection_id': os.getenv('WEBFLOW_COLLECTION_ID'),
+    'api_key': os.getenv('WEBFLOW_API_KEY')
+}

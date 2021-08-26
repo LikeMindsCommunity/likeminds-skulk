@@ -1,25 +1,27 @@
 import math
 import time
 
-MILLISECONDS_IN_A_DAY = 86400000
-
-days_in_months = {
-    '01': 31,
-    '02': 28,
-    '03': 31,
-    '04': 30,
-    '05': 31,
-    '06': 30,
-    '07': 31,
-    '08': 31,
-    '09': 30,
-    '10': 31,
-    '11': 30,
-    '12': 31
-}
-
 
 class TimeUtilities:
+
+    MILLISECONDS_IN_A_DAY = 86400000
+
+    DAYS_IN_A_WEEK = 7
+
+    DAYS_IN_MONTHS = {
+        '01': 31,
+        '02': 28,
+        '03': 31,
+        '04': 30,
+        '05': 31,
+        '06': 30,
+        '07': 31,
+        '08': 31,
+        '09': 30,
+        '10': 31,
+        '11': 30,
+        '12': 31
+    }
 
     @staticmethod
     def current_time_in_milliseconds() -> int:
@@ -30,7 +32,7 @@ class TimeUtilities:
         consider = False
         total_days = 0
         while months_count != 0:
-            months_list = sorted(days_in_months.items())
+            months_list = sorted(TimeUtilities.DAYS_IN_MONTHS.items())
             if backward:
                 months_list = reversed(months_list)
             for k, days in months_list:
@@ -48,22 +50,27 @@ class TimeUtilities:
         month = time.strftime("%m", time.gmtime(epoch))
         days = TimeUtilities.get_number_of_days_in_months(month, months)
 
-        return epoch + days * MILLISECONDS_IN_A_DAY
+        return epoch + days * TimeUtilities.MILLISECONDS_IN_A_DAY
 
     @staticmethod
     def subtract_months_in_epoch_time(epoch: int, months: int) -> int:
         month = time.strftime("%m", time.gmtime(epoch))
         days = TimeUtilities.get_number_of_days_in_months(month, months, True)
 
-        return epoch - days * MILLISECONDS_IN_A_DAY
+        return epoch - days * TimeUtilities.MILLISECONDS_IN_A_DAY
+
+    @staticmethod
+    def add_weeks_in_epoch_time(epoch: int, weeks: int) -> int:
+        days = weeks * TimeUtilities.DAYS_IN_A_WEEK
+        return TimeUtilities.add_days_in_epoch_time(epoch, days)
 
     @staticmethod
     def subtract_days_in_epoch_time(epoch: int, days: int) -> int:
-        return epoch - days * MILLISECONDS_IN_A_DAY
+        return epoch - days * TimeUtilities.MILLISECONDS_IN_A_DAY
 
     @staticmethod
     def add_days_in_epoch_time(epoch: int, days: int) -> int:
-        return epoch + days * MILLISECONDS_IN_A_DAY
+        return epoch + days * TimeUtilities.MILLISECONDS_IN_A_DAY
 
     @staticmethod
     def add_milliseconds_in_epoch_time(epoch: int, milliseconds: int) -> int:

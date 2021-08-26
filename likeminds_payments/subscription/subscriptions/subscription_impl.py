@@ -1,3 +1,7 @@
+from __future__ import absolute_import, unicode_literals
+
+from celery import shared_task
+from rest_framework import status as status_codes
 from .subscription_manager import SubscriptionManager
 from ..transactions.models import Transaction
 from .models import Subscription
@@ -9,16 +13,24 @@ from .constants import *
 from .serializers import SubscriptionSerializer, SubscriptionListSerializer
 
 from ..utility.constants import *
-from ..utility.time_utilities import TimeUtilities, MILLISECONDS_IN_A_DAY
+from ..utility.time_utilities import TimeUtilities
 from ..utility.number_utilities import NumberUtilities
 from ..utility.core_service_utilities import CoreServiceUtilities
 from ..external_services.razorpay.razorpay_wrapper import RazorpayWrapper
+from ..external_services.logging.logging_wrapper import LoggingWrapper
 from ..plans.constants import *
 from ..transactions.constants import *
 from ..member_notifications.constants import *
+from ..external_services.email.email_wrapper import MailWrapper
+from scripts.external_community_migration import generate_transactions
 
 import razorpay
 import analytics
+import pandas as pd
+from django.template.loader import get_template
+
+error_logger = LoggingWrapper.get_instance()
+info_logger = LoggingWrapper.get_instance()
 
 
 class SubscriptionImpl(SubscriptionManager):
@@ -74,8 +86,27 @@ class SubscriptionImpl(SubscriptionManager):
         return {'transaction': transaction_instance}
 
     @staticmethod
-    def _generate_data_for_new_subscription_against_transaction(transaction_instance: dict,
-                                                                subscription_plan_instance: dict,
+    def _get_subscription_valid_till(start_time_epoch: int, subscription_plan_instance: SubscriptionPlan):
+
+        valid_till = start_time_epoch
+
+        if subscription_plan_instance.duration_name in VALID_MONTH_PLAN_NAMES:
+            valid_till = TimeUtilities.add_months_in_epoch_time(start_time_epoch,
+                                                                subscription_plan_instance.duration_in_months)
+
+        if subscription_plan_instance.duration_name == WEEKLY:
+            valid_till = TimeUtilities.add_weeks_in_epoch_time(start_time_epoch,
+                                                               subscription_plan_instance.duration_in_months)
+
+        if subscription_plan_instance.duration_name == DAYS:
+            valid_till = TimeUtilities.add_days_in_epoch_time(start_time_epoch,
+                                                              subscription_plan_instance.duration_in_months)
+
+        return valid_till
+
+    @staticmethod
+    def _generate_data_for_new_subscription_against_transaction(transaction_instance: Transaction,
+                                                                subscription_plan_instance: SubscriptionPlan,
                                                                 user_id: int) -> dict:
 
         data = {
@@ -84,8 +115,8 @@ class SubscriptionImpl(SubscriptionManager):
                 "community_id": subscription_plan_instance.community_id,
                 "plan_id": subscription_plan_instance.plan_id,
                 "date_subscribed": transaction_instance.created_at,
-                "valid_till": TimeUtilities.add_months_in_epoch_time(transaction_instance.created_at,
-                                                                     subscription_plan_instance.duration_in_months),
+                "valid_till": SubscriptionImpl._get_subscription_valid_till(transaction_instance.created_at,
+                                                                            subscription_plan_instance),
                 "type": "onetime",
                 "transaction": transaction_instance,
             }
@@ -114,9 +145,9 @@ class SubscriptionImpl(SubscriptionManager):
         return data
 
     @staticmethod
-    def _generate_data_for_existing_subscription_against_transaction(subscription_instance: dict,
-                                                                     subscription_plan_instance: dict,
-                                                                     transaction_instance: dict) -> dict:
+    def _generate_data_for_existing_subscription_against_transaction(subscription_instance: Subscription,
+                                                                     subscription_plan_instance: SubscriptionPlan,
+                                                                     transaction_instance: Transaction) -> dict:
 
         current_time = TimeUtilities.current_time_in_milliseconds()
         data = {
@@ -131,13 +162,11 @@ class SubscriptionImpl(SubscriptionManager):
         existing_valid_till = subscription_instance.valid_till
 
         if existing_valid_till >= current_time:
-            data["subscription_data"]["valid_till"] = TimeUtilities.add_months_in_epoch_time(
-                existing_valid_till,
-                subscription_plan_instance.duration_in_months)
+            data["subscription_data"]["valid_till"] = SubscriptionImpl._get_subscription_valid_till(
+                existing_valid_till, subscription_plan_instance)
         else:
-            data["subscription_data"]["valid_till"] = TimeUtilities.add_months_in_epoch_time(
-                current_time,
-                subscription_plan_instance.duration_in_months)
+            data["subscription_data"]["valid_till"] = SubscriptionImpl._get_subscription_valid_till(
+                current_time, subscription_plan_instance)
 
         data["subscription_data"]["renewal_due"] = TimeUtilities.subtract_days_in_epoch_time(
             data["subscription_data"]["valid_till"], NOTIFY_PERIOD)
@@ -158,9 +187,9 @@ class SubscriptionImpl(SubscriptionManager):
         return data
 
     @staticmethod
-    def _generate_data_for_existing_subscription_against_referral(subscription_instance: dict,
-                                                                  subscription_plan_instance: dict,
-                                                                  transaction_instance: dict) -> dict:
+    def _generate_data_for_existing_subscription_against_referral(subscription_instance: Subscription,
+                                                                  subscription_plan_instance: SubscriptionPlan,
+                                                                  transaction_instance: Transaction) -> dict:
         current_time = TimeUtilities.current_time_in_milliseconds()
         existing_valid_till = subscription_instance.valid_till
 
@@ -190,7 +219,7 @@ class SubscriptionImpl(SubscriptionManager):
         return data
 
     @staticmethod
-    def _generate_first_transaction(transaction_instance: dict, plan_instance: dict, user_id: int):
+    def _generate_first_transaction(transaction_instance: Transaction, plan_instance: SubscriptionPlan, user_id: int):
 
         if transaction_instance.user_id is None:
             transaction_instance.user_id = user_id
@@ -240,7 +269,7 @@ class SubscriptionImpl(SubscriptionManager):
         return {'error_message': 'Payment ID already used'}
 
     @staticmethod
-    def _generate_renewal_transaction(transaction_instance: dict, plan_instance: dict, user_id):
+    def _generate_renewal_transaction(transaction_instance: Transaction, plan_instance: SubscriptionPlan, user_id):
 
         if transaction_instance.user_id is None:
             return {'error_message': "user ID doesn't exist for renewal transaction"}
@@ -279,7 +308,7 @@ class SubscriptionImpl(SubscriptionManager):
         return {'success': True}
 
     @staticmethod
-    def _generate_subscription_against_transaction(transaction_instance: dict, user_id: str) -> dict:
+    def _generate_subscription_against_transaction(transaction_instance: Transaction, user_id: str) -> dict:
 
         user_id = NumberUtilities.get_integer_from_string(user_id)
         plan_instance = SubscriptionPlan.get_plan_or_None(plan_id=transaction_instance.plan_id)
@@ -442,7 +471,7 @@ class SubscriptionImpl(SubscriptionManager):
                 'amount': 0,
                 'end_date': TimeUtilities.convert_epoch_to_date(subscription_history_instance.end_date),
                 'no_of_days': (subscription_history_instance.end_date -
-                               subscription_history_instance.start_date) // MILLISECONDS_IN_A_DAY,
+                               subscription_history_instance.start_date) // TimeUtilities.MILLISECONDS_IN_A_DAY,
                 'mode_of_payment': FREE_MODE,
                 'type': subscription_instance.type
             }
@@ -862,3 +891,51 @@ class SubscriptionImpl(SubscriptionManager):
 
         return {'error_message': 'something went wrong'}
 
+    @staticmethod
+    def _columns_validator(sheet_data: pd.DataFrame, columns: list) -> dict:
+
+        for column in columns:
+            if column not in sheet_data:
+                return {'error_message': 'missing {} column in sheet'.format(column)}
+
+        return {'sheet_data': sheet_data}
+
+    @staticmethod
+    @shared_task
+    def _handle_migration(input_csv_url, emails):
+
+        output_file_path = generate_transactions(input_file_path=input_csv_url)
+
+        if 'error_message' in output_file_path:
+            error_logger.error(output_file_path['error_message'])
+
+        template = get_template("otl_mail.html").render(
+            {"link": output_file_path['link']})
+
+        to_emails = [OTL_EMAIL]
+
+        if emails is not None:
+            to_emails.extend(emails)
+
+        status = MailWrapper.send_email(OTL_SUBJECT, template, to_emails)
+
+        if not status:
+            error_logger.error('error sending email')
+
+    def external_migration(self, members_data: str = None, emails: list = None) -> dict:
+
+        input_csv_url = members_data
+
+        if input_csv_url is None:
+            return {'error_message': 'invalid members_data sheet link', 'status': status_codes.HTTP_400_BAD_REQUEST}
+
+        df = pd.read_csv(input_csv_url)
+
+        validated_data = self._columns_validator(df, VALID_SHEET_COLUMNS)
+
+        if 'error_message' in validated_data:
+            return {'error_message': validated_data['error_message'], 'status': status_codes.HTTP_400_BAD_REQUEST}
+
+        self._handle_migration.delay(input_csv_url, emails)
+
+        return {'success': True, 'status': status_codes.HTTP_200_OK}

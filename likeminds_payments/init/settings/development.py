@@ -42,3 +42,16 @@ CORALOGIX_LOGGER = {
     'SUBSYSTEM_NAME_API': 'Backend_App_Api',
     'SUBSYSTEM_NAME_APP': 'Backend_App_System'
 }
+
+AWS_CREDENTIALS = {
+    'ACCESS_KEY': os.getenv('DEVELOPMENT_AWS_S3_ACCESS_KEY'),
+    'SECRET_KEY': os.getenv('DEVELOPMENT_AWS_S3_SECRET_KEY')
+}
+
+S3_BUCKETS = {
+    'media_bucket': {
+        'arn': 'arn:aws:s3:::beta-likeminds-media',
+        'name': 'beta-likeminds-media',
+        'region': 'ap-south-1'
+    }
+}

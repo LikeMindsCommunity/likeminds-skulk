@@ -1,4 +1,6 @@
 from .constants import *
+from ..utility.time_utilities import TimeUtilities
+from ..utility.number_utilities import NumberUtilities
 import json
 
 
@@ -41,9 +43,14 @@ class SubscriptionViewHelper:
                     validated_request_body['shared_by'] = request_body['shared_by']
 
                 if 'valid_till' in request_body:
+                    current_time = TimeUtilities.current_time_in_milliseconds()
+                    if NumberUtilities.get_integer_from_string(request_body['valid_till'] < current_time):
+                        return {'error_message': 'send valid date in future'}
                     validated_request_body['valid_till'] = request_body['valid_till']
 
                 if 'n_days' in request_body:
+                    if request_body['n_days'] < 0:
+                        return {'error_message': 'send valid n_days'}
                     validated_request_body['n_days'] = request_body['n_days']
 
             else:
@@ -132,5 +139,16 @@ class SubscriptionViewHelper:
 
         if 'community_id' not in request_body or not request_body['community_id']:
             return {'error_message': 'send community_id'}
+
+        return request_body
+
+    @staticmethod
+    def external_migration_body_validator(request_body):
+
+        if not request_body:
+            return {'error_message': 'invalid request body'}
+
+        if 'members_data_url' not in request_body or not request_body['members_data_url']:
+            return {'error_message': 'send members_data_url in body'}
 
         return request_body

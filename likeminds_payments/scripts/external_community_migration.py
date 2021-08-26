@@ -1,22 +1,26 @@
 from subscription.plans.models import SubscriptionPlan
 from subscription.transactions.models import Transaction
 from subscription.utility.core_service_utilities import CoreServiceUtilities
+from subscription.external_services.s3.s3_wrapper import S3Wrapper
+from django.conf import settings
 import pandas as pd
 import uuid
 import time
 from datetime import datetime
+from io import StringIO
 
 
-def generate_transactions():
+def generate_transactions(input_file_path: str = r'./scripts/members_data.csv'):
     print('script process started')
 
-    input_csv_path = r'./scripts/members_data.csv'
-    output_csv_path = 'otl_data_{}.csv'.format(datetime.today().strftime('%Y-%m-%d'))
+    input_csv_path = input_file_path
 
     print('reading csv data from: {}'.format(input_csv_path))
 
     data = get_csv_data(input_csv_path)
     print('got data from csv')
+
+    output_csv_name = '{}_otl_data_{}.csv'.format(data['community_id'][0], datetime.today().strftime('%Y-%m-%d_%H-%M-%S'))
 
     row_count = len(data['member_email'])
     print('number of transactions to create: {}'.format(row_count))
@@ -24,24 +28,26 @@ def generate_transactions():
     final_lists_dict = process_csv_data(row_count, data)
     output_data = create_output_data(final_lists_dict)
 
-    write_data_to_file(output_data, output_csv_path)
-    print("OTL data exported to file with name {}".format(output_csv_path))
-
     print("script process completed")
+
+    upload_file = upload_csv_to_s3(output_data, output_csv_name)
+
+    return upload_file
 
 
 def get_csv_data(file_path):
     df = pd.read_csv(file_path)
 
     csv_data = {
-        'plan_name': df['plan_name'],
-        'plan_duration': df['plan_duration(in months)'],
+        'plan_name': df['plan_name'].fillna(''),
+        'plan_duration': df['plan_duration (in months)'],
         'member_email': df['member_email'],
         'member_phone': df['member_phone (with country code)'],
         'start_date': df['start_date (dd/mm/yyyy)'],
         'community_id': df['community_id'],
         'payment_page_url': df['payment_page_url'],
-        'amount': df['amount']
+        'amount': df['amount'],
+        'community_name': df['community_name']
     }
 
     return csv_data
@@ -51,7 +57,10 @@ def process_csv_data(count, data):
     final_lists_dict = {
         'phones': [],
         'emails': [],
-        'otls': []
+        'otls': [],
+        'community_names': [],
+        'payment_ids': [],
+        'plan_names': []
     }
 
     if count == 0:
@@ -68,15 +77,19 @@ def loop_over_data_and_create_transactions(count, data, final_lists_dict):
 
         user_phone = '+' + str(data['member_phone'][i])
         user_email = data['member_email'][i]
+        community_name = data['community_name'][i]
+        plan_name = data['plan_name'][i]
         payment_id = 'mig_{}'.format(uuid.uuid4())
+
         plan_instances = SubscriptionPlan.objects.filter(community_id=data['community_id'][i],
                                                          duration_in_months=data['plan_duration'][i],
-                                                         name=data['plan_name'][i])
+                                                         name=data['plan_name'][i],
+                                                         is_deleted=False)
 
         plan_count = len(plan_instances)
 
         if plan_count == 0:
-            add_to_lists(final_lists_dict, user_phone, user_email, None)
+            add_to_lists(final_lists_dict, user_phone, user_email, None, community_name, payment_id, plan_name)
             continue
 
         plan_instance = plan_instances[0]
@@ -92,16 +105,20 @@ def loop_over_data_and_create_transactions(count, data, final_lists_dict):
                                                      payment_id=transaction_object['payment_id'])
 
         if 'error_message' in otl_url:
-            add_to_lists(final_lists_dict, user_phone, user_email, None)
+            add_to_lists(final_lists_dict, user_phone, user_email, None, community_name, payment_id, plan_name)
 
         else:
-            add_to_lists(final_lists_dict, user_phone, user_email, otl_url['private_link'])
+            add_to_lists(final_lists_dict, user_phone, user_email, otl_url['private_link'], community_name, payment_id,
+                         plan_name)
 
 
-def add_to_lists(lists_dict, user_phone, user_email, otl):
+def add_to_lists(lists_dict, user_phone, user_email, otl, community_name, payment_id, plan_name):
     lists_dict['phones'].append(user_phone)
     lists_dict['emails'].append(user_email)
     lists_dict['otls'].append(otl)
+    lists_dict['community_names'].append(community_name)
+    lists_dict['payment_ids'].append(payment_id)
+    lists_dict['plan_names'].append(plan_name)
 
 
 def create_transaction_object(plan_instance, community_data, payment_id, user_phone, data, iterator):
@@ -146,7 +163,7 @@ def create_transaction_instance(transaction):
     instance.renew = transaction['renew']
     instance.amount = transaction['amount']
     instance.payment_email = transaction['payment_email']
-    instance.payment_phone = transaction['payment_phone']
+    instance.payment_phone = transaction['payment_phone'][:12]
     instance.currency = transaction['currency']
     instance.is_international = transaction['is_international']
     instance.method = transaction['method']
@@ -167,7 +184,10 @@ def create_output_data(final_lists_dict):
     data = pd.DataFrame({
         'phone': final_lists_dict['phones'],
         'email': final_lists_dict['emails'],
-        'otl': final_lists_dict['otls']
+        'otl': final_lists_dict['otls'],
+        'community_name': final_lists_dict['community_names'],
+        'payment_id': final_lists_dict['payment_ids'],
+        'plan_name': final_lists_dict['plan_names']
     })
 
     return data
@@ -175,3 +195,18 @@ def create_output_data(final_lists_dict):
 
 def write_data_to_file(data, file_path):
     data.to_csv(file_path, index=False)
+
+
+def upload_csv_to_s3(data, file_name):
+    csv_buffer = StringIO()
+    data.to_csv(csv_buffer)
+
+    file_path = 'utilities/otl_files/{}'.format(file_name)
+    bucket = settings.S3_BUCKETS.get('media_bucket').get('name')
+
+    upload_status = S3Wrapper.upload_csv_file(file_path, bucket, csv_buffer, acl='public-read')
+
+    if upload_status:
+        return {'link': 'https://{}.s3.amazonaws.com/{}'.format(bucket, file_path)}
+
+    return {'error_message': 'error while uploading csv file'}

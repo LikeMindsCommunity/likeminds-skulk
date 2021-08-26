@@ -23,6 +23,7 @@ from ..plans.constants import *
 from ..transactions.constants import *
 from ..member_notifications.constants import *
 from ..external_services.email.email_wrapper import MailWrapper
+from ..external_services.s3.s3_wrapper import S3Wrapper
 from scripts.external_community_migration import generate_transactions
 
 import time
@@ -1037,24 +1038,31 @@ class SubscriptionImpl(SubscriptionManager):
         final_data = pd.DataFrame(data)
         csv_buffer = StringIO()
         final_data.to_csv(csv_buffer)
+
         file_path = 'utilities/report_files/{}'.format(file_name)
+        bucket = settings.S3_BUCKETS.get('media_bucket').get('name')
 
-    def _fetch_all_member_data(self):
+        upload_status = S3Wrapper.upload_csv_file(file_path, bucket, csv_buffer, acl='public-read')
 
-        members = self._get_all_members_detail(self.get_community_id(), self.get_member_id())
+        if upload_status:
+            return {'link': 'https://{}.s3.amazonaws.com/{}'.format(bucket, file_path)}
 
-        members_questions = self._get_all_members(self.get_community_id(), self.get_member_id())
+        return {'error_message': 'error while uploading csv file'}
 
-        community_questions = CoreServiceUtilities.get_community_questions(
-            self.get_community_id(), self.get_member_id())
+    @staticmethod
+    @shared_task
+    def _fetch_all_member_data(community_id, member_id):
+
+        members = SubscriptionImpl._get_all_members_detail(community_id, member_id)
+        members_questions = SubscriptionImpl._get_all_members(community_id, member_id)
+        community_questions = CoreServiceUtilities.get_community_questions(community_id, member_id)
 
         members_data = {}
-
         email = None
 
         for member in members:
 
-            if email is not None and member['id'] == self.get_member_id():
+            if email is not None and member['id'] == member_id:
                 email = member['emails'][0]['email']
 
             members_data[member['id']] = member
@@ -1063,14 +1071,32 @@ class SubscriptionImpl(SubscriptionManager):
 
             members_data[member_questions['id']]['question_answers'] = member_questions['question_answers']
 
-        subscription_details = self.fetch_subscription(list(members_data.keys()))
+        subscription_manager = SubscriptionImpl(member_id=member_id, community_id=community_id)
+        subscription_details = subscription_manager.fetch_subscription(list(members_data.keys()))
 
-        report_data = self._handle_report_data(
+        report_data = SubscriptionImpl._handle_report_data(
             members_data, subscription_details['subscriptions'], community_questions['questions'])
 
-        file_name = ''
+        community_name = '-'.join(community_questions['community']['name'].split(' '))
 
-        self._send_report(report_data, email, file_name)
+        file_name = 'MemberDetails_{}_{}.csv'.format(
+            community_name,
+            time.strftime("%d-%b-%Y", time.localtime(time.time())))
+
+        upload_status = SubscriptionImpl._send_report(report_data, email, file_name)
+
+        if 'error_message' in upload_status:
+            error_logger.error(upload_status['error_message'])
+
+        template = get_template("member_report_mail.html").render(
+            {"link": upload_status['link'], "community_name": community_name})
+
+        to_emails = [email]
+
+        status = MailWrapper.send_email(REPORT_SUBJECT, template, to_emails)
+
+        if not status:
+            error_logger.error('error sending email')
 
     def members_report(self) -> dict:
 
@@ -1079,13 +1105,15 @@ class SubscriptionImpl(SubscriptionManager):
             has_permission_check = CoreServiceUtilities.has_permission(self.get_community_id(), self.get_member_id())
 
             if 'error_message' in has_permission_check:
-                return {'error_message': has_permission_check['error_message']}
+                return {'error_message': has_permission_check['error_message'],
+                        'status': status_codes.HTTP_401_UNAUTHORIZED}
 
             if 'has_permission' in has_permission_check and has_permission_check['has_permission'] is False:
-                return {'error_message': 'You are not the Owner/CM of the community'}
+                return {'error_message': 'You are not the Owner/CM of the community',
+                        'status': status_codes.HTTP_401_UNAUTHORIZED}
 
-            self._fetch_all_member_data()
+            self._fetch_all_member_data.delay(self.get_community_id(), self.get_member_id())
 
             return {'success': True}
 
-        return {'error_message': 'something went wrong'}
+        return {'error_message': 'something went wrong', 'status': status_codes.HTTP_400_BAD_REQUEST}

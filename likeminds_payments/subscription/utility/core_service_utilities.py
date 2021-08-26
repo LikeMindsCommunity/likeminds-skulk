@@ -294,7 +294,7 @@ class CoreServiceUtilities:
         if 'questions' not in response:
             return {'error_message': 'invalid response from community questions api'}
 
-        return {'questions': response['questions']}
+        return {'questions': response['questions'], 'community': response['community']}
 
     @staticmethod
     def fetch_otl_url(community_id: str, payment_id: str, shared_by: str = None):

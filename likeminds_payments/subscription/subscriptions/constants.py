@@ -21,6 +21,7 @@ WEEKLY = 'weekly'
 VALID_SHEET_COLUMNS = ['plan_name', 'plan_duration (in months)', 'member_email', 'member_phone (with country code)',
                        'start_date (dd/mm/yyyy)', 'community_id', 'payment_page_url', 'amount']
 OTL_SUBJECT = 'OTL Migration Data'
+REPORT_SUBJECT = 'Members Report File'
 OTL_EMAIL = 'himanshu@likeminds.community'
 MEMBERSHIP_STATES = {
     0: 'Active',

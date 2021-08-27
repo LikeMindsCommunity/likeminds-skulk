@@ -140,7 +140,7 @@ class PlanImpl(PlanManager):
                 settings.WEB_URL, instance.event_plan_id, instance.community_id),
             'restrict_event_update_notification': True
         })
-        update_event_in_webflow_service.delay(instance.event_plan_id, member_id)
+        update_event_in_webflow_service(instance.event_plan_id, member_id)
 
         return {'success': True}
 
@@ -162,6 +162,6 @@ class PlanImpl(PlanManager):
 
         event_plan_instance = event_plan_filter[0]
         self.update_event_plan_context(event_plan_instance, req_body)
-        update_event_in_webflow_service.delay(event_plan_instance.event_plan_id, member_id)
+        update_event_in_webflow_service(event_plan_instance.event_plan_id, member_id)
 
         return {'success': True}

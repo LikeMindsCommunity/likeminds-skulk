@@ -1076,10 +1076,7 @@ class SubscriptionImpl(SubscriptionManager):
 
         for member_questions in members_questions:
 
-            members_data[member_questions['id']]['question_answers'] = []
-
-            if 'question_answers' in member_questions:
-                members_data[member_questions['id']]['question_answers'] = member_questions['question_answers']
+            members_data[member_questions['id']]['question_answers'] = member_questions.get('question_answers', [])
 
         subscription_manager = SubscriptionImpl(member_id=member_id, community_id=community_id)
         subscription_details = subscription_manager.fetch_subscription(list(members_data.keys()))

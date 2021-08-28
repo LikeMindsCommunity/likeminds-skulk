@@ -801,15 +801,13 @@ class SubscriptionImpl(SubscriptionManager):
             get_members = CoreServiceUtilities.get_all_members(community_id, member_id, page)
 
             if 'error_message' in get_members:
-                page += 1
+                done = True
                 continue
 
-            if 'members' in get_members:
+            if len(get_members['members']) == 0:
+                done = True
 
-                if len(get_members['members']) == 0:
-                    done = True
-
-                members += get_members['members']
+            members += get_members['members']
 
             page += 1
 
@@ -827,15 +825,13 @@ class SubscriptionImpl(SubscriptionManager):
             get_members = CoreServiceUtilities.get_all_members_details(community_id, member_id, page)
 
             if 'error_message' in get_members:
-                page += 1
+                done = True
                 continue
 
-            if 'members' in get_members:
+            if len(get_members['members']) == 0:
+                done = True
 
-                if len(get_members['members']) == 0:
-                    done = True
-
-                members += get_members['members']
+            members += get_members['members']
 
             page += 1
 

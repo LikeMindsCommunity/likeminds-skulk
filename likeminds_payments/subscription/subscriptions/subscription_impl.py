@@ -1059,6 +1059,7 @@ class SubscriptionImpl(SubscriptionManager):
     @shared_task
     def _fetch_all_member_data(community_id, member_id):
 
+        cm_member_id = NumberUtilities.get_integer_from_string(member_id)
         members = SubscriptionImpl._get_all_members_detail(community_id, member_id)
         members_questions = SubscriptionImpl._get_all_members(community_id, member_id)
         community_questions = CoreServiceUtilities.get_community_questions(community_id, member_id)
@@ -1068,14 +1069,17 @@ class SubscriptionImpl(SubscriptionManager):
 
         for member in members:
 
-            if email is not None and member['id'] == member_id:
+            if email is None and member['id'] == cm_member_id:
                 email = member['emails'][0]['email']
 
             members_data[member['id']] = member
 
         for member_questions in members_questions:
 
-            members_data[member_questions['id']]['question_answers'] = member_questions['question_answers']
+            members_data[member_questions['id']]['question_answers'] = []
+
+            if 'question_answers' in member_questions:
+                members_data[member_questions['id']]['question_answers'] = member_questions['question_answers']
 
         subscription_manager = SubscriptionImpl(member_id=member_id, community_id=community_id)
         subscription_details = subscription_manager.fetch_subscription(list(members_data.keys()))

@@ -7,6 +7,7 @@ LIFETIME_DESCRIPTION = 'lifetime payment'
 RENEWAL_DESCRIPTION = 'renewal payment'
 FREE_DESCRIPTION = 'free subscription'
 DASHBOARD = 'dashboard'
+PAID = 'paid'
 ONLINE_MODE = 'online'
 FREE_MODE = 'free'
 STATUS_ACTIVE = 0
@@ -20,4 +21,11 @@ WEEKLY = 'weekly'
 VALID_SHEET_COLUMNS = ['plan_name', 'plan_duration (in months)', 'member_email', 'member_phone (with country code)',
                        'start_date (dd/mm/yyyy)', 'community_id', 'payment_page_url', 'amount']
 OTL_SUBJECT = 'OTL Migration Data'
+REPORT_SUBJECT = 'Members Report File'
 OTL_EMAIL = 'himanshu@likeminds.community'
+MEMBERSHIP_STATES = {
+    0: 'Active',
+    1: 'Expired',
+    2: 'Grace Period',
+    3: 'Renewal Due'
+}

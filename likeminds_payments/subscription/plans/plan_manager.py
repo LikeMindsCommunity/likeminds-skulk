@@ -51,7 +51,7 @@ class PlanManager(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def update_event_plan(self, req_body) -> dict:
+    def update_event_plan(self, req_body, member_id) -> dict:
         """
         update a plan for event
         """

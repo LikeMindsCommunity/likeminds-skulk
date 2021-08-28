@@ -1,7 +1,10 @@
+from __future__ import absolute_import, unicode_literals
+from celery import shared_task
 from .constants import EVENT_PAYMENT_LINK
 from ..plans.plan_manager import PlanManager
 from .models import SubscriptionPlan, SubscriptionEventPlan
 from .serializers import PlanSerializer, EventPlanSerializer
+from ..utility.async_tasks import update_event_in_webflow_service
 from ..utility.core_service_utilities import CoreServiceUtilities
 from ..utility.model_utilities import ModelUtilities
 from ..utility.number_utilities import NumberUtilities
@@ -134,9 +137,10 @@ class PlanImpl(PlanManager):
             'member_id': member_id,
             'chatroom_id': instance.chatroom_id,
             'event_payment_link': EVENT_PAYMENT_LINK % (
-            settings.WEB_URL, instance.event_plan_id, instance.community_id),
+                settings.WEB_URL, instance.event_plan_id, instance.community_id),
             'restrict_event_update_notification': True
         })
+        update_event_in_webflow_service.delay(instance.event_plan_id, member_id)
 
         return {'success': True}
 
@@ -146,7 +150,7 @@ class PlanImpl(PlanManager):
 
         return {'event_plans': event_plans}
 
-    def update_event_plan(self, req_body) -> dict:
+    def update_event_plan(self, req_body, member_id) -> dict:
 
         event_plan_id = req_body.get('event_plan_id')
 
@@ -158,5 +162,6 @@ class PlanImpl(PlanManager):
 
         event_plan_instance = event_plan_filter[0]
         self.update_event_plan_context(event_plan_instance, req_body)
+        update_event_in_webflow_service.delay(event_plan_instance.event_plan_id, member_id)
 
         return {'success': True}

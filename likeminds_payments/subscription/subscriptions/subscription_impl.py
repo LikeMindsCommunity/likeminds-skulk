@@ -925,7 +925,6 @@ class SubscriptionImpl(SubscriptionManager):
 
         return {'error_message': 'something went wrong'}
 
-
     @staticmethod
     def _columns_validator(sheet_data: pd.DataFrame, columns: list) -> dict:
 

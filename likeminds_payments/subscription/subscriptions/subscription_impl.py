@@ -219,7 +219,7 @@ class SubscriptionImpl(SubscriptionManager):
                     transaction_instance.shared_by, plan_instance.community_id
                 )
 
-                if referrer_subscription_instance.type != ONETIME_PAYMENT:
+                if referrer_subscription_instance is None or referrer_subscription_instance.type != ONETIME_PAYMENT:
                     return {'success': True}
 
                 referrer_data = SubscriptionImpl._generate_data_for_existing_subscription_against_referral(

@@ -9,7 +9,8 @@ class PlanManager(metaclass=abc.ABCMeta):
                 (hasattr(subclass, 'fetch_plan') and callable(subclass.fetch_plan)) and
                 (hasattr(subclass, 'delete_plan') and callable(subclass.delete_plan)) and
                 (hasattr(subclass, 'create_event_plan') and callable(subclass.create_event_plan)) and
-                (hasattr(subclass, 'fetch_event_plan') and callable(subclass.fetch_event_plan)) or
+                (hasattr(subclass, 'fetch_event_plan') and callable(subclass.fetch_event_plan)) and
+                (hasattr(subclass, 'update_event_plan') and callable(subclass.update_event_plan)) or
                 NotImplemented)
 
     @abc.abstractmethod
@@ -45,6 +46,14 @@ class PlanManager(metaclass=abc.ABCMeta):
     def fetch_event_plan(self, chatroom_ids) -> dict:
         """
         return events of chatroom ids
+        """
+
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def update_event_plan(self, req_body, member_id) -> dict:
+        """
+        update a plan for event
         """
 
         raise NotImplementedError

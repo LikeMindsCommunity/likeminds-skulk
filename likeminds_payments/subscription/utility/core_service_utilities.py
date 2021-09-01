@@ -234,6 +234,69 @@ class CoreServiceUtilities:
         return {'members': response['members']}
 
     @staticmethod
+    def get_all_members_details(community_id: str, member_id: str, page: int):
+
+        if not community_id:
+            return {'error_message': 'send community_id'}
+
+        if not member_id:
+            return {'error_message': 'send member_id'}
+
+        community_id = NumberUtilities.get_integer_from_string(community_id)
+        member_id = NumberUtilities.get_integer_from_string(member_id)
+
+        url = ALL_MEMBERS_DETAILS_API
+        query_params = {
+            'community_id': community_id,
+            'page': page
+        }
+        headers = {
+            'x-member-id': '{}'.format(member_id),
+            'x-platform-code': 'web'
+        }
+
+        response = ApiUtilities.generate_get_request(url=url, query_params=query_params, headers=headers)
+
+        if 'error_message' in response:
+            return {'error_message': response['error_message']}
+
+        if 'members' not in response:
+            return {'error_message': 'invalid response from remove member api'}
+
+        return {'members': response['members']}
+
+    @staticmethod
+    def get_community_questions(community_id: str, member_id: str):
+
+        if not community_id:
+            return {'error_message': 'send community_id'}
+
+        if not member_id:
+            return {'error_message': 'send member_id'}
+
+        community_id = NumberUtilities.get_integer_from_string(community_id)
+        member_id = NumberUtilities.get_integer_from_string(member_id)
+
+        url = COMMUNITY_QUESTIONS_API
+        query_params = {
+            'community_id': community_id
+        }
+        headers = {
+            'x-member-id': '{}'.format(member_id),
+            'x-platform-code': 'web'
+        }
+
+        response = ApiUtilities.generate_get_request(url=url, query_params=query_params, headers=headers)
+
+        if 'error_message' in response:
+            return {'error_message': response['error_message']}
+
+        if 'questions' not in response:
+            return {'error_message': 'invalid response from community questions api'}
+
+        return {'questions': response['questions'], 'community': response['community']}
+
+    @staticmethod
     def fetch_otl_url(community_id: str, payment_id: str, shared_by: str = None):
 
         if not community_id:

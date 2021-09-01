@@ -31,7 +31,7 @@ class SubscriptionViewHelper:
 
                 validated_request_body['community_id'] = request_body['community_id']
 
-                if 'type' not in request_body or not request_body['type'] in [FREE_SUBSCRIPTION, DASHBOARD]:
+                if 'type' not in request_body or not request_body['type'] in [FREE_SUBSCRIPTION, DASHBOARD, PAID]:
                     return {'error_message': 'invalid type value'}
 
                 validated_request_body['type'] = request_body['type']
@@ -130,6 +130,31 @@ class SubscriptionViewHelper:
 
     @staticmethod
     def convert_to_paid_body_validator(request_body, user_id):
+
+        if not request_body:
+            return {'error_message': 'invalid request body'}
+
+        if not user_id:
+            return {'error_message': 'send x-member-id in headers'}
+
+        if 'community_id' not in request_body or not request_body['community_id']:
+            return {'error_message': 'send community_id'}
+
+        return request_body
+
+    @staticmethod
+    def external_migration_body_validator(request_body):
+
+        if not request_body:
+            return {'error_message': 'invalid request body'}
+
+        if 'members_data_url' not in request_body or not request_body['members_data_url']:
+            return {'error_message': 'send members_data_url in body'}
+
+        return request_body
+
+    @staticmethod
+    def members_report_body_validator(request_body, user_id):
 
         if not request_body:
             return {'error_message': 'invalid request body'}

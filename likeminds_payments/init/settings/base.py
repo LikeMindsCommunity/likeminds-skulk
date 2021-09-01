@@ -42,6 +42,14 @@ INSTALLED_APPS = [
     'django_crontab'
 ]
 
+SENDGRID_API_KEY = os.getenv('SENDGRID_API_KEY')
+EMAIL_HOST = os.getenv('EMAIL_HOST')
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+EMAIL_BACKEND = "sgbackend.SendGridBackend"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+
 CORS_ORIGIN_ALLOW_ALL = True
 
 CORS_ALLOW_HEADERS = list(default_headers) + [
@@ -178,3 +186,8 @@ CRONJOBS = [
     ('*/5 * * * *', 'subscription.cron.send_events.handle', CRONJOB_LOG_FILE)
 ]
 CRONTAB_COMMAND_SUFFIX = '2>&1'
+
+WEBFLOW_KEYS = {
+    'collection_id': os.getenv('WEBFLOW_COLLECTION_ID'),
+    'api_key': os.getenv('WEBFLOW_API_KEY')
+}

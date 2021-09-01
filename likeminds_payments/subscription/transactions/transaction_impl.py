@@ -389,12 +389,16 @@ class TransactionImpl(TransactionManager):
 
     def valid_event_transaction(self, chatroom_id, user_id) -> dict:
 
-        event_plan_id = SubscriptionEventPlan.get_event_plan_or_None(chatroom_id)
+        event_plans_list = list(ModelUtilities.get_model_filter(SubscriptionEventPlan,
+                                                                {'chatroom_id': chatroom_id}).
+                                values_list('event_plan_id', flat=True))
 
-        if not event_plan_id:
+        if not event_plans_list:
             return {'error_message': "No event plan exists"}
 
-        has_transaction = Transaction.objects.filter(plan_id=event_plan_id, user_id=user_id)
+        has_transaction = ModelUtilities.get_model_filter(Transaction,
+                                                          {'plan_id__in': event_plans_list,
+                                                           'user_id': user_id})
 
         if has_transaction:
             return {'success': True}

@@ -146,7 +146,7 @@ class ValidateEventTransactionView(TransactionMixin, APIView):
         request_validated = TransactionViewHelper.validate_request_params_for_event_transaction_view(user_id,
                                                                                                      chatroom_id)
 
-        if not request_validated:
+        if request_validated.get('error_message'):
             return JsonResponse(request_validated, status=status_codes.HTTP_400_BAD_REQUEST)
 
         transaction_manager = TransactionImpl()

@@ -137,7 +137,8 @@ class PlanImpl(PlanManager):
             'member_id': member_id,
             'chatroom_id': instance.chatroom_id,
             'event_payment_link': EVENT_PAYMENT_LINK % (
-                settings.WEB_URL, instance.event_plan_id, instance.chatroom_id),
+                settings.WEB_URL, instance.event_plan_id, instance.chatroom_id,
+                instance.community_id),
             'restrict_event_update_notification': True
         })
         update_event_in_webflow_service.delay(instance.event_plan_id, member_id)

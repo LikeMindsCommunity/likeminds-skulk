@@ -250,6 +250,9 @@ class OrderViewHelper:
 
         community_plan_instance = SubscriptionPlan.get_plan_or_None(order_body.get('plan_id'))
 
+        if event_plan_instance.community_id != community_plan_instance.community_id:
+            return {'error_message': 'plan_id and event_plan_id should belong to same community'}
+
         if community_data.get('error_message'):
             return {'error_message': community_data['error_message']}
 

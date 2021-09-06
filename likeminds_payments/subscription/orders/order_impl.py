@@ -97,3 +97,22 @@ class OrderImpl(OrderManager):
         }
 
         return options
+
+    def create_community_event_order(self) -> dict:
+        order_instance = self.get_order_instance()
+
+        if not order_instance:
+            return {'error_message': 'error with created order'}
+
+        options = {
+            "key": settings.RAZORPAY_KEY,
+            "amount": order_instance['amount'],
+            "currency": order_instance['currency'],
+            "description": ORDER_TEXT,
+            "image": LIKEMINDS_LOGO_URL,
+            "order_id": order_instance['id'],
+            "name": COMPANY_NAME,
+            "notes": order_instance['notes']
+        }
+
+        return options

@@ -17,7 +17,7 @@ class NumberUtilities:
     @staticmethod
     def convert_to_rupee_or_none(number: int):
         if number is not None:
-            return round(number / 100, 2)
+            return number / 100
 
         return None
 

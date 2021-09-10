@@ -150,10 +150,13 @@ class OrderViewHelper:
         return request_body
 
     @staticmethod
-    def _create_event_order_object_data(plan_instance, order_body, community_data) -> dict:
+    def _create_event_order_object_data(plan_instance, order_body, community_data, amount=None) -> dict:
+
+        if amount is None:
+            amount = plan_instance.cost
 
         order_data = {
-            "amount": plan_instance.cost,
+            "amount": amount,
             "currency": "INR",
             "receipt": "receipt#1",
             "notes": {
@@ -183,8 +186,19 @@ class OrderViewHelper:
         if community_data.get('error_message'):
             return {'error_message': community_data['error_message']}
 
+        member_state = CoreServiceUtilities.get_member_state(community_data.id, order_body.get('user_id'))
+
+        amount = 0
+
+        if (member_state == MemberState.GUEST) and plan_instance.strike_cost:
+            amount = plan_instance.strike_cost
+
+        else:
+            amount = plan_instance.cost
+
         order_data = OrderViewHelper._create_event_order_object_data(plan_instance, order_body,
-                                                                     community_data['community'])
+                                                                     community_data['community'],
+                                                                     amount=amount)
 
         razorpay_client = RazorpayWrapper.get_instance()
 

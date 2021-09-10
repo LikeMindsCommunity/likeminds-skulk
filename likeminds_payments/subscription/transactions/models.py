@@ -4,7 +4,7 @@ from ..utility.time_utilities import TimeUtilities
 
 class Transaction(models.Model):
     plan_id = models.CharField(max_length=64)
-    payment_id = models.CharField(unique=True, max_length=64)
+    payment_id = models.CharField(max_length=64)
     community_name = models.CharField(max_length=200)
     plan_name = models.CharField(max_length=128, null=True)
     plan_cost = models.IntegerField(default=0)
@@ -25,7 +25,7 @@ class Transaction(models.Model):
     created_at = models.BigIntegerField(default=0)
     updated_at = models.BigIntegerField(default=0)
     type = models.IntegerField(default=0)
-    community_id = models.IntegerField(default=0)
+    type_id = models.IntegerField(default=0)
 
     def __str__(self):
         return str(self.pk)
@@ -67,7 +67,7 @@ class Transaction(models.Model):
         instance.shared_by = transaction_body['shared_by']
         instance.grace_period = transaction_body['grace_period']
         instance.type = transaction_body.get('type', 0)
-        instance.community_id = transaction_body.get('community_id', 0)
+        instance.type_id = transaction_body.get('type_id', 0)
         instance.save()
 
         return instance

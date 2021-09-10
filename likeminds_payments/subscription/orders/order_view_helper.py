@@ -186,7 +186,8 @@ class OrderViewHelper:
         if community_data.get('error_message'):
             return {'error_message': community_data['error_message']}
 
-        member_state = CoreServiceUtilities.get_member_state(community_data.id, order_body.get('user_id'))
+        member_state = CoreServiceUtilities.get_member_state(community_data['community']['id'],
+                                                             order_body.get('user_id'))
 
         if (member_state == MemberState.GUEST) and plan_instance.strike_cost:
             amount = plan_instance.strike_cost

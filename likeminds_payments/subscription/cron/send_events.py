@@ -1,10 +1,37 @@
 from subscription.member_notifications.constants import EVENTS
 from subscription.subscriptions.models import Subscription
+from subscription.subscriptions.constants import STATUS_EXPIRED, STATUS_GRACE_PERIOD
+from subscription.subscriptions.serializers import SubscriptionSerializer
 from subscription.member_notifications.models import MemberNotification
 from subscription.utility.time_utilities import TimeUtilities
 from subscription.utility.number_utilities import NumberUtilities
 from subscription.utility.core_service_utilities import CoreServiceUtilities
+from subscription.utility.model_utilities import ModelUtilities
 import analytics
+
+
+def get_user_exempted_paid_expired_communitites(user_id):
+    # Get all subscription against this user
+    subscriptions_instances = ModelUtilities.get_model_filter(Subscription, {"user_id": user_id})
+
+    subscriptions_serialized_object = SubscriptionSerializer(subscriptions_instances)
+
+    exempted_community_ids = []
+    paid_community_ids = []
+    expired_community_ids = []
+
+    for subscription_object in subscriptions_serialized_object:
+
+        if subscription_object["type"] == "free":
+            exempted_community_ids.append(subscription_object["community_id"])
+
+        if subscription_object["type"] != "free":
+            paid_community_ids.append(subscription_object["community_id"])
+
+        if subscription_object["membership_state"] in [STATUS_EXPIRED, STATUS_GRACE_PERIOD]:
+            expired_community_ids.append(subscription_object["community_id"])
+
+    return exempted_community_ids, paid_community_ids, expired_community_ids
 
 
 def send_event(user_id, community_id, event, subscription):
@@ -36,11 +63,18 @@ def send_event(user_id, community_id, event, subscription):
             event_data['amount'] = NumberUtilities.convert_to_rupee_or_none(transaction_instance.amount)
 
         analytics.track(user_id, event['event'], event_data)
+        
+        # Get exempted, paid and expired community ids list for user
+        exempted_community_ids, paid_community_ids, expired_community_ids = \
+            get_user_exempted_paid_expired_communitites(user_id)
 
         data = {
             'user_id': user_id,
             'community_id': community_id,
-            'code': event['code']
+            'code': event['code'],
+            'exempted_community_ids': exempted_community_ids,
+            'paid_community_ids': paid_community_ids,
+            'expired_community_ids': expired_community_ids
         }
 
         MemberNotification.create_instance(data)

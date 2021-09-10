@@ -188,8 +188,6 @@ class OrderViewHelper:
 
         member_state = CoreServiceUtilities.get_member_state(community_data.id, order_body.get('user_id'))
 
-        amount = 0
-
         if (member_state == MemberState.GUEST) and plan_instance.strike_cost:
             amount = plan_instance.strike_cost
 

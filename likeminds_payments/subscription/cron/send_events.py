@@ -43,6 +43,10 @@ def send_event(user_id, community_id, event, subscription):
 
         community_data = CoreServiceUtilities.get_community_data(community_id)
 
+        # Get exempted, paid and expired community ids list for user
+        exempted_community_ids, paid_community_ids, expired_community_ids = \
+            get_user_exempted_paid_expired_communitites(user_id)
+
         event_data = {
             'user_id': user_id,
             'community_id': community_id,
@@ -50,7 +54,10 @@ def send_event(user_id, community_id, event, subscription):
             'plan_name': '',
             'amount': 0,
             'end_date': TimeUtilities.convert_epoch_to_date(subscription.valid_till),
-            'type': subscription.type
+            'type': subscription.type,
+            'exempted_community_ids': exempted_community_ids,
+            'paid_community_ids': paid_community_ids,
+            'expired_community_ids': expired_community_ids
         }
 
         if community_data is not None:
@@ -63,18 +70,11 @@ def send_event(user_id, community_id, event, subscription):
             event_data['amount'] = NumberUtilities.convert_to_rupee_or_none(transaction_instance.amount)
 
         analytics.track(user_id, event['event'], event_data)
-        
-        # Get exempted, paid and expired community ids list for user
-        exempted_community_ids, paid_community_ids, expired_community_ids = \
-            get_user_exempted_paid_expired_communitites(user_id)
 
         data = {
             'user_id': user_id,
             'community_id': community_id,
-            'code': event['code'],
-            'exempted_community_ids': exempted_community_ids,
-            'paid_community_ids': paid_community_ids,
-            'expired_community_ids': expired_community_ids
+            'code': event['code']
         }
 
         MemberNotification.create_instance(data)

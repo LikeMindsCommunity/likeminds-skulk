@@ -38,6 +38,10 @@ class Transaction(models.Model):
             return None
 
     @staticmethod
+    def get_transaction_list_or_None(payment_id):
+        return Transaction.objects.filter(payment_id=payment_id)
+
+    @staticmethod
     def get_transaction_with_id_or_None(transaction_id):
         try:
             return Transaction.objects.get(pk=transaction_id)

@@ -170,6 +170,20 @@ class TransactionImpl(TransactionManager):
         return transaction_data
 
     @staticmethod
+    def _fetch_transaction_data_for_community_and_event(order_notes, payment_instance, refund_instance):
+        transaction_data_list = []
+        event_transaction_data = TransactionImpl._fetch_transaction_data_for_event(order_notes, payment_instance,
+                                                                                   refund_instance)
+
+        community_transaction_data = TransactionImpl._fetch_transaction_data_for_community_subscription(order_notes,
+                                                                                                        payment_instance,
+                                                                                                        refund_instance)
+        transaction_data_list.append(event_transaction_data)
+        transaction_data_list.append(community_transaction_data)
+
+        return transaction_data_list
+
+    @staticmethod
     def _attend_event_for_paid_transaction(transaction_instance):
 
         event_plan_id = transaction_instance.plan_id
@@ -199,16 +213,22 @@ class TransactionImpl(TransactionManager):
 
         order_notes = order_instance['notes']
         is_event_transaction = order_notes['type'] == "event"
+        is_community_and_event_transaction = order_notes['type'] == "community_and_event"
 
-        if is_event_transaction:
+        if is_community_and_event_transaction:
+            transaction_data_list = self._fetch_transaction_data_for_community_and_event(order_notes, payment_instance,
+                                                                                         refund_instance)
+        elif is_event_transaction:
             transaction_data = self._fetch_transaction_data_for_event(order_notes, payment_instance, refund_instance)
+            transaction_data_list = [transaction_data]
 
         else:
             transaction_data = self._fetch_transaction_data_for_community_subscription(order_notes,
                                                                                        payment_instance,
                                                                                        refund_instance)
+            transaction_data_list = [transaction_data]
 
-        return transaction_data
+        return transaction_data_list
 
     @staticmethod
     def _create_member_acquisition_data(transaction_instance: Transaction, transaction_data: dict) -> dict:
@@ -271,82 +291,90 @@ class TransactionImpl(TransactionManager):
         if 'error_message' in signature_verification:
             return {'error_message': signature_verification['error_message']}
 
-        existing_transaction_instance = Transaction.get_transaction_or_None(
+        existing_transaction_list = Transaction.get_transaction_list_or_None(
             transaction_body['payload']['payment']['entity']['id']
         )
 
-        if existing_transaction_instance and \
-                existing_transaction_instance.type == TransactionType.COMMUNITY_SUBSCRIPTION:
+        for existing_transaction_instance in existing_transaction_list:
 
-            plan_instance = SubscriptionPlan.get_plan_or_None(plan_id=existing_transaction_instance.plan_id)
+            if existing_transaction_instance and \
+                    existing_transaction_instance.type == TransactionType.COMMUNITY_SUBSCRIPTION:
 
-            if transaction_body["event"] == "refund.processed":
-                existing_transaction_instance.status = "refund"
-                existing_transaction_instance.save()
+                plan_instance = SubscriptionPlan.get_plan_or_None(plan_id=existing_transaction_instance.plan_id)
 
-                if existing_transaction_instance.user_id is not None:
-                    subscription_instance = Subscription.get_subscription_or_None(
-                        existing_transaction_instance.user_id, plan_instance.community_id)
+                if transaction_body["event"] == "refund.processed":
+                    existing_transaction_instance.status = "refund"
+                    existing_transaction_instance.save()
 
-                    if subscription_instance is not None:
-                        current_time = TimeUtilities.current_time_in_milliseconds()
-                        subscription_instance.valid_till = current_time
-                        subscription_instance.renewal_due = TimeUtilities.subtract_days_in_epoch_time(
-                            subscription_instance.valid_till, NOTIFY_PERIOD)
-                        subscription_instance.save()
+                    if existing_transaction_instance.user_id is not None:
+                        subscription_instance = Subscription.get_subscription_or_None(
+                            existing_transaction_instance.user_id, plan_instance.community_id)
 
-                    subscription_history_instance = SubscriptionHistory.objects.get(
-                        transaction=existing_transaction_instance)
+                        if subscription_instance is not None:
+                            current_time = TimeUtilities.current_time_in_milliseconds()
+                            subscription_instance.valid_till = current_time
+                            subscription_instance.renewal_due = TimeUtilities.subtract_days_in_epoch_time(
+                                subscription_instance.valid_till, NOTIFY_PERIOD)
+                            subscription_instance.save()
 
-                    if subscription_history_instance is not None:
-                        subscription_history_instance.type = 'refunded'
-                        subscription_history_instance.save()
+                        subscription_history_instance = SubscriptionHistory.objects.get(
+                            transaction=existing_transaction_instance)
 
-                return {'success': True}
-            else:
-                return {'error_message': 'transaction exists with given plan_id'}
+                        if subscription_history_instance is not None:
+                            subscription_history_instance.type = 'refunded'
+                            subscription_history_instance.save()
 
-        transaction_data = self._create_transaction_data(transaction_body)
+                    return {'success': True}
 
-        if 'error_message' in transaction_data:
-            return {'error_message': transaction_data['error_message']}
+                else:
 
-        transaction_instance = Transaction.create_instance(transaction_data)
+                    return {'error_message': 'transaction exists with given plan_id'}
 
-        if not transaction_instance:
-            return {'error_message': 'error while creating transaction'}
+        transaction_data_list = self._create_transaction_data(transaction_body)
 
-        if transaction_body['event'] == 'payment.captured' and \
-                transaction_instance.type == TransactionType.COMMUNITY_SUBSCRIPTION:
+        for transaction_data in transaction_data_list:
 
-            if transaction_data['renew'] and transaction_data['user_id'] is not None:
+            if 'error_message' in transaction_data:
+                return {'error_message': transaction_data['error_message']}
 
-                subscription_manager = SubscriptionImpl(payment_id=transaction_data['payment_id'],
-                                                        member_id=transaction_data['user_id'])
+            # What if one transaction is created but other could not be created
+            transaction_instance = Transaction.create_instance(transaction_data)
 
-                create_subscription = subscription_manager.create_subscription()
+            if not transaction_instance:
+                return {'error_message': 'error while creating transaction'}
 
-                if 'error_message' in create_subscription:
-                    return {'error_message': create_subscription['error_message']}
+            if transaction_body['event'] == 'payment.captured' and \
+                    transaction_instance.type == TransactionType.COMMUNITY_SUBSCRIPTION:
 
-                plan_instance = SubscriptionPlan.get_plan_or_None(transaction_instance.plan_id)
+                if transaction_data['renew'] and transaction_data['user_id'] is not None:
 
-                response = CoreServiceUtilities.renew_member(plan_instance.community_id, transaction_data['user_id'])
+                    subscription_manager = SubscriptionImpl(payment_id=transaction_data['payment_id'],
+                                                            member_id=transaction_data['user_id'])
 
-                if 'error_message' in response:
-                    return {'error_message': response['error_message']}
+                    create_subscription = subscription_manager.create_subscription()
 
-            if not transaction_data['renew'] and transaction_data['user_id'] is None:
-                acquisition_data = self._create_member_acquisition_data(transaction_instance, transaction_data)
+                    if 'error_message' in create_subscription:
+                        return {'error_message': create_subscription['error_message']}
 
-                MemberAcquisition.create_instance(acquisition_data)
+                    plan_instance = SubscriptionPlan.get_plan_or_None(transaction_instance.plan_id)
 
-        if transaction_instance.type == TransactionType.EVENT and transaction_instance.user_id:
+                    response = CoreServiceUtilities.renew_member(plan_instance.community_id,
+                                                                 transaction_data['user_id'])
 
-            if  transaction_instance.status == 'captured':
-                self._attend_event_for_paid_transaction(transaction_instance)
+                    if 'error_message' in response:
+                        return {'error_message': response['error_message']}
 
-            TransactionHelper.send_analytics_for_event_transaction.delay(transaction_instance.id)
+                if not transaction_data['renew'] and transaction_data['user_id'] is None:
+                    acquisition_data = self._create_member_acquisition_data(transaction_instance, transaction_data)
+
+                    MemberAcquisition.create_instance(acquisition_data)
+
+            if transaction_instance.type == TransactionType.EVENT and transaction_instance.user_id:
+
+                if transaction_instance.status == 'captured':
+                    self._attend_event_for_paid_transaction(transaction_instance)
+
+                TransactionHelper.send_analytics_for_event_transaction.delay(transaction_instance.id)
 
         return {'success': True}
 
@@ -473,7 +501,7 @@ class TransactionHelper:
             return
 
         event_filter = ModelUtilities.get_model_filter(SubscriptionEventPlan, {'chatroom_id': chatroom_id})
-        cost_list = [plan_instance.cost/100 for plan_instance in event_filter]
+        cost_list = [plan_instance.cost / 100 for plan_instance in event_filter]
 
         event_metadata = TransactionHelper.create_event_metadata(chatroom_data, cost_list)
 

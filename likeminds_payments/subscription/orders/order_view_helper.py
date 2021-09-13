@@ -286,6 +286,7 @@ class OrderViewHelper:
             "notes": {
                 "event_plan_id": event_plan_instance.event_plan_id,
                 "plan_id": community_plan_instance.plan_id,
+                "name": community_plan_instance.name,
                 "community_id": community_plan_instance.community_id,
                 "community_name": community_data['name'],
                 "type": "community_and_event",

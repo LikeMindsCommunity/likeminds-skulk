@@ -340,6 +340,11 @@ class TransactionImpl(TransactionManager):
             # What if one transaction is created but other could not be created
             transaction_instance = Transaction.create_instance(transaction_data)
 
+            if transaction_instance.type == TransactionType.EVENT:
+                event_plan_instance = SubscriptionEventPlan.get_event_plan_or_None(transaction_data['plan_id'])
+
+                transaction_instance.type_id = event_plan_instance.chatroom_id
+
             if not transaction_instance:
                 return {'error_message': 'error while creating transaction'}
 

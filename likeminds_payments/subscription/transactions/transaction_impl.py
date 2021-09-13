@@ -344,6 +344,7 @@ class TransactionImpl(TransactionManager):
                 event_plan_instance = SubscriptionEventPlan.get_event_plan_or_None(transaction_data['plan_id'])
 
                 transaction_instance.type_id = event_plan_instance.chatroom_id
+                transaction_instance.save()
 
             if not transaction_instance:
                 return {'error_message': 'error while creating transaction'}

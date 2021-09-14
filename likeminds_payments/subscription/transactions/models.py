@@ -34,9 +34,9 @@ class Transaction(models.Model):
         return str(self.pk)
 
     @staticmethod
-    def get_transaction_or_None(payment_id):
+    def get_transaction_or_None(payment_id, transaction_type=TransactionType.COMMUNITY_SUBSCRIPTION):
         try:
-            return Transaction.objects.get(payment_id=payment_id)
+            return Transaction.objects.get(payment_id=payment_id, type=transaction_type)
         except:
             return None
 

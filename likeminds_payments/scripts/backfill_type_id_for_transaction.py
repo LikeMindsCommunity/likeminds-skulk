@@ -13,6 +13,10 @@ def update_community_id_for_community_transaction():
 
         if transaction_instance.type_id == 0:
             plan_instance = SubscriptionPlan.get_plan_or_None(transaction_instance.plan_id)
+
+            if not plan_instance:
+                continue
+
             transaction_instance.type_id = plan_instance.community_id
             transaction_instance.save()
             print("Success | Community Transaction | payment_id = ", transaction_instance.payment_id)
@@ -25,6 +29,10 @@ def update_chatroom_id_for_event_transaction():
 
         if transaction_instance.type_id == 0:
             plan_instance = SubscriptionEventPlan.get_event_plan_or_None(transaction_instance.plan_id)
+
+            if not plan_instance:
+                continue
+
             transaction_instance.type_id = plan_instance.chatroom_id
             transaction_instance.save()
             print("Success | Event Transaction | payment_id = ", transaction_instance.payment_id)

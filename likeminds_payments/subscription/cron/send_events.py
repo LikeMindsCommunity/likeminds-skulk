@@ -1,10 +1,37 @@
 from subscription.member_notifications.constants import EVENTS
 from subscription.subscriptions.models import Subscription
+from subscription.subscriptions.constants import STATUS_EXPIRED, STATUS_GRACE_PERIOD, FREE_SUBSCRIPTION
+from subscription.subscriptions.serializers import SubscriptionSerializer
 from subscription.member_notifications.models import MemberNotification
 from subscription.utility.time_utilities import TimeUtilities
 from subscription.utility.number_utilities import NumberUtilities
 from subscription.utility.core_service_utilities import CoreServiceUtilities
+from subscription.utility.model_utilities import ModelUtilities
 import analytics
+
+
+def get_user_exempted_paid_expired_communitites(user_id):
+    # Get all subscription against this user
+    subscriptions_instances = ModelUtilities.get_model_filter(Subscription, {"user_id": user_id})
+
+    subscriptions_serialized_object = SubscriptionSerializer(subscriptions_instances)
+
+    exempted_community_ids = []
+    paid_community_ids = []
+    expired_community_ids = []
+
+    for subscription_object in subscriptions_serialized_object:
+
+        if subscription_object["type"] == FREE_SUBSCRIPTION:
+            exempted_community_ids.append(subscription_object["community_id"])
+
+        if subscription_object["type"] != FREE_SUBSCRIPTION:
+            paid_community_ids.append(subscription_object["community_id"])
+
+        if subscription_object["membership_state"] in [STATUS_EXPIRED, STATUS_GRACE_PERIOD]:
+            expired_community_ids.append(subscription_object["community_id"])
+
+    return exempted_community_ids, paid_community_ids, expired_community_ids
 
 
 def send_event(user_id, community_id, event, subscription):
@@ -16,6 +43,10 @@ def send_event(user_id, community_id, event, subscription):
 
         community_data = CoreServiceUtilities.get_community_data(community_id)
 
+        # Get exempted, paid and expired community ids list for user
+        exempted_community_ids, paid_community_ids, expired_community_ids = \
+            get_user_exempted_paid_expired_communitites(user_id)
+
         event_data = {
             'user_id': user_id,
             'community_id': community_id,
@@ -23,7 +54,10 @@ def send_event(user_id, community_id, event, subscription):
             'plan_name': '',
             'amount': 0,
             'end_date': TimeUtilities.convert_epoch_to_date(subscription.valid_till),
-            'type': subscription.type
+            'type': subscription.type,
+            'exempted_community_ids': exempted_community_ids,
+            'paid_community_ids': paid_community_ids,
+            'expired_community_ids': expired_community_ids
         }
 
         if community_data is not None:

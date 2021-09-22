@@ -20,7 +20,8 @@ class FbManager(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @staticmethod
-    def create_event(event_name: str, action_source: str, user_data: UserData, event_source_url: str = None):
+    def create_event(event_name: str, action_source: str, user_data: UserData, event_id: str,
+                     event_source_url: str = None):
         """
         creates a facebook event
         """

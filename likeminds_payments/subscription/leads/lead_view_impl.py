@@ -5,7 +5,6 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 
 from ..utility.request_utilities import RequestUtilities
-from ..orders.order_view_helper import OrderViewHelper
 from .lead_impl import LeadImpl
 from .lead_view_helper import LeadViewHelper
 
@@ -35,9 +34,16 @@ class SendEventView(APIView):
 
         lead_manager = LeadImpl()
         response_data = lead_manager.send_facebook_event(
-            client_ip_address, client_user_agent, validated_request_body['event_name'],
-            validated_request_body['action_source'], validated_request_body['emails'], validated_request_body['phones'],
-            validated_request_body['fbc'], validated_request_body['fbp'], event_source_url)
+            client_ip_address,
+            client_user_agent,
+            validated_request_body['event_name'],
+            validated_request_body['event_id'],
+            validated_request_body['action_source'],
+            validated_request_body['emails'],
+            validated_request_body['phones'],
+            validated_request_body['fbc'],
+            validated_request_body['fbp'],
+            event_source_url)
 
         return JsonResponse(
             response_data,

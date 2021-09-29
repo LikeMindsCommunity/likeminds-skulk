@@ -14,3 +14,4 @@ RENEW_MEMBER_API = "{}/api/community_membership/renew_member".format(settings.CO
 CHATROOM_EVENT_ATTEND = "{}/api/chatroom/event/attend".format(settings.CORE_SERVICE_URL)
 CHATROOM_EVENT_UPDATE = "{}/api/chatroom/event/update".format(settings.CORE_SERVICE_URL)
 CHATROOM_FETCH = "{}/api/chatroom/fetch".format(settings.CORE_SERVICE_URL)
+USER_FETCH = "{}/api/user".format(settings.CORE_SERVICE_URL)

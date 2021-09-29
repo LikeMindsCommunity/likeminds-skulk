@@ -424,3 +424,16 @@ class CoreServiceUtilities:
         response = ApiUtilities.generate_get_request(url=url, query_params=query_params, headers=headers)
 
         return response
+
+    @staticmethod
+    def get_user_details(fetch_info):
+
+        headers = {
+            'x-member-id': '{}'.format(fetch_info.get('member_id'))
+        }
+
+        url = USER_FETCH + "/{}".format(fetch_info.get('member_id'))
+
+        response = ApiUtilities.generate_get_request(url=url, headers=headers)
+
+        return response

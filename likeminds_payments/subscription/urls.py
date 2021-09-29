@@ -4,6 +4,7 @@ from .orders.order_view_impl import *
 from .transactions.transaction_view_impl import *
 from .subscriptions.subscription_view_impl import *
 from .subscription_histories.subscription_history_view_impl import *
+from .payment_page.payment_page_view_impl import *
 from .leads.lead_view_impl import *
 
 app_name = "subscription"
@@ -34,5 +35,7 @@ urlpatterns = [
     path('send_facebook_event', SendEventView.as_view(), name='send-facebook-event'),
     path('valid_event_payment_id', ValidateEventPaymentView.as_view(), name='valid_event_payment_id'),
     path('update_payment_id', UpdatePaymentView.as_view(), name='update_payment_id'),
-    path('update_event_plan', UpdateEventPlanView.as_view(), name='update_event_plan')
+    path('update_event_plan', UpdateEventPlanView.as_view(), name='update_event_plan'),
+    path('payment_page/create', CreatePaymentPageView.as_view(), name='create_payment_page'),
+    path('payment_page/update', UpdatePaymentPageView.as_view(), name='update_payment_page')
 ]

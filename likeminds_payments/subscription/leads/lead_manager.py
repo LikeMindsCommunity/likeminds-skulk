@@ -9,7 +9,7 @@ class LeadManager(metaclass=abc.ABCMeta):
                 NotImplemented)
 
     @abc.abstractmethod
-    def send_facebook_event(self, client_ip_address: str, client_user_agent: str, event_name: str,
+    def send_facebook_event(self, client_ip_address: str, client_user_agent: str, event_name: str, event_id: str,
                             action_source: str, emails: list, phones: list, fbc: str, fbp: str,
                             event_source_url: str) -> dict:
         """

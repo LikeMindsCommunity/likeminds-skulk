@@ -13,6 +13,16 @@ class RequestUtilities:
         return request_body
 
     @staticmethod
+    def fetch_request_query_params(request):
+
+        query_param_body = {}
+
+        for param in request.query_params:
+            query_param_body[param] = request.GET.get(param)
+
+        return query_param_body
+
+    @staticmethod
     def get_parameter_from_headers(request, parameter) -> str:
         return request.META.get(parameter, '')
 

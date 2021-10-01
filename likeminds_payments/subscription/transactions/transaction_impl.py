@@ -343,7 +343,7 @@ class TransactionImpl(TransactionManager):
 
         if transaction_instance.type == TransactionType.EVENT and transaction_instance.user_id:
 
-            if  transaction_instance.status == 'captured':
+            if transaction_instance.status == 'captured':
                 self._attend_event_for_paid_transaction(transaction_instance)
 
             TransactionHelper.send_analytics_for_event_transaction.delay(transaction_instance.id)

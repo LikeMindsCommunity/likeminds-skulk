@@ -67,6 +67,65 @@ class PaymentPageViewHelper:
         return payment_page_meta_body
 
     @staticmethod
+    def fetch_all_payment_page_body_validator(payment_page_meta_body):
+
+        if 'page' not in payment_page_meta_body:
+            return {'error_message': 'send page'}
+
+        if ('page' in payment_page_meta_body) and not payment_page_meta_body['page'].isdigit():
+            return {'error_message': 'invalid page value'}
+
+        if 'community_id' not in payment_page_meta_body:
+            return {'error_message': 'send community_id'}
+
+        if ('sort_type' in payment_page_meta_body) and (payment_page_meta_body['sort_type'] not in
+                                                        [f.name for f in PaymentPageMeta._meta.get_fields()]):
+            return {'error_message': 'invalid sort_type'}
+
+        if ('sort_order' in payment_page_meta_body) and (payment_page_meta_body['sort_order'] not in
+                                                         PAYMENT_PAGE_SORT_ORDER_CHOICES):
+            return {'error_message': 'invalid sort_order'}
+
+        return payment_page_meta_body
+
+    @staticmethod
+    def get_first_verified_email_and_phone(user_id):
+
+        email = None
+        mobile_no = None
+
+        user_details_object = CoreServiceUtilities.get_user_details({"member_id": user_id})
+
+        if 'user' in user_details_object:
+
+            if 'emails' in user_details_object['user']:
+
+                for user_email_object in user_details_object['user']['emails']:
+
+                    if user_email_object['verified']:
+                        email = user_email_object['email']
+                        break
+
+            else:
+                return {'error_message': 'error while fetching email'}
+
+            if 'mobiles' in user_details_object['user']:
+
+                for user_mobile_object in user_details_object['user']['mobiles']:
+
+                    if user_mobile_object['state'] == 1:
+                        mobile_no = user_mobile_object['mobile_no']
+                        break
+
+            else:
+                return {'error_message': 'error while fetching mobile no'}
+
+        else:
+            return {'error_message': 'error while fetching user details'}
+
+        return {'email': email, 'mobile_no': mobile_no}
+
+    @staticmethod
     def _create_new_payment_page_instance(payment_page_body, user_id) -> dict:
 
         if 'amount' in payment_page_body:
@@ -87,34 +146,16 @@ class PaymentPageViewHelper:
         if 'redirect_url' not in payment_page_body or not payment_page_body['redirect_url']:
             payment_page_body['redirect_url'] = None
 
-        user_details_object = CoreServiceUtilities.get_user_details({"member_id": user_id})
+        user_email_phone_object = PaymentPageViewHelper.get_first_verified_email_and_phone(user_id)
 
-        if 'user' in user_details_object:
+        if 'error_message' in user_email_phone_object:
+            return {'error_message': user_email_phone_object['error_message']}
 
-            if 'emails' in user_details_object['user']:
+        if user_email_phone_object['email']:
+            payment_page_body['contact_email'] = user_email_phone_object['email']
 
-                for user_email_object in user_details_object['user']['emails']:
-
-                    if user_email_object['verified']:
-                        payment_page_body['contact_email'] = user_email_object['email']
-                        break
-
-            else:
-                return {'error_message': 'error while fetching email'}
-
-            if 'mobiles' in user_details_object['user']:
-
-                for user_mobile_object in user_details_object['user']['mobiles']:
-
-                    if user_mobile_object['state'] == 1:
-                        payment_page_body['contact_mobile_no'] = user_mobile_object['mobile_no']
-                        break
-
-            else:
-                return {'error_message': 'error while fetching mobile no'}
-
-        else:
-            return {'error_message': 'error while fetching user details'}
+        if user_email_phone_object['contact_mobile_no']:
+            payment_page_body['contact_mobile_no'] = user_email_phone_object['mobile_no']
 
         try:
             payment_page_instance = PaymentPageMeta.create_instance(payment_page_body)
@@ -161,15 +202,25 @@ class PaymentPageViewHelper:
         return {'payment_page_instance': payment_page_instance}
 
     @staticmethod
-    def create_payment_page_instance_helper(payment_page_body, user_id) -> dict:
+    def check_cm_permission(community_id, user_id):
 
-        has_permission_check = CoreServiceUtilities.has_permission(payment_page_body['community_id'], user_id)
+        has_permission_check = CoreServiceUtilities.has_permission(community_id, user_id)
 
         if 'error_message' in has_permission_check:
             return {'error_message': has_permission_check['error_message']}
 
         if 'has_permission' in has_permission_check and has_permission_check['has_permission'] is False:
             return {'error_message': 'You are not the Owner/CM of the community'}
+
+        return has_permission_check
+
+    @staticmethod
+    def create_payment_page_instance_helper(payment_page_body, user_id) -> dict:
+
+        has_permission_check = PaymentPageViewHelper.check_cm_permission(payment_page_body['community_id'], user_id)
+
+        if 'error_message' in has_permission_check:
+            return {'error_message': has_permission_check['error_message']}
 
         payment_page_instance = PaymentPageViewHelper._create_new_payment_page_instance(payment_page_body, user_id)
 
@@ -192,13 +243,10 @@ class PaymentPageViewHelper:
 
         payment_page_instance = payment_page_filter[0]
 
-        has_permission_check = CoreServiceUtilities.has_permission(payment_page_instance.community_id, user_id)
+        has_permission_check = PaymentPageViewHelper.check_cm_permission(payment_page_instance.community_id, user_id)
 
         if 'error_message' in has_permission_check:
             return {'error_message': has_permission_check['error_message']}
-
-        if 'has_permission' in has_permission_check and has_permission_check['has_permission'] is False:
-            return {'error_message': 'You are not the Owner/CM of the community'}
 
         updated_plan_instance = PaymentPageViewHelper._update_existing_page_instance(payment_page_body,
                                                                                      payment_page_instance)

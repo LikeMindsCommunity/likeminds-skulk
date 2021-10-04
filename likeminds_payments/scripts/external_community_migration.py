@@ -39,8 +39,7 @@ def get_csv_data(file_path):
     df = pd.read_csv(file_path)
 
     csv_data = {
-        'plan_name': df['plan_name'].fillna(''),
-        'plan_duration': df['plan_duration (in months)'],
+        'plan_id': df['plan_id'],
         'member_email': df['member_email'],
         'member_phone': df['member_phone (with country code)'],
         'start_date': df['start_date (dd/mm/yyyy)'],
@@ -60,7 +59,7 @@ def process_csv_data(count, data):
         'otls': [],
         'community_names': [],
         'payment_ids': [],
-        'plan_names': []
+        'plan_ids': []
     }
 
     if count == 0:
@@ -78,21 +77,15 @@ def loop_over_data_and_create_transactions(count, data, final_lists_dict):
         user_phone = '+' + str(data['member_phone'][i])
         user_email = data['member_email'][i]
         community_name = data['community_name'][i]
-        plan_name = data['plan_name'][i]
+        plan_id = data['plan_id'][i]
         payment_id = 'mig_{}'.format(uuid.uuid4())
 
-        plan_instances = SubscriptionPlan.objects.filter(community_id=data['community_id'][i],
-                                                         duration_in_months=data['plan_duration'][i],
-                                                         name=data['plan_name'][i],
-                                                         is_deleted=False)
+        plan_instance = SubscriptionPlan.get_plan_or_None(plan_id=plan_id)
 
-        plan_count = len(plan_instances)
-
-        if plan_count == 0:
-            add_to_lists(final_lists_dict, user_phone, user_email, None, community_name, payment_id, plan_name)
+        if plan_instance is None:
+            add_to_lists(final_lists_dict, user_phone, user_email, None, community_name, payment_id, plan_id)
             continue
 
-        plan_instance = plan_instances[0]
         community_data = CoreServiceUtilities.get_community_data(plan_instance.community_id)
 
         transaction_object = create_transaction_object(plan_instance, community_data, payment_id, user_phone, data, i)
@@ -105,20 +98,20 @@ def loop_over_data_and_create_transactions(count, data, final_lists_dict):
                                                      payment_id=transaction_object['payment_id'])
 
         if 'error_message' in otl_url:
-            add_to_lists(final_lists_dict, user_phone, user_email, None, community_name, payment_id, plan_name)
+            add_to_lists(final_lists_dict, user_phone, user_email, None, community_name, payment_id, plan_id)
 
         else:
             add_to_lists(final_lists_dict, user_phone, user_email, otl_url['private_link'], community_name, payment_id,
-                         plan_name)
+                         plan_id)
 
 
-def add_to_lists(lists_dict, user_phone, user_email, otl, community_name, payment_id, plan_name):
+def add_to_lists(lists_dict, user_phone, user_email, otl, community_name, payment_id, plan_id):
     lists_dict['phones'].append(user_phone)
     lists_dict['emails'].append(user_email)
     lists_dict['otls'].append(otl)
     lists_dict['community_names'].append(community_name)
     lists_dict['payment_ids'].append(payment_id)
-    lists_dict['plan_names'].append(plan_name)
+    lists_dict['plan_ids'].append(plan_id)
 
 
 def create_transaction_object(plan_instance, community_data, payment_id, user_phone, data, iterator):
@@ -187,7 +180,7 @@ def create_output_data(final_lists_dict):
         'otl': final_lists_dict['otls'],
         'community_name': final_lists_dict['community_names'],
         'payment_id': final_lists_dict['payment_ids'],
-        'plan_name': final_lists_dict['plan_names']
+        'plan_id': final_lists_dict['plan_ids']
     })
 
     return data

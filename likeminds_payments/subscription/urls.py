@@ -39,6 +39,7 @@ urlpatterns = [
     path('payment_page/create', CreatePaymentPageView.as_view(), name='create_payment_page'),
     path('payment_page/update', UpdatePaymentPageView.as_view(), name='update_payment_page'),
     path('payment_page/fetch_all', FetchAllPaymentPageView.as_view(), name='fetch_all_payment_page'),
+    path('payment_page/download_all', DownloadAllPaymentPageView.as_view(), name='download_all_payment_page'),
     path('payment_page/fetch', FetchPaymentPageView.as_view(), name='fetch_payment_page'),
     path('payment_page/fetch_contact_us', FetchContactUsView.as_view(), name='fetch_contact_us')
 ]

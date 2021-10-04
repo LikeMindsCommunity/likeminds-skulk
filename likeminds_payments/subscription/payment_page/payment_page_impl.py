@@ -5,12 +5,13 @@ from ..payment_page.payment_page_manager import PaymentPageManager
 from .models import PaymentPageMeta
 from ..payment_page.payment_page_view_helper import PaymentPageViewHelper
 from ..utility.model_utilities import ModelUtilities
+from ..utility.csv_utilities import CsvUtilities
+from ..utility.time_utilities import TimeUtilities
 from ..payment_page.constants import *
 from ..payment_page.serializers import PaymentPageMetaSerializer
 
 from ..transactions.models import Transaction
 from ..utility.core_service_utilities import CoreServiceUtilities
-
 
 
 class PaymentPageImpl(PaymentPageManager):
@@ -67,16 +68,23 @@ class PaymentPageImpl(PaymentPageManager):
         payment_page_filter = ModelUtilities.get_model_filter(PaymentPageMeta,
                                                               {"community_id": self.get_community_id()})
 
+        total_payment_pages_count = len(payment_page_filter)
+
         if not payment_page_filter:
             return {'success': True, 'payment_pages': []}
 
-        sort_type = 'created_at' if 'sort_type' not in req_body else req_body['sort_type']
-        sort_order = PAYMENT_PAGE_DESCENDING_ORDER if 'sort_order' not in req_body else req_body['sort_order']
+        sort_type = 'created_at' if not req_body.get('sort_type') else req_body.get('sort_type')
+        sort_order = PAYMENT_PAGE_DESCENDING_ORDER if not req_body.get('sort_order') else req_body.get('sort_order')
         sort_order_sign = '-' if sort_order == PAYMENT_PAGE_DESCENDING_ORDER else ''
 
         payment_page_filter = payment_page_filter.order_by(sort_order_sign + sort_type)
 
-        payment_page_filter_paginated = ModelUtilities.paginate_queryset(payment_page_filter, int(req_body['page']), 20)
+        if req_body.get('page'):
+            payment_page_filter_paginated = ModelUtilities.paginate_queryset(payment_page_filter, int(req_body.get(
+                'page')), 20)
+
+        else:
+            payment_page_filter_paginated = payment_page_filter
 
         payment_page_ids = list(payment_page_filter_paginated.values_list('payment_page_id', flat=True))
 
@@ -100,7 +108,7 @@ class PaymentPageImpl(PaymentPageManager):
 
             payment_pages_data.append(payment_page_data)
 
-        return {'success': True, 'payment_pages': payment_pages_data}
+        return {'success': True, 'payment_pages': payment_pages_data, 'total_payment_pages': total_payment_pages_count}
 
     def fetch_payment_page(self, payment_page_id) -> dict:
 
@@ -138,3 +146,23 @@ class PaymentPageImpl(PaymentPageManager):
             return {'success': False, 'error_message': user_email_phone_object['error_message']}
 
         return {'success': True, 'contact_us': user_email_phone_object}
+
+    def download_all_payment_page(self) -> dict:
+
+        payment_page_fetch = self.fetch_all_payment_page({})
+
+        if payment_page_fetch.get('success') and payment_page_fetch.get('payment_pages', []):
+            payment_pages_data = payment_page_fetch.get('payment_pages', [])
+
+            payment_pages_df = CsvUtilities().object_list_to_dataframe(
+                payment_pages_data, col_sequence=PAYMENT_PAGE_DOWNLOAD_ALL_CSV_COLUMN_ORDERING,
+                col_map=PAYMENT_PAGE_DOWNLOAD_ALL_CSV_COLUMN_MAPPER)
+
+            payment_pages_df['Status'] = payment_pages_df['Status'].apply(lambda x: 'Active' if x else 'Inactive')
+            payment_pages_df['Created On'] = payment_pages_df['Created On'].apply(
+                lambda x: TimeUtilities.convert_epoch_time_to_date_month_year(x) + "\n" +
+                TimeUtilities.convert_epoch_time_in_hh_mm_am_pm(x))
+
+            CsvUtilities.pd_dataframe_to_csv(payment_pages_df, 'test.csv')
+
+        return {}

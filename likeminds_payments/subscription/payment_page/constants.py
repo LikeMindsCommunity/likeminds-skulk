@@ -7,3 +7,14 @@ PAYMENT_PAGE_ASCENDING_ORDER = 0
 PAYMENT_PAGE_DESCENDING_ORDER = 1
 
 PAYMENT_PAGE_SORT_ORDER_CHOICES = [PAYMENT_PAGE_ASCENDING_ORDER, PAYMENT_PAGE_DESCENDING_ORDER]
+
+PAYMENT_PAGE_DOWNLOAD_ALL_CSV_COLUMN_MAPPER = {
+    "title": "Title",
+    "total_amount": "Revenue",
+    "total_payments": "Unit Sold",
+    "payment_page_url": "URL",
+    "created_at": "Created On",
+    "is_active": "Status"
+}
+
+PAYMENT_PAGE_DOWNLOAD_ALL_CSV_COLUMN_ORDERING = ["Title", "Revenue", "Unit Sold", "URL", "Created On", "Status"]

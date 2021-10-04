@@ -189,3 +189,39 @@ class FetchContactUsView(APIView):
             response_data,
             status=status_codes.HTTP_200_OK
         )
+
+
+class DownloadAllPaymentPageView(APIView):
+
+    @staticmethod
+    def get(request, *args, **kwargs):
+
+        member_id = RequestUtilities.get_parameter_from_headers(request, 'HTTP_X_MEMBER_ID')
+
+        if not member_id:
+            return JsonResponse(
+                {'success': False, 'error_message': 'send member_id in headers'},
+                status=status_codes.HTTP_400_BAD_REQUEST
+            )
+
+        community_id = request.GET.get('community_id', None)
+
+        if not community_id:
+            return JsonResponse(
+                {'success': False, 'error_message': 'send community_id'},
+                status=status_codes.HTTP_400_BAD_REQUEST
+            )
+
+        payment_page_manager = PaymentPageImpl(user_id=member_id, community_id=community_id)
+        response_data = payment_page_manager.download_all_payment_page()
+
+        if 'error_message' in response_data:
+            return JsonResponse(
+                {'success': False, 'error_message': response_data['error_message']},
+                status=status_codes.HTTP_200_OK
+            )
+
+        return JsonResponse(
+            response_data,
+            status=status_codes.HTTP_200_OK
+        )

@@ -30,3 +30,10 @@ class PaymentPageManager(metaclass=abc.ABCMeta):
         This fetches contact details of the member
         """
         raise NotImplementedError
+
+    @abc.abstractmethod
+    def download_all_payment_page(self) -> dict:
+        """
+        This fetches is used to create a CSV out of all payment pages present for a community
+        """
+        raise NotImplementedError

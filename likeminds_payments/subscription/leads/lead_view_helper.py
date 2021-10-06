@@ -12,6 +12,7 @@ class LeadViewHelper:
             'emails': None,
             'phones': None,
             'event_name': None,
+            'event_id': None,
             'action_source': None
         }
 
@@ -29,6 +30,9 @@ class LeadViewHelper:
 
         if 'event_name' in request_body:
             body['event_name'] = request_body['event_name']
+
+        if 'event_id' in request_body:
+            body['event_id'] = request_body['event_id']
 
         if 'source' in request_body:
             body['action_source'] = request_body['source']

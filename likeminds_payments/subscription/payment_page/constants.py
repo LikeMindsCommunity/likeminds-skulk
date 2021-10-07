@@ -18,3 +18,7 @@ PAYMENT_PAGE_DOWNLOAD_ALL_CSV_COLUMN_MAPPER = {
 }
 
 PAYMENT_PAGE_DOWNLOAD_ALL_CSV_COLUMN_ORDERING = ["Title", "Revenue", "Unit Sold", "URL", "Created On", "Status"]
+
+PAYMENT_PAGE_ALL_REPORTS_DOWNLOAD_EMAIL_BODY = {
+    "subject": "All payment pages report"
+}

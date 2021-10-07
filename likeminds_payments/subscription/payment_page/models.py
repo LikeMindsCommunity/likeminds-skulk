@@ -14,7 +14,8 @@ class PaymentPageMeta(models.Model):
     community_id = models.IntegerField(default=0)
     is_active = models.BooleanField(default=False)
     contact_email = models.CharField(max_length=256)
-    contact_mobile_no = models.CharField(max_length=128)
+    contact_mobile_no = models.BigIntegerField(null=True)
+    contact_country_code = models.IntegerField(null=True)
     created_at = models.BigIntegerField(default=0)
     updated_at = models.BigIntegerField(default=0)
 
@@ -35,6 +36,7 @@ class PaymentPageMeta(models.Model):
         instance.is_active = plan_body['is_active']
         instance.contact_email = plan_body['contact_email']
         instance.contact_mobile_no = plan_body['contact_mobile_no']
+        instance.contact_country_code = plan_body['contact_country_code']
         instance.save()
 
         return instance

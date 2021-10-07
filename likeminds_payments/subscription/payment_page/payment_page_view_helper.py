@@ -64,6 +64,9 @@ class PaymentPageViewHelper:
         if 'contact_mobile_no' in payment_page_meta_body:
             return {'error_message': 'contact_mobile_no cannot be updated'}
 
+        if 'contact_country_code' in payment_page_meta_body:
+            return {'error_message': 'contact_country_code cannot be updated'}
+
         return payment_page_meta_body
 
     @staticmethod
@@ -89,12 +92,14 @@ class PaymentPageViewHelper:
         return payment_page_meta_body
 
     @staticmethod
-    def get_first_verified_email_and_phone(user_id):
+    def get_first_verified_email_and_phone(user_id, user_details_object=None):
 
         email = None
         mobile_no = None
+        country_code = None
 
-        user_details_object = CoreServiceUtilities.get_user_details({"member_id": user_id})
+        if not user_details_object:
+            user_details_object = CoreServiceUtilities.get_user_details({"member_id": user_id})
 
         if 'user' in user_details_object:
 
@@ -115,6 +120,7 @@ class PaymentPageViewHelper:
 
                     if user_mobile_object['state'] == 1:
                         mobile_no = user_mobile_object['mobile_no']
+                        country_code = user_mobile_object['country_code']
                         break
 
             else:
@@ -123,7 +129,7 @@ class PaymentPageViewHelper:
         else:
             return {'error_message': 'error while fetching user details'}
 
-        return {'email': email, 'mobile_no': mobile_no}
+        return {'email': email, 'mobile_no': mobile_no, 'country_code': country_code}
 
     @staticmethod
     def _create_new_payment_page_instance(payment_page_body, user_id) -> dict:
@@ -154,8 +160,9 @@ class PaymentPageViewHelper:
         if user_email_phone_object['email']:
             payment_page_body['contact_email'] = user_email_phone_object['email']
 
-        if user_email_phone_object['contact_mobile_no']:
+        if user_email_phone_object['mobile_no']:
             payment_page_body['contact_mobile_no'] = user_email_phone_object['mobile_no']
+            payment_page_body['contact_country_code'] = user_email_phone_object['country_code']
 
         try:
             payment_page_instance = PaymentPageMeta.create_instance(payment_page_body)

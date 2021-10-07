@@ -15,3 +15,5 @@ CHATROOM_EVENT_ATTEND = "{}/api/chatroom/event/attend".format(settings.CORE_SERV
 CHATROOM_EVENT_UPDATE = "{}/api/chatroom/event/update".format(settings.CORE_SERVICE_URL)
 CHATROOM_FETCH = "{}/api/chatroom/fetch".format(settings.CORE_SERVICE_URL)
 USER_FETCH = "{}/api/user".format(settings.CORE_SERVICE_URL)
+SEND_EMAIL = "{}/api/external_service_apis/send_email".format(settings.CORE_SERVICE_URL)
+SEND_WHATSAPP_MESSAGES = "{}/api/external_service_apis/send_wa_bulk_messages".format(settings.CORE_SERVICE_URL)

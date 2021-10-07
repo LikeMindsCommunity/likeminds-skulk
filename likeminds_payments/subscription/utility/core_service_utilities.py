@@ -437,3 +437,16 @@ class CoreServiceUtilities:
         response = ApiUtilities.generate_get_request(url=url, headers=headers)
 
         return response
+
+    @staticmethod
+    def send_email(user_id, email_body_object):
+
+        headers = {
+            'x-member-id': '{}'.format(user_id)
+        }
+
+        url = SEND_EMAIL
+
+        response = ApiUtilities.generate_post_request(url=url, data=email_body_object, headers=headers)
+
+        return response

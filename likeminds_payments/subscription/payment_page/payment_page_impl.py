@@ -1,5 +1,7 @@
+from django.template.loader import get_template
 from django.db.models import Sum, Count
 from django.conf import settings
+import time
 
 from ..payment_page.payment_page_manager import PaymentPageManager
 from .models import PaymentPageMeta
@@ -12,6 +14,7 @@ from ..payment_page.serializers import PaymentPageMetaSerializer
 
 from ..transactions.models import Transaction
 from ..utility.core_service_utilities import CoreServiceUtilities
+from ..external_services.s3.s3_wrapper import S3Wrapper
 
 
 class PaymentPageImpl(PaymentPageManager):
@@ -151,18 +154,69 @@ class PaymentPageImpl(PaymentPageManager):
 
         payment_page_fetch = self.fetch_all_payment_page({})
 
-        if payment_page_fetch.get('success') and payment_page_fetch.get('payment_pages', []):
-            payment_pages_data = payment_page_fetch.get('payment_pages', [])
+        if (not payment_page_fetch.get('success')) or (not payment_page_fetch.get('payment_pages', [])):
 
-            payment_pages_df = CsvUtilities().object_list_to_dataframe(
-                payment_pages_data, col_sequence=PAYMENT_PAGE_DOWNLOAD_ALL_CSV_COLUMN_ORDERING,
-                col_map=PAYMENT_PAGE_DOWNLOAD_ALL_CSV_COLUMN_MAPPER)
+            if payment_page_fetch.get('error_message'):
+                return {'success': False, 'error_message': payment_page_fetch.get('error_message')}
 
-            payment_pages_df['Status'] = payment_pages_df['Status'].apply(lambda x: 'Active' if x else 'Inactive')
-            payment_pages_df['Created On'] = payment_pages_df['Created On'].apply(
-                lambda x: TimeUtilities.convert_epoch_time_to_date_month_year(x) + "\n" +
-                TimeUtilities.convert_epoch_time_in_hh_mm_am_pm(x))
+            return {'success': False, 'error_message': 'error in fetching data'}
 
-            CsvUtilities.pd_dataframe_to_csv(payment_pages_df, 'test.csv')
+        payment_pages_data = payment_page_fetch.get('payment_pages', [])
 
-        return {}
+        if not payment_pages_data:
+            return {'success': False, 'error_message': 'No data found'}
+
+        user_details_object = CoreServiceUtilities.get_user_details({"member_id": self.get_user_id()})
+
+        if not user_details_object['user']:
+            return {'success': False, 'error_message': 'Error in fetching user details'}
+
+        cm_name = user_details_object['user']['name']
+
+        user_verified_mobile_and_email = PaymentPageViewHelper.get_first_verified_email_and_phone(self.get_user_id(),
+                                                                                                  user_details_object)
+
+        community_details_object = CoreServiceUtilities.get_community_data(self.get_community_id())
+
+        if not community_details_object['community']:
+            return {'success': False, 'error_message': 'Invalid community id'}
+
+        community_name = community_details_object['community']['name']
+
+        payment_pages_df = CsvUtilities().object_list_to_dataframe(
+            payment_pages_data, col_sequence=PAYMENT_PAGE_DOWNLOAD_ALL_CSV_COLUMN_ORDERING,
+            col_map=PAYMENT_PAGE_DOWNLOAD_ALL_CSV_COLUMN_MAPPER)
+
+        payment_pages_df['Status'] = payment_pages_df['Status'].apply(lambda x: 'Active' if x else 'Inactive')
+        payment_pages_df['Created On'] = payment_pages_df['Created On'].apply(
+            lambda x: TimeUtilities.convert_epoch_time_to_date_month_year(x) + "\n" +
+            TimeUtilities.convert_epoch_time_in_hh_mm_am_pm(x))
+
+        file_name = 'All_payment_pages_report_{}.csv'.format(self.get_community_id(),
+                                                             time.strftime("%d-%m-%Y", time.localtime(time.time())))
+
+        upload_status = S3Wrapper.upload_csv_file_and_get_link(payment_pages_df,
+                                                               dir_path='utilities/payment_page_files',
+                                                               file_name=file_name)
+
+        if 'error_message' in upload_status:
+            return {'success': False, 'error_message': upload_status['error_message']}
+
+        # Send Email
+        mail_template = get_template("all_payment_page_download_report_mail.html").render(
+            {"link": upload_status['link'],
+             "cm_name": cm_name,
+             "community_name": community_name})
+
+        payment_page_mail_body = PAYMENT_PAGE_ALL_REPORTS_DOWNLOAD_EMAIL_BODY.copy()
+
+        payment_page_mail_body['mail_body'] = mail_template
+        payment_page_mail_body['mail_recipient_list'] = [user_verified_mobile_and_email['email']]
+
+        send_email_response = CoreServiceUtilities.send_email(self.get_user_id(),
+                                                              payment_page_mail_body)
+
+        if send_email_response.get('success'):
+            return send_email_response
+
+        return {'success': False, 'error_message': 'Some error occured while sending mail'}

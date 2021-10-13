@@ -136,3 +136,42 @@ class CreateEventOrderView(APIView):
             return JsonResponse({'error_message': e.args}, status=status_codes.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return JsonResponse({'success': True, "order": response_data})
+
+
+class CreateCommunityEventOrderView(APIView):
+
+    @method_decorator(csrf_exempt)
+    def dispatch(self, request, *args, **kwargs):
+        return super(CreateCommunityEventOrderView, self).dispatch(request, *args, **kwargs)
+
+    @staticmethod
+    def post(request, *args, **kwargs):
+
+        request_body = RequestUtilities.load_request_body(request)
+
+        validated_request_body = OrderViewHelper.create_community_event_order_body_validator(request_body)
+
+        if 'error_message' in validated_request_body:
+            return JsonResponse(
+                {'success': False, 'error_message': validated_request_body['error_message']},
+                status=status_codes.HTTP_400_BAD_REQUEST
+            )
+
+        order_instance = OrderViewHelper.create_community_event_order_instance_helper(validated_request_body)
+
+        if 'error_message' in order_instance:
+            return JsonResponse(
+                {'success': False, 'error_message': order_instance['error_message']},
+                status=status_codes.HTTP_400_BAD_REQUEST
+            )
+
+        order_manager = OrderImpl(order_instance=order_instance['order_instance'])
+        response_data = order_manager.create_community_event_order()
+
+        if 'error_message' in response_data:
+            return JsonResponse(
+                {'success': False, 'error_message': response_data['error_message']},
+                status=response_data['status']
+            )
+
+        return JsonResponse({'success': True, "order": response_data}, status=status_codes.HTTP_200_OK)

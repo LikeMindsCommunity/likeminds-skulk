@@ -1,5 +1,6 @@
 from ..plans.models import SubscriptionPlan, SubscriptionEventPlan
 from ..utility.core_service_utilities import CoreServiceUtilities
+from ..utility.model_utilities import ModelUtilities
 from ..utility.number_utilities import NumberUtilities
 from ..utility.request_utilities import RequestUtilities
 from ..external_services.razorpay.razorpay_wrapper import RazorpayWrapper
@@ -223,5 +224,108 @@ class OrderViewHelper:
 
                 elif plan_instance.discount_type == EventDiscountType.FLAT:
                     cost = cost - plan_instance.discount
+
+        return cost
+
+    @staticmethod
+    def create_community_event_order_body_validator(request_body) -> dict:
+
+        if not request_body:
+
+            return {'error_message': 'invalid request body'}
+
+        if not request_body.get('event_plan_id'):
+
+            return {'error_message': 'send event_plan_id'}
+
+        if not request_body.get('payment_page_url'):
+
+            return {'error_message': 'send payment_page_url'}
+
+        if not request_body.get('user_id'):
+
+            return {'error_message': 'Invalid user id'}
+
+        if not request_body.get('plan_id'):
+
+            return {'error_message': 'Invalid plan id'}
+
+        return request_body
+
+    @staticmethod
+    def create_community_event_order_instance_helper(order_body) -> dict:
+
+        event_plan_instance = ModelUtilities.get_model_instance_or_none(SubscriptionEventPlan,
+                                                                        order_body.get('event_plan_id'))
+
+        if not event_plan_instance:
+            return {'error_message': 'invalid event_plan_id'}
+
+        community_data = CoreServiceUtilities.get_community_data(event_plan_instance.community_id)
+
+        community_plan_instance = ModelUtilities.get_model_instance_or_none(SubscriptionPlan, order_body.get('plan_id'))
+
+        if event_plan_instance.community_id != community_plan_instance.community_id:
+            return {'error_message': 'plan_id and event_plan_id should belong to same community'}
+
+        if community_data.get('error_message'):
+            return {'error_message': community_data['error_message']}
+
+        cost = OrderViewHelper.get_cost_for_event_in_community_event_order(event_plan_instance,
+                                                                           order_body.get('user_id'))
+
+        total_cost = cost + community_plan_instance.cost
+
+        order_data = OrderViewHelper._create_community_event_order_object_data(event_plan_instance,
+                                                                               community_plan_instance,
+                                                                               order_body,
+                                                                               community_data['community'],
+                                                                               total_cost)
+
+        razorpay_client = RazorpayWrapper.get_instance()
+
+        order_instance = razorpay_client.order.create(data=order_data)
+
+        if order_instance.get('error_message'):
+            return {'error_message': 'error creating order with razorpay'}
+
+        return {'order_instance': order_instance}
+
+    @staticmethod
+    def _create_community_event_order_object_data(event_plan_instance, community_plan_instance,
+                                                  order_body, community_data, amount=0) -> dict:
+
+        order_data = {
+            "amount": amount,
+            "currency": "INR",
+            "notes": {
+                "event_plan_id": event_plan_instance.event_plan_id,
+                "plan_id": community_plan_instance.plan_id,
+                "name": community_plan_instance.name,
+                "community_id": community_plan_instance.community_id,
+                "community_name": community_data['name'],
+                "type": "community_and_event",
+                "payment_page_url": order_body['payment_page_url'],
+                "user_id": order_body['user_id'],
+            }
+        }
+
+        return order_data
+
+    @staticmethod
+    def get_cost_for_event_in_community_event_order(event_plan_instance, user_id) -> int:
+
+        member_state = CoreServiceUtilities.get_member_state(event_plan_instance.community_id, user_id)
+        cost = event_plan_instance.cost
+
+        if member_state != MemberState.GUEST:
+
+            if event_plan_instance.discount and event_plan_instance.discount_type:
+
+                if event_plan_instance.discount_type == EventDiscountType.PERCENTAGE:
+                    cost = NumberUtilities.get_n_percentage_value(cost, event_plan_instance.discount)
+
+                elif event_plan_instance.discount_type == EventDiscountType.FLAT:
+                    cost = cost - event_plan_instance.discount
 
         return cost

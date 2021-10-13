@@ -171,7 +171,7 @@ class CreateCommunityEventOrderView(APIView):
         if 'error_message' in response_data:
             return JsonResponse(
                 {'success': False, 'error_message': response_data['error_message']},
-                status=status_codes.HTTP_200_OK
+                status=response_data['status']
             )
 
         return JsonResponse({'success': True, "order": response_data}, status=status_codes.HTTP_200_OK)

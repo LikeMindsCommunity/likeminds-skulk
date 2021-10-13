@@ -1,5 +1,6 @@
 from .order_manager import OrderManager
 from django.conf import settings
+from rest_framework import status as status_codes
 
 import razorpay.resources.order as order
 from .constants import *
@@ -102,7 +103,7 @@ class OrderImpl(OrderManager):
         order_instance = self.get_order_instance()
 
         if not order_instance:
-            return {'error_message': 'error with created order'}
+            return {'error_message': 'error with created order', 'status': status_codes.HTTP_400_BAD_REQUEST}
 
         options = {
             "key": settings.RAZORPAY_KEY,

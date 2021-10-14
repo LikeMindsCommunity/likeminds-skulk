@@ -672,20 +672,6 @@ class SubscriptionImpl(SubscriptionManager):
 
         return {'success': True}
 
-        # if subscription_instance.created_at == subscription_instance.updated_at:
-        #     current_time = TimeUtilities.current_time_in_milliseconds()
-        #
-        #     difference = current_time - subscription_instance.date_subscribed
-        #
-        #     subscription_instance.date_subscribed = current_time
-        #     subscription_instance.valid_till = TimeUtilities.add_milliseconds_in_epoch_time(
-        #         subscription_instance.valid_till, difference)
-        #     subscription_instance.save()
-        #
-        #     return {'success': True}
-        #
-        # return {'error_message': 'something went wrong'}
-
     @staticmethod
     def _fetch_subscriptions(user_id: str, community_id: str):
         if community_id is not None:

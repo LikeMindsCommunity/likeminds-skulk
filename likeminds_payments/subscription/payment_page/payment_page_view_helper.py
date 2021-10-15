@@ -103,7 +103,10 @@ class PaymentPageViewHelper:
 
         if 'user' in user_details_object:
 
-            if 'emails' in user_details_object['user']:
+            if 'emails' not in user_details_object['user']:
+                return {'error_message': 'error while fetching email'}
+
+            else:
 
                 for user_email_object in user_details_object['user']['emails']:
 
@@ -111,10 +114,10 @@ class PaymentPageViewHelper:
                         email = user_email_object['email']
                         break
 
-            else:
-                return {'error_message': 'error while fetching email'}
+            if 'mobiles' not in user_details_object['user']:
+                return {'error_message': 'error while fetching mobile no'}
 
-            if 'mobiles' in user_details_object['user']:
+            else:
 
                 for user_mobile_object in user_details_object['user']['mobiles']:
 
@@ -122,9 +125,6 @@ class PaymentPageViewHelper:
                         mobile_no = user_mobile_object['mobile_no']
                         country_code = user_mobile_object['country_code']
                         break
-
-            else:
-                return {'error_message': 'error while fetching mobile no'}
 
         else:
             return {'error_message': 'error while fetching user details'}

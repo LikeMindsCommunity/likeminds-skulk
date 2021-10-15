@@ -192,8 +192,8 @@ class PaymentPageImpl(PaymentPageManager):
             lambda x: TimeUtilities.convert_epoch_time_to_date_month_year(x) + "\n" +
             TimeUtilities.convert_epoch_time_in_hh_mm_am_pm(x))
 
-        file_name = 'All_payment_pages_report_{}.csv'.format(self.get_community_id(),
-                                                             time.strftime("%d-%m-%Y", time.localtime(time.time())))
+        file_name = DOWNLOAD_ALL_PAYMENT_PAGE_FILE_NAME.format(self.get_community_id(),
+                                                               time.strftime("%d-%m-%Y", time.localtime(time.time())))
 
         upload_status = S3Wrapper.upload_csv_file_and_get_link(payment_pages_df,
                                                                dir_path='utilities/payment_page_files',

@@ -458,7 +458,7 @@ class TransactionImpl(TransactionManager):
 
             return transactions
 
-        transactions = Transaction.objects.filter(user_id=user_id).order_by('created_at')
+        transactions = ModelUtilities.get_model_filter(Transaction, {'user_id': user_id}).order_by('created_at')
 
         for transaction in transactions:
             plan = SubscriptionPlan.get_plan_or_None(transaction.plan_id)

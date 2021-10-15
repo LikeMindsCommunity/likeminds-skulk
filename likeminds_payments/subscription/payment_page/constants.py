@@ -22,3 +22,5 @@ PAYMENT_PAGE_DOWNLOAD_ALL_CSV_COLUMN_ORDERING = ["Title", "Revenue", "Unit Sold"
 PAYMENT_PAGE_ALL_REPORTS_DOWNLOAD_EMAIL_BODY = {
     "subject": "All payment pages report"
 }
+
+DOWNLOAD_ALL_PAYMENT_PAGE_FILE_NAME = "All_payment_pages_report_{}.csv"

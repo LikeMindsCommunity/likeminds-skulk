@@ -36,6 +36,7 @@ urlpatterns = [
     path('valid_event_payment_id', ValidateEventPaymentView.as_view(), name='valid_event_payment_id'),
     path('update_payment_id', UpdatePaymentView.as_view(), name='update_payment_id'),
     path('update_event_plan', UpdateEventPlanView.as_view(), name='update_event_plan'),
+    path('create_community_event_order', CreateCommunityEventOrderView.as_view(), name='create_community_event_order'),
     path('payment_page/create', CreatePaymentPageView.as_view(), name='create_payment_page'),
     path('payment_page/update', UpdatePaymentPageView.as_view(), name='update_payment_page'),
     path('payment_page/fetch_all', FetchAllPaymentPageView.as_view(), name='fetch_all_payment_page'),

@@ -670,19 +670,21 @@ class SubscriptionImpl(SubscriptionManager):
         if subscription_instance is None:
             return {'error_message': 'no subscription exists for provided user_id and community_id'}
 
-        if subscription_instance.created_at == subscription_instance.updated_at:
-            current_time = TimeUtilities.current_time_in_milliseconds()
+        return {'success': True}
 
-            difference = current_time - subscription_instance.date_subscribed
-
-            subscription_instance.date_subscribed = current_time
-            subscription_instance.valid_till = TimeUtilities.add_milliseconds_in_epoch_time(
-                subscription_instance.valid_till, difference)
-            subscription_instance.save()
-
-            return {'success': True}
-
-        return {'error_message': 'something went wrong'}
+        # if subscription_instance.created_at == subscription_instance.updated_at:
+        #     current_time = TimeUtilities.current_time_in_milliseconds()
+        #
+        #     difference = current_time - subscription_instance.date_subscribed
+        #
+        #     subscription_instance.date_subscribed = current_time
+        #     subscription_instance.valid_till = TimeUtilities.add_milliseconds_in_epoch_time(
+        #         subscription_instance.valid_till, difference)
+        #     subscription_instance.save()
+        #
+        #     return {'success': True}
+        #
+        # return {'error_message': 'something went wrong'}
 
     @staticmethod
     def _fetch_subscriptions(user_id: str, community_id: str):

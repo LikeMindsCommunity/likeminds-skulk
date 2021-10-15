@@ -1,5 +1,6 @@
 from .order_manager import OrderManager
 from django.conf import settings
+from rest_framework import status as status_codes
 
 import razorpay.resources.order as order
 from .constants import *
@@ -93,6 +94,25 @@ class OrderImpl(OrderManager):
             "order_id": order_instance['id'],
             "name": COMPANY_NAME,
             "receipt": "receipt#1",
+            "notes": order_instance['notes']
+        }
+
+        return options
+
+    def create_community_event_order(self) -> dict:
+        order_instance = self.get_order_instance()
+
+        if not order_instance:
+            return {'error_message': 'error with created order', 'status': status_codes.HTTP_400_BAD_REQUEST}
+
+        options = {
+            "key": settings.RAZORPAY_KEY,
+            "amount": order_instance['amount'],
+            "currency": order_instance['currency'],
+            "description": ORDER_TEXT,
+            "image": LIKEMINDS_LOGO_URL,
+            "order_id": order_instance['id'],
+            "name": COMPANY_NAME,
             "notes": order_instance['notes']
         }
 

@@ -14,6 +14,7 @@ from .constants import *
 from .serializers import SubscriptionSerializer, SubscriptionListSerializer
 
 from ..utility.constants import *
+from ..utility.states import TransactionType
 from ..utility.time_utilities import TimeUtilities
 from ..utility.number_utilities import NumberUtilities
 from ..utility.core_service_utilities import CoreServiceUtilities
@@ -27,6 +28,7 @@ from ..external_services.s3.s3_wrapper import S3Wrapper
 from scripts.external_community_migration import generate_transactions
 
 import time
+import uuid
 import razorpay
 import analytics
 import pandas as pd
@@ -956,23 +958,190 @@ class SubscriptionImpl(SubscriptionManager):
         if not status:
             error_logger.error('error sending email')
 
-    def external_migration(self, members_data: str = None, emails: list = None) -> dict:
+    @staticmethod
+    def _create_transaction_object(plan_id, amount, email, phone, type_id, community_id, payment_name: str = '',
+                                   renew: bool = False, user_id: int = None):
 
-        input_csv_url = members_data
+        unique_id = uuid.uuid4()
+        payment_id = 'mig_{}'.format(unique_id)
+        method = MIGRATION
 
-        if input_csv_url is None:
-            return {'error_message': 'invalid members_data sheet link', 'status': status_codes.HTTP_400_BAD_REQUEST}
+        if type_id == TransactionType.PAYMENT_PAGE:
+            payment_id = 'ppc_{}'.format(unique_id)
+            method = MANUAL_PAYMENT_PAGE
 
-        df = pd.read_csv(input_csv_url)
+        plan_instance = SubscriptionPlan.get_plan_or_None(plan_id)
 
-        validated_data = self._columns_validator(df, VALID_SHEET_COLUMNS)
+        if plan_instance is None:
+            if type_id != TransactionType.PAYMENT_PAGE:
+                return {'error_message': 'invalid plan_id', 'status': status_codes.HTTP_400_BAD_REQUEST}
 
-        if 'error_message' in validated_data:
-            return {'error_message': validated_data['error_message'], 'status': status_codes.HTTP_400_BAD_REQUEST}
+            plan_name = ""
+            plan_cost = amount
 
-        self._handle_migration.delay(input_csv_url, emails)
+        else:
+            plan_name = plan_instance.name
+            plan_cost = plan_instance.cost
 
-        return {'success': True, 'status': status_codes.HTTP_200_OK}
+        community_data = CoreServiceUtilities.get_community_data(community_id)
+
+        if 'error_message' in community_data:
+            return {'error_message': community_data['error_message'],
+                    'status': status_codes.HTTP_500_INTERNAL_SERVER_ERROR}
+
+        transaction_data = {
+            "plan_id": plan_id,
+            "payment_id": payment_id,
+            "community_name": community_data['community']['name'],
+            "plan_name": plan_name,
+            "plan_cost": plan_cost,
+            "renew": renew,
+            "amount": amount,
+            "payment_email": email,
+            "payment_phone": phone,
+            "currency": 'INR',
+            "is_international": False,
+            "method": method,
+            "status": 'captured',
+            "error_description": "",
+            "refund_amount": 0,
+            "user_id": user_id,
+            "payment_page_url": "",
+            "grace_period": 0,
+            "type": type_id,
+            "type_id": community_id,
+            "shared_by": None,
+            "payment_name": payment_name
+        }
+
+        transaction_instance = Transaction.create_instance(transaction_data)
+
+        return {'transaction': transaction_instance}
+
+    def external_migration(self, request_body: dict) -> dict:
+
+        if 'members_data_url' in request_body and request_body['members_data_url'] is not None:
+            input_csv_url = request_body['members_data_url']
+
+            if input_csv_url is None:
+                return {'error_message': 'invalid members_data sheet link', 'status': status_codes.HTTP_400_BAD_REQUEST}
+
+            df = pd.read_csv(input_csv_url)
+
+            validated_data = self._columns_validator(df, VALID_SHEET_COLUMNS)
+
+            if 'error_message' in validated_data:
+                return {'error_message': validated_data['error_message'], 'status': status_codes.HTTP_400_BAD_REQUEST}
+
+            self._handle_migration.delay(input_csv_url, request_body['emails'])
+
+            return {'success': True,
+                    'message': 'A mail will be sent to you with the details',
+                    'status': status_codes.HTTP_200_OK}
+
+        create_transaction = self._create_transaction_object(request_body['plan_id'],
+                                                             request_body['amount'],
+                                                             request_body['member_email'],
+                                                             request_body['member_phone (with country code)'],
+                                                             TransactionType.COMMUNITY_SUBSCRIPTION,
+                                                             request_body['community_id'])
+
+        if 'error_message' in create_transaction:
+            return {'error_message': create_transaction['error_message'], 'status': create_transaction['status']}
+
+        transaction = create_transaction['transaction']
+
+        otl_url = CoreServiceUtilities.fetch_otl_url(community_id=transaction.type_id,
+                                                     payment_id=transaction.payment_id)
+
+        if 'error_message' in otl_url:
+            return {'error_message': otl_url['error_message'], 'status': status_codes.HTTP_500_INTERNAL_SERVER_ERROR}
+
+        return {'success': True}
+
+        # send communication via email and whatsapp to the user
+
+    def external_renew_migrate(self, request_body: dict) -> dict:
+
+        if self.get_member_id() is not None:
+
+            has_permission_check = CoreServiceUtilities.has_permission(self.get_community_id(), self.get_member_id())
+
+            if 'error_message' in has_permission_check:
+                return {'error_message': has_permission_check['error_message'],
+                        'status': status_codes.HTTP_500_INTERNAL_SERVER_ERROR}
+
+            if 'has_permission' in has_permission_check and has_permission_check['has_permission'] is False:
+                return {'error_message': 'You are not the Owner/CM of the community',
+                        'status': status_codes.HTTP_401_UNAUTHORIZED}
+
+            user_details = CoreServiceUtilities.user_fetch({'member_id': self.get_member_id()})
+
+            user_id = user_details['user']['id']
+            user_emails = user_details['user']['emails']
+            user_email = None
+            if len(user_emails) > 0:
+                user_email = user_emails[0]['email']
+            user_phones = user_details['user']['mobiles']
+            user_phone = None
+            if len(user_phones) > 0:
+                user_phone = '+{}{}'.format(user_phones[0]['country_code'], user_phones[0]['mobile_no'])
+
+            create_transaction = self._create_transaction_object(request_body['plan_id'],
+                                                                 request_body['amount'],
+                                                                 user_email,
+                                                                 user_phone,
+                                                                 TransactionType.COMMUNITY_SUBSCRIPTION,
+                                                                 request_body['community_id'],
+                                                                 renew=True,
+                                                                 user_id=user_id)
+
+            if 'error_message' in create_transaction:
+                return {'error_message': create_transaction['error_message'], 'status': create_transaction['status']}
+
+            transaction = create_transaction['transaction']
+
+            subscription_manager = SubscriptionImpl(payment_id=transaction.payment_id,
+                                                    member_id=transaction.user_id)
+
+            create_subscription = subscription_manager.create_subscription()
+
+            if 'error_message' in create_subscription:
+                return {'error_message': create_subscription['error_message'],
+                        'status': status_codes.HTTP_500_INTERNAL_SERVER_ERROR}
+
+            return {'success': True}
+
+        return {'error_message': 'send member-id in headers', 'status': status_codes.HTTP_400_BAD_REQUEST}
+
+    def payment_page_add_cash(self, request_body: dict) -> dict:
+
+        if self.get_member_id() is not None:
+
+            has_permission_check = CoreServiceUtilities.has_permission(self.get_community_id(), self.get_member_id())
+
+            if 'error_message' in has_permission_check:
+                return {'error_message': has_permission_check['error_message'],
+                        'status': status_codes.HTTP_500_INTERNAL_SERVER_ERROR}
+
+            if 'has_permission' in has_permission_check and has_permission_check['has_permission'] is False:
+                return {'error_message': 'You are not the Owner/CM of the community',
+                        'status': status_codes.HTTP_401_UNAUTHORIZED}
+
+            create_transaction = self._create_transaction_object(request_body['payment_page_id'],
+                                                                 request_body['amount'],
+                                                                 request_body['payment_email'],
+                                                                 request_body['payment_phone'],
+                                                                 TransactionType.PAYMENT_PAGE,
+                                                                 request_body['community_id'],
+                                                                 payment_name=request_body['payment_name'])
+
+            if 'error_message' in create_transaction:
+                return {'error_message': create_transaction['error_message'], 'status': create_transaction['status']}
+
+            return {'success': True}
+
+        return {'error_message': 'send member-id in headers', 'status': status_codes.HTTP_400_BAD_REQUEST}
 
     @staticmethod
     def _handle_report_data(members_detail, subscription_details, community_questions) -> dict:

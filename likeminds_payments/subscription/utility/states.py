@@ -6,6 +6,7 @@ class EventDiscountType:
 class TransactionType:
     COMMUNITY_SUBSCRIPTION = 0
     EVENT = 1
+    PAYMENT_PAGE = 2
 
 
 class MemberState:

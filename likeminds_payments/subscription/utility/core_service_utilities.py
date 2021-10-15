@@ -424,3 +424,24 @@ class CoreServiceUtilities:
         response = ApiUtilities.generate_get_request(url=url, query_params=query_params, headers=headers)
 
         return response
+
+    @staticmethod
+    def user_fetch(fetch_info):
+
+        user_id = NumberUtilities.get_integer_from_string(fetch_info.get('member_id'))
+
+        headers = {
+            'x-member-id': '{}'.format(user_id)
+        }
+
+        url = "{}/{}".format(USER_FETCH, user_id)
+
+        response = ApiUtilities.generate_get_request(url=url, headers=headers)
+
+        if 'error_message' in response:
+            return {'error_message': response['error_message']}
+
+        if 'user' not in response:
+            return {'error_message': 'invalid response from user api'}
+
+        return response

@@ -29,6 +29,7 @@ class Transaction(models.Model):
     updated_at = models.BigIntegerField(default=0)
     type = models.IntegerField(default=0)
     type_id = models.IntegerField(default=0)
+    payment_name = models.TextField(default='')
 
     def __str__(self):
         return str(self.pk)
@@ -75,6 +76,7 @@ class Transaction(models.Model):
         instance.grace_period = transaction_body['grace_period']
         instance.type = transaction_body.get('type', 0)
         instance.type_id = transaction_body.get('type_id', 0)
+        instance.payment_name = transaction_body.get('payment_name', '')
 
         if instance.type == TransactionType.EVENT:
             event_plan_instance = SubscriptionEventPlan.get_event_plan_or_None(transaction_body['plan_id'])

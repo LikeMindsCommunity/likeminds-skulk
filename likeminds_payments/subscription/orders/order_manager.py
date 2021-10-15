@@ -6,7 +6,9 @@ class OrderManager(metaclass=abc.ABCMeta):
     @classmethod
     def __subclasshook__(cls, subclass):
         return ((hasattr(subclass, 'create_order') and callable(subclass.create_order)) and
-                (hasattr(subclass, 'verify_order') and callable(subclass.verify_order)) or
+                (hasattr(subclass, 'verify_order') and callable(subclass.verify_order)) and
+                (hasattr(subclass, 'create_event_order') and callable(subclass.create_event_order)) and
+                (hasattr(subclass, 'create_payment_page_order') and callable(subclass.create_payment_page_order)) or
                 NotImplemented)
 
     @abc.abstractmethod
@@ -27,6 +29,13 @@ class OrderManager(metaclass=abc.ABCMeta):
     def create_event_order(self) -> dict:
         """
         create an order for an event
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def create_payment_page_order(self) -> dict:
+        """
+        create an order for a payment page
         """
         raise NotImplementedError
 

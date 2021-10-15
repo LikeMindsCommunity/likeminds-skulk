@@ -14,6 +14,7 @@ from ..utility.core_service_utilities import CoreServiceUtilities
 from .constants import *
 from .models import Transaction
 from ..plans.models import SubscriptionPlan, SubscriptionEventPlan
+from ..payment_page.models import PaymentPageMeta
 from ..subscriptions.models import Subscription
 from ..subscription_histories.models import SubscriptionHistory
 from ..member_acquisition.models import MemberAcquisition
@@ -170,6 +171,53 @@ class TransactionImpl(TransactionManager):
         return transaction_data
 
     @staticmethod
+    def _fetch_transaction_data_for_payment_page(order_notes, payment_instance, refund_instance):
+
+        transaction_data = {
+            "plan_id": order_notes['payment_page_id'],
+            "payment_id": payment_instance['id'],
+            "community_name": order_notes['community_name'],
+            "type_id": order_notes['community_id'],
+            "plan_cost": payment_instance['amount'],
+            "amount": payment_instance['amount'],
+            "renew": False,
+            "payment_email": payment_instance['email'],
+            "payment_phone": payment_instance['contact'],
+            "currency": payment_instance['currency'],
+            "is_international": payment_instance['international'],
+            "method": payment_instance['method'],
+            "status": payment_instance['status'],
+            "error_description": "",
+            "refund_amount": 0,
+            "user_id": None,
+            "payment_page_url": order_notes['payment_page_url'],
+            "grace_period": 0,
+            "type": TransactionType.PAYMENT_PAGE,
+            "shared_by": None,
+            "payment_name": order_notes['payment_name']
+        }
+
+        if payment_instance['error_description'] is not None:
+            transaction_data["error_description"] = payment_instance['error_description']
+
+        if 'renew' in order_notes and order_notes['renew'] == "true":
+            transaction_data['renew'] = True
+
+        if 'amount' in refund_instance:
+            transaction_data['refund_amount'] = refund_instance['amount']
+
+        if 'user_id' in order_notes:
+            transaction_data['user_id'] = order_notes['user_id']
+
+        if 'shared_by' in order_notes:
+            transaction_data['shared_by'] = order_notes['shared_by']
+
+        if 'grace_period' in order_notes:
+            transaction_data['grace_period'] = order_notes['grace_period']
+
+        return transaction_data
+
+    @staticmethod
     def _fetch_transaction_data_for_community_and_event(order_notes, payment_instance, refund_instance):
         transaction_data_list = []
         event_transaction_data = TransactionImpl._fetch_transaction_data_for_event(order_notes, payment_instance,
@@ -214,8 +262,15 @@ class TransactionImpl(TransactionManager):
         order_notes = order_instance['notes']
         is_event_transaction = order_notes['type'] == "event"
         is_community_and_event_transaction = order_notes['type'] == "community_and_event"
+        is_payment_page_transaction = order_notes['type'] == 'payment_page'
 
-        if is_community_and_event_transaction:
+        if is_payment_page_transaction:
+            transaction_data = self._fetch_transaction_data_for_payment_page(order_notes, payment_instance,
+                                                                             refund_instance)
+
+            transaction_data_list = [transaction_data]
+
+        elif is_community_and_event_transaction:
             transaction_data_list = self._fetch_transaction_data_for_community_and_event(order_notes, payment_instance,
                                                                                          refund_instance)
         elif is_event_transaction:
@@ -330,6 +385,13 @@ class TransactionImpl(TransactionManager):
 
                     return {'error_message': 'transaction exists with given plan_id'}
 
+            elif existing_transaction_instance and \
+                    existing_transaction_instance.type == TransactionType.PAYMENT_PAGE:
+
+                if transaction_body["event"] == "refund.processed":
+                    existing_transaction_instance.status = "refund"
+                    existing_transaction_instance.save()
+
         transaction_data_list = self._create_transaction_data(transaction_body)
 
         for transaction_data in transaction_data_list:
@@ -376,6 +438,10 @@ class TransactionImpl(TransactionManager):
 
                 TransactionHelper.send_analytics_for_event_transaction.delay(transaction_instance.id)
 
+            if transaction_instance.type == TransactionType.PAYMENT_PAGE:
+
+                pass
+
         return {'success': True}
 
     @staticmethod
@@ -383,18 +449,29 @@ class TransactionImpl(TransactionManager):
         return TransactionSerializer(transactions)
 
     @staticmethod
-    def _fetch_transactions(user_id: str, community_id: str):
+    def _fetch_transactions(user_id: str, community_id: str, payment_page_id=None):
         output = []
+
+        if not payment_page_id:
+            transactions = ModelUtilities.get_model_filter(Transaction,
+                                                           {'plan_id': payment_page_id}).order_by('created_at')
+
+            return transactions
+
         transactions = Transaction.objects.filter(user_id=user_id).order_by('created_at')
+
         for transaction in transactions:
             plan = SubscriptionPlan.get_plan_or_None(transaction.plan_id)
+
             if plan is not None and plan.community_id == community_id:
                 output.append(transaction)
+
         return output
 
-    def fetch_transactions(self, page) -> dict:
+    def fetch_transactions(self, page, payment_page_id=None) -> dict:
 
-        transactions = self._fetch_transactions(self.get_user_id(), self.get_community_id())
+        transactions = self._fetch_transactions(self.get_user_id(), self.get_community_id(),
+                                                payment_page_id=payment_page_id)
 
         if len(transactions) == 0:
             return {'error_message': 'no transaction exist for this user in this community'}

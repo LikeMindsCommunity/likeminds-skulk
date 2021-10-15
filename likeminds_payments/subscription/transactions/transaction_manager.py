@@ -22,7 +22,7 @@ class TransactionManager(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def fetch_transactions(self, page) -> dict:
+    def fetch_transactions(self, page, payment_page_id) -> dict:
         """
         Fetch transactions of a user in a community or all the unmapped transactions in a community
         """

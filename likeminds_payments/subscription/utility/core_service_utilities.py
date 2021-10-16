@@ -450,3 +450,41 @@ class CoreServiceUtilities:
         response = ApiUtilities.generate_post_request(url=url, data=email_body_object, headers=headers)
 
         return response
+
+    @staticmethod
+    def send_wa_messages(user_id, whatsapp_body):
+        headers = {
+            'x-member-id': '{}'.format(user_id)
+        }
+
+        url = SEND_WHATSAPP_MESSAGES
+
+        response = ApiUtilities.generate_post_request(url=url, data=whatsapp_body, headers=headers)
+
+        return response
+
+    @staticmethod
+    def get_community_admins(community_id, user_id=None, fetch_owner_only=False):
+
+        headers = {}
+
+        if user_id:
+            headers = {
+                'x-member-id': '{}'.format(user_id)
+            }
+
+        url = COMMUNITY_ADMINS_API + "/{}".format(community_id)
+
+        response = ApiUtilities.generate_get_request(url=url, headers=headers)
+
+        member_owner_data = response["members"]
+
+        if fetch_owner_only:
+
+            for member_detail in response["members"]:
+
+                if member_detail['is_owner']:
+                    member_owner_data = [member_detail]
+                    break
+
+        return member_owner_data

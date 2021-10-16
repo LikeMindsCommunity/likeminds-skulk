@@ -14,6 +14,7 @@ from ..payment_page.serializers import PaymentPageMetaSerializer
 
 from ..transactions.models import Transaction
 from ..utility.core_service_utilities import CoreServiceUtilities
+from ..utility.async_tasks import send_email_from_core_service
 from ..external_services.s3.s3_wrapper import S3Wrapper
 
 
@@ -213,10 +214,6 @@ class PaymentPageImpl(PaymentPageManager):
         payment_page_mail_body['mail_body'] = mail_template
         payment_page_mail_body['mail_recipient_list'] = [user_verified_mobile_and_email['email']]
 
-        send_email_response = CoreServiceUtilities.send_email(self.get_user_id(),
-                                                              payment_page_mail_body)
+        send_email_response = send_email_from_core_service(self.get_user_id(), payment_page_mail_body)
 
-        if send_email_response.get('success'):
-            return send_email_response
-
-        return {'success': False, 'error_message': 'Some error occured while sending mail'}
+        return send_email_response

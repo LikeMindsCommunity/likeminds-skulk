@@ -11,10 +11,10 @@ from ..utility.states import TransactionType
 from ..utility.time_utilities import TimeUtilities
 from ..utility.model_utilities import ModelUtilities
 from ..utility.core_service_utilities import CoreServiceUtilities
+from ..utility.async_tasks import (payment_page_member_payment_success_email)
 from .constants import *
 from .models import Transaction
 from ..plans.models import SubscriptionPlan, SubscriptionEventPlan
-from ..payment_page.models import PaymentPageMeta
 from ..subscriptions.models import Subscription
 from ..subscription_histories.models import SubscriptionHistory
 from ..member_acquisition.models import MemberAcquisition
@@ -440,7 +440,15 @@ class TransactionImpl(TransactionManager):
 
             if transaction_instance.type == TransactionType.PAYMENT_PAGE:
 
-                pass
+                if transaction_instance.status == 'captured':
+
+                    # Send Payment Page member success email and whatsapp
+                    payment_page_member_payment_success_email.delay(transaction_instance.id)
+
+
+
+                elif transaction_instance.status == 'failed':
+                    pass
 
         return {'success': True}
 

@@ -1,7 +1,9 @@
 from .constants import *
 from .models import SubscriptionPlan
+from ..subscriptions.constants import SUBSCRIPTION_COHORT_NAME, SUBSCRIPTION_EXPIRED_COHORT_NAME
 from ..utility.core_service_utilities import CoreServiceUtilities
 from ..utility.number_utilities import NumberUtilities
+from ..utility.states import cohort_types
 
 
 class PlanViewHelper:
@@ -99,12 +101,18 @@ class PlanViewHelper:
             else:
                 plan_body['image'] = PLAN_IMAGES['default']
 
+        if SUBSCRIPTION_PLAN_NAMES[plan_body['duration_name']]['unique']:
+            plan_title = SUBSCRIPTION_PLAN_NAMES[plan_body['duration_name']]['title']
+        else:
+            plan_title = '{} "{}" Plan'.format(plan_body['duration_in_months'],
+                                               SUBSCRIPTION_PLAN_NAMES[plan_body['duration_name']]['title'])
+
         try:
             plan_instance = SubscriptionPlan.create_instance(plan_body)
         except:
             return {'error_message': 'error_while creating new plan'}
 
-        return {'plan_instance': plan_instance}
+        return {'plan_instance': plan_instance, 'plan_title': plan_title}
 
     @staticmethod
     def _update_existing_plan_instance(plan_body, plan_instance) -> dict:
@@ -273,5 +281,41 @@ class PlanViewHelper:
 
         if not event_plan_id:
             return {'success': False, 'error_message': "In-valid event plan id"}
+
+        return {}
+
+    @staticmethod
+    def create_subscription_plan_cohort(instance_data, user_id):
+        cohort_info = {
+            'member_id': user_id,
+            'name': SUBSCRIPTION_COHORT_NAME.format(instance_data['plan_title']),
+            'type': cohort_types.SUBSCRIPTION_PLAN,
+            'type_id': instance_data['plan_instance'].plan_id,
+            'community_id': instance_data['plan_instance'].community_id,
+            'member_ids': [user_id]
+        }
+
+        response = CoreServiceUtilities.create_cohort(cohort_info)
+
+        if response.get('error_message'):
+            return {'error_message': response['error_message']}
+
+        return {}
+
+    @staticmethod
+    def create_subscription_expired_plan_cohort(instance_data, user_id):
+        cohort_info = {
+            'member_id': user_id,
+            'name': SUBSCRIPTION_EXPIRED_COHORT_NAME.format(instance_data['plan_title']),
+            'type': cohort_types.SUBSCRIPTION_EXPIRED_PLAN,
+            'type_id': instance_data['plan_instance'].plan_id,
+            'community_id': instance_data['plan_instance'].community_id,
+            'member_ids': [user_id]
+        }
+
+        response = CoreServiceUtilities.create_cohort(cohort_info)
+
+        if response.get('error_message'):
+            return {'error_message': response['error_message']}
 
         return {}

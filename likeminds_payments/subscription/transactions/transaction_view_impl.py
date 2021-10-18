@@ -206,3 +206,29 @@ class UpdatePaymentView(TransactionMixin, APIView):
             return JsonResponse(response, status=status_codes.HTTP_400_BAD_REQUEST)
 
         return JsonResponse(response)
+
+
+class DownloadAllTransactionView(TransactionMixin, APIView):
+
+    @method_decorator(csrf_exempt)
+    def dispatch(self, request, *args, **kwargs):
+        return super(DownloadAllTransactionView, self).dispatch(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+
+        member_id = RequestUtilities.get_parameter_from_headers(request, 'HTTP_X_MEMBER_ID')
+
+        request_body = RequestUtilities.fetch_request_query_params(request)
+        validate_request = TransactionViewHelper.validate_request_body_for_download_all_transaction_view(request_body)
+
+        if validate_request.get('error_message'):
+            return JsonResponse({'error_message': "Invalid request body"},
+                                status=status_codes.HTTP_400_BAD_REQUEST)
+
+        transaction_manager = TransactionImpl()
+        response = transaction_manager.download_all_transaction(validate_request, member_id)
+
+        if response.get('error_message'):
+            return JsonResponse(response, status=status_codes.HTTP_400_BAD_REQUEST)
+
+        return JsonResponse(response)

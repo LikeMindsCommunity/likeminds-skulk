@@ -60,7 +60,7 @@ class TransactionViewHelper:
         if 'page' in request_body and isinstance(request_body['page'], int):
             body['page'] = NumberUtilities.get_integer_from_string(request_body['page'])
 
-        if 'payment_page_id' in request_body and not request_body.get('payment_page_id'):
+        if 'payment_page_id' in request_body and request_body.get('payment_page_id'):
             payment_page_filter = ModelUtilities.get_model_filter(PaymentPageMeta,
                                                                   {'payment_page_id': request_body.get('payment_page_id')})
 
@@ -153,3 +153,14 @@ class TransactionViewHelper:
             return {'error_message': "In-valid payment id"}
 
         return {}
+
+    @staticmethod
+    def validate_request_body_for_download_all_transaction_view(req_body):
+
+        if not req_body:
+            return {'error_message': "Invalid request body"}
+
+        if not req_body.get('payment_page_id'):
+            return {'error_message': "Invalid payment_page_id"}
+
+        return req_body

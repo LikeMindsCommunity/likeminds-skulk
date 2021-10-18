@@ -58,3 +58,11 @@ class TransactionManager(metaclass=abc.ABCMeta):
         """
 
         raise NotImplementedError
+
+    @abc.abstractmethod
+    def download_all_transaction(self, req_body, user_id) -> dict:
+        """
+        updates the payment id and user
+        """
+
+        raise NotImplementedError

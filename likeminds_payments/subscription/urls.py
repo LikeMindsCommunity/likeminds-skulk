@@ -20,6 +20,7 @@ urlpatterns = [
     path('fetch_transactions', FetchTransactionsView.as_view(), name="fetch-transactions"),
     path('refund_transaction', RefundTransactionView.as_view(), name="refund-transaction"),
     path('create_subscription', CreateSubscriptionView.as_view(), name="create-subscription"),
+    path('transactions/download_all', DownloadAllTransactionView.as_view(), name="download-all-transaction"),
     path('start', StartSubscriptionView.as_view(), name="start-subscription"),
     path('fetch', FetchSubscriptionView.as_view(), name="fetch-subscription"),
     path('cancel', CancelSubscriptionView.as_view(), name="cancel-subscription"),

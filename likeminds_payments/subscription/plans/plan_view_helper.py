@@ -319,3 +319,22 @@ class PlanViewHelper:
             return {'error_message': response['error_message']}
 
         return {}
+
+    @staticmethod
+    def add_member_to_subscription_cohort(plan_id, user_id, community_id):
+
+        cohort_info = {
+            'member_id': user_id,
+            'type': cohort_types.SUBSCRIPTION_PLAN,
+            'type_id': plan_id,
+            'community_id': community_id,
+            'member_ids': [user_id]
+        }
+
+        response = CoreServiceUtilities.update_cohort(cohort_info)
+
+        if response.get('error_message'):
+            return {'error_message': response['error_message']}
+
+        return {}
+

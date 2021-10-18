@@ -15,3 +15,4 @@ CHATROOM_EVENT_ATTEND = "{}/api/chatroom/event/attend".format(settings.CORE_SERV
 CHATROOM_EVENT_UPDATE = "{}/api/chatroom/event/update".format(settings.CORE_SERVICE_URL)
 CHATROOM_FETCH = "{}/api/chatroom/fetch".format(settings.CORE_SERVICE_URL)
 CREATE_COHORT_API = "{}/api/cohort/create".format(settings.CORE_SERVICE_URL)
+UPDATE_COHORT_API = "{}/api/cohort/update".format(settings.CORE_SERVICE_URL)

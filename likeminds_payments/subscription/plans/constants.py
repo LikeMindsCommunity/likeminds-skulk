@@ -43,8 +43,8 @@ SUBSCRIPTION_PLAN_NAMES = {
     },
     "lifetime": {
         "unique": True,
-        "title": "",
-        "subtitle": ""
+        "title": "Lifetime",
+        "subtitle": "lifetime"
     }
 }
 PLAN_BASE_URL = settings.URL

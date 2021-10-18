@@ -35,7 +35,8 @@ class FbWrapper(FbManager):
         return user_data
 
     @staticmethod
-    def create_event(event_name: str, action_source: str, user_data: UserData, event_source_url: str = None):
+    def create_event(event_name: str, action_source: str, user_data: UserData, event_id: str,
+                     event_source_url: str = None):
 
         action_source_value = ActionSource.OTHER
 
@@ -45,6 +46,7 @@ class FbWrapper(FbManager):
         event = Event(
             event_name=event_name,
             event_time=int(time.time()),
+            event_id=event_id,
             user_data=user_data,
             event_source_url=event_source_url if event_source_url is not None else '',
             action_source=action_source_value

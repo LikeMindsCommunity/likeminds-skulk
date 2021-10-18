@@ -29,3 +29,5 @@ MEMBERSHIP_STATES = {
     2: 'Grace Period',
     3: 'Renewal Due'
 }
+SUBSCRIPTION_COHORT_NAME = 'Subscription Plan - {}'
+SUBSCRIPTION_EXPIRED_COHORT_NAME = 'Subscription Expired Plan - {}'

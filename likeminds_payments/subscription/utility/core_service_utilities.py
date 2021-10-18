@@ -424,3 +424,35 @@ class CoreServiceUtilities:
         response = ApiUtilities.generate_get_request(url=url, query_params=query_params, headers=headers)
 
         return response
+
+    @staticmethod
+    def create_cohort(cohort_info):
+
+        if not cohort_info:
+            return
+
+        member_id = NumberUtilities.get_integer_from_string(cohort_info.get('member_id'))
+
+        url = CREATE_COHORT_API
+
+        data = {
+            'community_id': cohort_info.get('community_id'),
+            'name': cohort_info.get('name'),
+            'member_ids': cohort_info.get('member_ids'),
+            'type': cohort_info.get('type'),
+            'type_id': cohort_info.get('type_id')
+        }
+
+        headers = {
+            'x-member-id': '{}'.format(member_id)
+        }
+
+        response = ApiUtilities.generate_post_request(url=url, data=data, headers=headers)
+
+        if 'error_message' in response:
+            return {'error_message': response['error_message']}
+
+        if 'success' not in response:
+            return {'error_message': 'invalid response from create cohort api'}
+
+        return {'success': response['success']}

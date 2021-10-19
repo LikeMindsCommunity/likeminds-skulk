@@ -127,10 +127,7 @@ def send_wa_messages_from_core_service(user_id, whatsapp_body):
 def send_notifications_from_core_service(user_id, notification_body):
     send_notifications_response = CoreServiceUtilities.send_notifications(user_id, notification_body)
 
-    if send_notifications_response.get('success'):
-        return send_notifications_response
-
-    return {'success': False, 'error_message': 'Some error occurred while sending notifications'}
+    return {'success': True}
 
 
 @shared_task

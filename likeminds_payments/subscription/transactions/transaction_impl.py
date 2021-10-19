@@ -616,7 +616,7 @@ class TransactionImpl(TransactionManager):
 
         if not community_owner_details:
             return {'error_message': "No owner found for the community",
-                    'status_code': status_codes.HTTP_408_REQUEST_TIMEOUT}
+                    'status_code': status_codes.HTTP_404_NOT_FOUND}
 
         community_owner_details = community_owner_details[0]
 

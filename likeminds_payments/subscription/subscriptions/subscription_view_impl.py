@@ -5,9 +5,12 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 
 from ..mixins import TransactionMixin
+from ..plans.plan_view_helper import PlanViewHelper
+from ..transactions.models import Transaction
 from ..utility.request_utilities import RequestUtilities
 from .subscription_impl import SubscriptionImpl
 from .subscription_view_helper import SubscriptionViewHelper
+from ..utility.states import TransactionType
 
 
 class CreateSubscriptionView(TransactionMixin, APIView):
@@ -37,6 +40,20 @@ class CreateSubscriptionView(TransactionMixin, APIView):
         response_data = subscription_manager.create_subscription(valid_till=validated_request_body['valid_till'],
                                                                  n_days=validated_request_body['n_days'],
                                                                  shared_by=validated_request_body['shared_by'])
+
+        transaction = Transaction.get_transaction_or_None(payment_id=validated_request_body['payment_id'],
+                                                          transaction_type=TransactionType.COMMUNITY_SUBSCRIPTION)
+
+        cohort_response = PlanViewHelper.add_member_to_subscription_cohort(
+            plan_id=transaction.plan_id,
+            user_id=member_id,
+            community_id=validated_request_body['community_id'])
+
+        if 'error_message' in cohort_response:
+            return JsonResponse(
+                {'success': False, 'error_message': cohort_response['error_message']},
+                status=status_codes.HTTP_200_OK
+            )
 
         if 'error_message' in response_data:
             return JsonResponse(

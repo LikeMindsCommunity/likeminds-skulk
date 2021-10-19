@@ -1,8 +1,12 @@
 from __future__ import absolute_import, unicode_literals
 
+import pandas as pd
 from celery import shared_task
 from .transaction_manager import TransactionManager
 from django.conf import settings
+from django.template.loader import get_template
+import time
+from rest_framework import status as status_codes
 from ..external_services.razorpay.razorpay_wrapper import RazorpayWrapper
 from ..external_services.segment.segment_impl import SegmentImpl
 from ..utility.core_service_utilities import CoreServiceUtilities
@@ -11,14 +15,21 @@ from ..utility.states import TransactionType
 from ..utility.time_utilities import TimeUtilities
 from ..utility.model_utilities import ModelUtilities
 from ..utility.core_service_utilities import CoreServiceUtilities
+from ..utility.async_tasks import (payment_page_member_payment_success_email, payment_page_member_payment_failed_email,
+                                   payment_page_cm_payment_success_email, send_email_from_core_service)
+from ..utility.csv_utilities import CsvUtilities
 from .constants import *
 from .models import Transaction
 from ..plans.models import SubscriptionPlan, SubscriptionEventPlan
 from ..subscriptions.models import Subscription
+from ..payment_page.models import PaymentPageMeta
+from ..payment_page.payment_page_view_helper import PaymentPageViewHelper
 from ..subscription_histories.models import SubscriptionHistory
 from ..member_acquisition.models import MemberAcquisition
 from ..subscriptions.subscription_view_impl import SubscriptionImpl
 from .serializers import TransactionSerializer
+
+from ..external_services.s3.s3_wrapper import S3Wrapper
 
 import hmac
 import hashlib
@@ -170,6 +181,53 @@ class TransactionImpl(TransactionManager):
         return transaction_data
 
     @staticmethod
+    def _fetch_transaction_data_for_payment_page(order_notes, payment_instance, refund_instance):
+
+        transaction_data = {
+            "plan_id": order_notes['payment_page_id'],
+            "payment_id": payment_instance['id'],
+            "community_name": order_notes['community_name'],
+            "type_id": order_notes['community_id'],
+            "plan_cost": payment_instance['amount'],
+            "amount": payment_instance['amount'],
+            "renew": False,
+            "payment_email": payment_instance['email'],
+            "payment_phone": payment_instance['contact'],
+            "currency": payment_instance['currency'],
+            "is_international": payment_instance['international'],
+            "method": payment_instance['method'],
+            "status": payment_instance['status'],
+            "error_description": "",
+            "refund_amount": 0,
+            "user_id": None,
+            "payment_page_url": order_notes['payment_page_url'],
+            "grace_period": 0,
+            "type": TransactionType.PAYMENT_PAGE,
+            "shared_by": None,
+            "payment_name": order_notes['payment_name']
+        }
+
+        if payment_instance['error_description'] is not None:
+            transaction_data["error_description"] = payment_instance['error_description']
+
+        if 'renew' in order_notes and order_notes['renew'] == "true":
+            transaction_data['renew'] = True
+
+        if 'amount' in refund_instance:
+            transaction_data['refund_amount'] = refund_instance['amount']
+
+        if 'user_id' in order_notes:
+            transaction_data['user_id'] = order_notes['user_id']
+
+        if 'shared_by' in order_notes:
+            transaction_data['shared_by'] = order_notes['shared_by']
+
+        if 'grace_period' in order_notes:
+            transaction_data['grace_period'] = order_notes['grace_period']
+
+        return transaction_data
+
+    @staticmethod
     def _fetch_transaction_data_for_community_and_event(order_notes, payment_instance, refund_instance):
         transaction_data_list = []
         event_transaction_data = TransactionImpl._fetch_transaction_data_for_event(order_notes, payment_instance,
@@ -214,8 +272,15 @@ class TransactionImpl(TransactionManager):
         order_notes = order_instance['notes']
         is_event_transaction = order_notes['type'] == "event"
         is_community_and_event_transaction = order_notes['type'] == "community_and_event"
+        is_payment_page_transaction = order_notes['type'] == 'payment_page'
 
-        if is_community_and_event_transaction:
+        if is_payment_page_transaction:
+            transaction_data = self._fetch_transaction_data_for_payment_page(order_notes, payment_instance,
+                                                                             refund_instance)
+
+            transaction_data_list = [transaction_data]
+
+        elif is_community_and_event_transaction:
             transaction_data_list = self._fetch_transaction_data_for_community_and_event(order_notes, payment_instance,
                                                                                          refund_instance)
         elif is_event_transaction:
@@ -330,6 +395,13 @@ class TransactionImpl(TransactionManager):
 
                     return {'error_message': 'transaction exists with given plan_id'}
 
+            elif existing_transaction_instance and \
+                    existing_transaction_instance.type == TransactionType.PAYMENT_PAGE:
+
+                if transaction_body["event"] == "refund.processed":
+                    existing_transaction_instance.status = "refund"
+                    existing_transaction_instance.save()
+
         transaction_data_list = self._create_transaction_data(transaction_body)
 
         for transaction_data in transaction_data_list:
@@ -376,6 +448,21 @@ class TransactionImpl(TransactionManager):
 
                 TransactionHelper.send_analytics_for_event_transaction.delay(transaction_instance.id)
 
+            if transaction_instance.type == TransactionType.PAYMENT_PAGE:
+
+                if transaction_instance.status == 'captured':
+
+                    # Send Payment Page member success email and whatsapp
+                    payment_page_member_payment_success_email.delay(transaction_instance.id)
+
+                    # Send Payment Page CM success email
+                    payment_page_cm_payment_success_email.delay(transaction_instance.id)
+
+                elif transaction_instance.status == 'failed':
+
+                    # Send Payment Page member success email and whatsapp
+                    payment_page_member_payment_failed_email.delay(transaction_instance.id)
+
         return {'success': True}
 
     @staticmethod
@@ -385,16 +472,26 @@ class TransactionImpl(TransactionManager):
     @staticmethod
     def _fetch_transactions(user_id: str, community_id: str):
         output = []
-        transactions = Transaction.objects.filter(user_id=user_id).order_by('created_at')
+
+        transactions = ModelUtilities.get_model_filter(Transaction, {'user_id': user_id}).order_by('created_at')
+
         for transaction in transactions:
             plan = SubscriptionPlan.get_plan_or_None(transaction.plan_id)
+
             if plan is not None and plan.community_id == community_id:
                 output.append(transaction)
+
         return output
 
-    def fetch_transactions(self, page) -> dict:
+    def fetch_transactions(self, page, payment_page_id=None) -> dict:
 
-        transactions = self._fetch_transactions(self.get_user_id(), self.get_community_id())
+        transactions = []
+
+        if payment_page_id:
+            transactions = TransactionHelper.fetch_payment_transactions(payment_page_id)
+
+        else:
+            transactions = self._fetch_transactions(self.get_user_id(), self.get_community_id())
 
         if len(transactions) == 0:
             return {'error_message': 'no transaction exist for this user in this community'}
@@ -472,6 +569,74 @@ class TransactionImpl(TransactionManager):
 
         return {'success': False, 'error_message': "In-valid payment id"}
 
+    def download_all_transaction(self, req_body, user_id) -> dict:
+
+        payment_page_filter = ModelUtilities.get_model_filter(PaymentPageMeta,
+                                                              {'payment_page_id': req_body.get('payment_page_id')})
+
+        if not payment_page_filter:
+            return {'error_message': 'Invalid payment_page_id', 'status_code': status_codes.HTTP_400_BAD_REQUEST}
+
+        payment_page_instance = payment_page_filter[0]
+
+        transactions_filter = TransactionHelper.fetch_payment_transactions(req_body.get('payment_page_id'))
+
+        transaction_serialized_object = self._serialize_transactions(transactions_filter)
+
+        if not transactions_filter:
+            return {'error_message': 'No data found!', 'status_code': status_codes.HTTP_404_NOT_FOUND}
+
+        transactions_df = CsvUtilities().object_list_to_dataframe(transaction_serialized_object)
+
+        transactions_df = transactions_df.assign(status_text=transactions_df['status'].apply(
+            lambda x: PAYMENTS_STATUS_MAPPER[x.upper()] if not pd.isnull(x) else ""))
+
+        transactions_df['status'] = transactions_df['status_text']
+        transactions_df.rename(columns=TRANSACTION_DOWNLOAD_ALL_PAYMENT_PAGE_CSV_COLUMN_MAPPER, inplace=True)
+        transactions_df = transactions_df[TRANSACTION_DOWNLOAD_ALL_CSV_COLUMN_ORDERING_PAYMENT_PAGE_ID]
+
+        transactions_df['Created On'] = transactions_df['Created On'].apply(
+            lambda x: TimeUtilities.convert_epoch_time_to_date_month_year(x) + "\n" +
+                      TimeUtilities.convert_epoch_time_in_hh_mm_am_pm(x))
+
+        file_name = TRANSACTION_DOWNLOAD_ALL_PAYMENT_PAGE_FILE_NAME.format(
+            "_".join(payment_page_instance.title.split(" ")), time.strftime("%d-%m-%Y", time.localtime(time.time())))
+
+        upload_status = S3Wrapper.upload_csv_file_and_get_link(transactions_df,
+                                                               dir_path='utilities/payment_page_transaction_files',
+                                                               file_name=file_name)
+
+        if 'error_message' in upload_status:
+            return {'success': False, 'error_message': upload_status['error_message'],
+                    'status_code': status_codes.HTTP_408_REQUEST_TIMEOUT}
+
+        # Get Owner of community
+        community_owner_details = CoreServiceUtilities.get_community_admins(payment_page_instance.community_id,
+                                                                            fetch_owner_only=True)
+
+        if not community_owner_details:
+            return {'error_message': "No owner found for the community",
+                    'status_code': status_codes.HTTP_404_NOT_FOUND}
+
+        community_owner_details = community_owner_details[0]
+
+        user_verified_mobile_and_email = PaymentPageViewHelper.get_first_verified_email_and_phone(user_id)
+
+        # Send Email
+        mail_template = get_template("transactions_all_payment_page_download_report_mail.html").render(
+            {"link": upload_status['link'],
+             "cm_name": community_owner_details['name'],
+             "payment_page_title": payment_page_instance.title})
+
+        transaction_payment_page_mail_body = TRANSACTION_DOWNLOAD_ALL_PAYMENT_PAGEREPORT_TO_CM_BODY.copy()
+
+        transaction_payment_page_mail_body['mail_body'] = mail_template
+        transaction_payment_page_mail_body['mail_recipient_list'] = [user_verified_mobile_and_email['email']]
+
+        send_email_response = send_email_from_core_service(user_id, transaction_payment_page_mail_body)
+
+        return send_email_response
+
 
 class TransactionHelper:
 
@@ -539,3 +704,10 @@ class TransactionHelper:
 
         event_metadata = TransactionHelper.compute_event_metadata_for_analytics(chatroom_id, user_id)
         SegmentImpl.track_event(user_id, event_name, event_metadata)
+
+    @staticmethod
+    def fetch_payment_transactions(payment_page_id):
+        transactions = ModelUtilities.get_model_filter(Transaction,
+                                                       {'plan_id': payment_page_id}).order_by('created_at')
+
+        return transactions

@@ -1,3 +1,4 @@
+from subscription.plans.plan_view_helper import PlanViewHelper
 from subscription.subscriptions.models import Subscription
 from subscription.utility.time_utilities import TimeUtilities
 from subscription.utility.core_service_utilities import CoreServiceUtilities
@@ -25,3 +26,12 @@ def handle():
             if 'success' in response and response['success']:
                 subscription.is_removed = True
                 subscription.save()
+
+            cohort_response = PlanViewHelper.add_member_to_subscription_expired_cohort(
+                user_id=subscription.user_id,
+                plan_id=subscription.plan_id,
+                community_id=subscription.community_id
+            )
+
+            if 'error_message' in cohort_response:
+                print({'error_message': response['error_message']})

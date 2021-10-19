@@ -112,7 +112,7 @@ class PlanViewHelper:
         except:
             return {'error_message': 'error_while creating new plan'}
 
-        return {'plan_instance': plan_instance, 'plan_title': plan_title}
+        return {'plan_instance': plan_instance}
 
     @staticmethod
     def _update_existing_plan_instance(plan_body, plan_instance) -> dict:
@@ -285,31 +285,31 @@ class PlanViewHelper:
         return {}
 
     @staticmethod
-    def create_subscription_plan_cohort(instance_data, user_id):
+    def create_subscription_plan_cohort(serialized_plan, user_id):
         cohort_info = {
             'member_id': user_id,
-            'name': SUBSCRIPTION_COHORT_NAME.format(instance_data['plan_title']),
+            'name': SUBSCRIPTION_COHORT_NAME.format(serialized_plan['plan_title']),
             'type': cohort_types.SUBSCRIPTION_PLAN,
-            'type_id': instance_data['plan_instance'].plan_id,
-            'community_id': instance_data['plan_instance'].community_id,
+            'type_id': serialized_plan['plan_id'],
+            'community_id': serialized_plan['community_id'],
             'member_ids': [user_id]
         }
 
         response = CoreServiceUtilities.create_cohort(cohort_info)
 
         if response.get('error_message'):
-            return {'error_message': response['error_message']}
+            return {'error_message': response['error_message'], 'status_code': response['status_code']}
 
         return {}
 
     @staticmethod
-    def create_subscription_expired_plan_cohort(instance_data, user_id):
+    def create_subscription_expired_plan_cohort(serialized_plan, user_id):
         cohort_info = {
             'member_id': user_id,
-            'name': SUBSCRIPTION_EXPIRED_COHORT_NAME.format(instance_data['plan_title']),
+            'name': SUBSCRIPTION_EXPIRED_COHORT_NAME.format(serialized_plan['plan_title']),
             'type': cohort_types.SUBSCRIPTION_EXPIRED_PLAN,
-            'type_id': instance_data['plan_instance'].plan_id,
-            'community_id': instance_data['plan_instance'].community_id,
+            'type_id': serialized_plan['plan_id'],
+            'community_id': serialized_plan['community_id'],
             'member_ids': [user_id]
         }
 
@@ -334,7 +334,7 @@ class PlanViewHelper:
         response = CoreServiceUtilities.update_cohort(cohort_info)
 
         if response.get('error_message'):
-            return {'error_message': response['error_message']}
+            return {'error_message': response['error_message'], 'status_code': response['status_code']}
 
         return {}
 
@@ -352,7 +352,7 @@ class PlanViewHelper:
         response = CoreServiceUtilities.update_cohort(cohort_info)
 
         if response.get('error_message'):
-            return {'error_message': response['error_message']}
+            return {'error_message': response['error_message'],  'status_code': response['status_code']}
 
         return {}
 

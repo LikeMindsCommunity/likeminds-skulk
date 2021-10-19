@@ -286,7 +286,7 @@ class PlanViewHelper:
             'type': cohort_types.SUBSCRIPTION_PLAN,
             'type_id': serialized_plan['plan_id'],
             'community_id': serialized_plan['community_id'],
-            'member_ids': [user_id]
+            'member_ids': []
         }
 
         response = CoreServiceUtilities.create_cohort(cohort_info)
@@ -304,7 +304,7 @@ class PlanViewHelper:
             'type': cohort_types.SUBSCRIPTION_EXPIRED_PLAN,
             'type_id': serialized_plan['plan_id'],
             'community_id': serialized_plan['community_id'],
-            'member_ids': [user_id]
+            'member_ids': []
         }
 
         response = CoreServiceUtilities.create_cohort(cohort_info)

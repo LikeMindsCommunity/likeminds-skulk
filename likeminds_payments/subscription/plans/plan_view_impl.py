@@ -39,6 +39,24 @@ class CreatePlanView(TransactionMixin, APIView):
                 status=status_codes.HTTP_200_OK
             )
 
+        # Creating Subscription Plan Cohort
+        cohort_response = PlanViewHelper.create_subscription_plan_cohort(instance_data, user_id)
+
+        if 'error_message' in cohort_response:
+            return JsonResponse(
+                {'success': False, 'error_message': cohort_response['error_message']},
+                status=status_codes.HTTP_200_OK
+            )
+
+        # Creating Subscription Plan Expired Cohort
+        cohort_response = PlanViewHelper.create_subscription_expired_plan_cohort(instance_data, user_id)
+
+        if 'error_message' in cohort_response:
+            return JsonResponse(
+                {'success': False, 'error_message': cohort_response['error_message']},
+                status=status_codes.HTTP_200_OK
+            )
+
         plan_manager = PlanImpl(plan_instance=instance_data['plan_instance'])
         response_data = plan_manager.create_plan()
 

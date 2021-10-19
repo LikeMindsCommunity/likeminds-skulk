@@ -229,6 +229,6 @@ class DownloadAllTransactionView(TransactionMixin, APIView):
         response = transaction_manager.download_all_transaction(validate_request, member_id)
 
         if response.get('error_message'):
-            return JsonResponse(response, status=status_codes.HTTP_400_BAD_REQUEST)
+            return JsonResponse(response, status=response.get('status_code'))
 
         return JsonResponse(response)

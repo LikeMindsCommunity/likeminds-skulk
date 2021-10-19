@@ -6,6 +6,7 @@ from .transaction_manager import TransactionManager
 from django.conf import settings
 from django.template.loader import get_template
 import time
+from rest_framework import status as status_codes
 from ..external_services.razorpay.razorpay_wrapper import RazorpayWrapper
 from ..external_services.segment.segment_impl import SegmentImpl
 from ..utility.core_service_utilities import CoreServiceUtilities
@@ -574,7 +575,7 @@ class TransactionImpl(TransactionManager):
                                                               {'payment_page_id': req_body.get('payment_page_id')})
 
         if not payment_page_filter:
-            return {'error_message': 'Invalid payment_page_id'}
+            return {'error_message': 'Invalid payment_page_id', 'status_code': status_codes.HTTP_400_BAD_REQUEST}
 
         payment_page_instance = payment_page_filter[0]
 
@@ -583,7 +584,7 @@ class TransactionImpl(TransactionManager):
         transaction_serialized_object = self._serialize_transactions(transactions_filter)
 
         if not transactions_filter:
-            return {'error_message': 'No data found!'}
+            return {'error_message': 'No data found!', 'status_code': status_codes.HTTP_404_NOT_FOUND}
 
         transactions_df = CsvUtilities().object_list_to_dataframe(transaction_serialized_object)
 
@@ -606,14 +607,16 @@ class TransactionImpl(TransactionManager):
                                                                file_name=file_name)
 
         if 'error_message' in upload_status:
-            return {'success': False, 'error_message': upload_status['error_message']}
+            return {'success': False, 'error_message': upload_status['error_message'],
+                    'status_code': status_codes.HTTP_408_REQUEST_TIMEOUT}
 
         # Get Owner of community
         community_owner_details = CoreServiceUtilities.get_community_admins(payment_page_instance.community_id,
                                                                             fetch_owner_only=True)
 
         if not community_owner_details:
-            return {'error_message': "No owner found for the community"}
+            return {'error_message': "No owner found for the community",
+                    'status_code': status_codes.HTTP_408_REQUEST_TIMEOUT}
 
         community_owner_details = community_owner_details[0]
 

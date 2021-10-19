@@ -101,12 +101,6 @@ class PlanViewHelper:
             else:
                 plan_body['image'] = PLAN_IMAGES['default']
 
-        if SUBSCRIPTION_PLAN_NAMES[plan_body['duration_name']]['unique']:
-            plan_title = SUBSCRIPTION_PLAN_NAMES[plan_body['duration_name']]['title']
-        else:
-            plan_title = '{} "{}" Plan'.format(plan_body['duration_in_months'],
-                                               SUBSCRIPTION_PLAN_NAMES[plan_body['duration_name']]['title'])
-
         try:
             plan_instance = SubscriptionPlan.create_instance(plan_body)
         except:

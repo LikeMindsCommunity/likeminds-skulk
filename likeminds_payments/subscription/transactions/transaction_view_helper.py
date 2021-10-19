@@ -1,8 +1,10 @@
 from .constants import *
 from ..utility.core_service_utilities import CoreServiceUtilities
 from ..utility.number_utilities import NumberUtilities
+from ..utility.model_utilities import ModelUtilities
 from .models import Transaction
 from ..plans.models import SubscriptionPlan
+from ..payment_page.models import PaymentPageMeta
 
 
 class TransactionViewHelper:
@@ -43,7 +45,8 @@ class TransactionViewHelper:
         body = {
             'community_id': None,
             'user_id': None,
-            'page': 1
+            'page': 1,
+            'payment_page_id': None
         }
 
         if 'community_id' not in request_body or not request_body['community_id']:
@@ -56,6 +59,15 @@ class TransactionViewHelper:
 
         if 'page' in request_body and isinstance(request_body['page'], int):
             body['page'] = NumberUtilities.get_integer_from_string(request_body['page'])
+
+        if 'payment_page_id' in request_body and request_body.get('payment_page_id'):
+            payment_page_filter = ModelUtilities.get_model_filter(PaymentPageMeta,
+                                                                  {'payment_page_id': request_body.get('payment_page_id')})
+
+            if not payment_page_filter:
+                return {'error_message': 'Invalid payment_page_id'}
+
+            body['payment_page_id'] = request_body.get('payment_page_id')
 
         return body
 
@@ -141,3 +153,14 @@ class TransactionViewHelper:
             return {'error_message': "In-valid payment id"}
 
         return {}
+
+    @staticmethod
+    def validate_request_body_for_download_all_transaction_view(req_body):
+
+        if not req_body:
+            return {'error_message': "Invalid request body"}
+
+        if not req_body.get('payment_page_id'):
+            return {'error_message': "Invalid payment_page_id"}
+
+        return req_body

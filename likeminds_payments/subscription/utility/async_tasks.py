@@ -335,7 +335,7 @@ def payment_page_cm_payment_success_email(transaction_id):
     payment_page_mail_body_payment_success_cm = PAYMENT_PAGE_PAYMENT_SUCCESS_EMAIL_TO_CM_BODY.copy()
 
     payment_page_mail_body_payment_success_cm['subject'] = payment_page_mail_body_payment_success_cm[
-        'subject'].format(transaction_instance.community_name)
+        'subject'].format(str(payment_page_instance.title))
     payment_page_mail_body_payment_success_cm['mail_body'] = cm_payment_success_mail_template
     payment_page_mail_body_payment_success_cm['mail_recipient_list'] = [transaction_instance.payment_email]
 

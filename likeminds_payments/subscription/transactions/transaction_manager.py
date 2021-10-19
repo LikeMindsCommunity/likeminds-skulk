@@ -10,7 +10,8 @@ class TransactionManager(metaclass=abc.ABCMeta):
                 (hasattr(subclass, 'refund_transaction') and callable(subclass.refund_transaction)) and
                 (hasattr(subclass, 'valid_event_transaction') and callable(subclass.valid_event_transaction)) and
                 (hasattr(subclass, 'valid_event_payment_id') and callable(subclass.valid_event_payment_id)) and
-                (hasattr(subclass, 'update_payment_id') and callable(subclass.update_payment_id))
+                (hasattr(subclass, 'update_payment_id') and callable(subclass.update_payment_id)) and
+                (hasattr(subclass, 'download_all_transaction') and callable(subclass.download_all_transaction))
                 or
                 NotImplemented)
 

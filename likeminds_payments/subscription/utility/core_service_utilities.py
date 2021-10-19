@@ -464,6 +464,18 @@ class CoreServiceUtilities:
         return response
 
     @staticmethod
+    def send_notifications(user_id, notifications_body):
+        headers = {
+            'x-member-id': '{}'.format(user_id)
+        }
+
+        url = SEND_NOTIFICATIONS
+
+        response = ApiUtilities.generate_post_request(url=url, data=notifications_body, headers=headers)
+
+        return response
+
+    @staticmethod
     def get_community_admins(community_id, user_id=None, fetch_owner_only=False):
 
         headers = {}

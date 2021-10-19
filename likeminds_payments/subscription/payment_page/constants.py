@@ -41,3 +41,8 @@ PAYMENT_PAGE_PAYMENT_SUCCESS_MEMBER_WHATSAPP_TEMPLATE_NAME = "payment_page_succe
 PAYMENT_PAGE_PAYMENT_SUCCESS_MEMBER_WHATSAPP_BROADCAST_NAME = "payment_page_success"
 PAYMENT_PAGE_PAYMENT_FAILED_MEMBER_WHATSAPP_TEMPLATE_NAME = "failed_payment_member_v5"
 PAYMENT_PAGE_PAYMENT_FAILED_MEMBER_WHATSAPP_BROADCAST_NAME = "payment_page_failed"
+
+PAYMENT_PAGE_SUCCESS_PAYMENT_PUSH_NOTIFICATION_TO_CM_TITLE = "New payment received"
+PAYMENT_PAGE_SUCCESS_PAYMENT_PUSH_NOTIFICATION_TO_CM_SUB_TITLE = "We have received a new payment of" \
+                                                                 " {} {} for {}"
+PAYMENT_PAGE_SUCCESS_PAYMENT_PUSH_NOTIFICATION_TO_CM_ROUTE = "route://testing_route_push_notification"

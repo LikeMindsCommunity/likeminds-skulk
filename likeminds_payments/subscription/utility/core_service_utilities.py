@@ -426,6 +426,68 @@ class CoreServiceUtilities:
         return response
 
     @staticmethod
+    def create_cohort(cohort_info):
+
+        if not cohort_info:
+            return
+
+        member_id = NumberUtilities.get_integer_from_string(cohort_info.get('member_id'))
+
+        url = CREATE_COHORT_API
+
+        data = {
+            'community_id': cohort_info.get('community_id'),
+            'name': cohort_info.get('name'),
+            'member_ids': cohort_info.get('member_ids'),
+            'type': cohort_info.get('type'),
+            'type_id': cohort_info.get('type_id')
+        }
+
+        headers = {
+            'x-member-id': '{}'.format(member_id)
+        }
+
+        response = ApiUtilities.generate_post_request(url=url, data=data, headers=headers)
+
+        if 'error_message' in response:
+            return {'error_message': response['error_message'], 'status_code': response['status_code']}
+
+        if 'success' not in response:
+            return {'error_message': 'invalid response from create cohort api', 'status_code': response['status_code']}
+
+        return {'success': response['success']}
+
+    @staticmethod
+    def update_cohort(cohort_info):
+
+        if not cohort_info:
+            return
+
+        member_id = NumberUtilities.get_integer_from_string(cohort_info.get('member_id'))
+
+        url = UPDATE_COHORT_API
+
+        data = {
+            'member_ids': cohort_info.get('member_ids'),
+            'type': cohort_info.get('type'),
+            'type_id': cohort_info.get('type_id')
+        }
+
+        headers = {
+            'x-member-id': '{}'.format(member_id)
+        }
+
+        response = ApiUtilities.generate_post_request(url=url, data=data, headers=headers)
+
+        if 'error_message' in response:
+            return {'error_message': response['error_message'], 'status_code': response['status_code']}
+
+        if 'success' not in response:
+            return {'error_message': 'invalid response from update cohort api', 'status_code': response['status_code']}
+
+        return {'success': response['success']}
+
+    @staticmethod
     def get_user_details(fetch_info):
 
         headers = {

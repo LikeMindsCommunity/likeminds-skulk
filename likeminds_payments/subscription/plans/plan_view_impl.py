@@ -4,6 +4,7 @@ from rest_framework import status as status_codes
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 
+from .serializers import PlanSerializer
 from ..mixins import TransactionMixin
 from ..utility.json_utilities import JsonUtilities
 from ..utility.request_utilities import RequestUtilities
@@ -37,6 +38,27 @@ class CreatePlanView(TransactionMixin, APIView):
             return JsonResponse(
                 {'success': False, 'error_message': instance_data['error_message']},
                 status=status_codes.HTTP_200_OK
+            )
+
+        serialized_plan_list = PlanSerializer([instance_data['plan_instance']])
+        serialized_plan = serialized_plan_list[0]
+
+        # Creating Subscription Plan Cohort
+        cohort_response = PlanViewHelper.create_subscription_plan_cohort(serialized_plan, user_id)
+
+        if 'error_message' in cohort_response:
+            return JsonResponse(
+                {'success': False, 'error_message': cohort_response['error_message']},
+                status=cohort_response['status_code']
+            )
+
+        # Creating Subscription Plan Expired Cohort
+        cohort_response = PlanViewHelper.create_subscription_expired_plan_cohort(serialized_plan, user_id)
+
+        if 'error_message' in cohort_response:
+            return JsonResponse(
+                {'success': False, 'error_message': cohort_response['error_message']},
+                status=cohort_response['status_code']
             )
 
         plan_manager = PlanImpl(plan_instance=instance_data['plan_instance'])

@@ -4,6 +4,7 @@ from celery import shared_task
 from rest_framework import status as status_codes
 from django.template.loader import get_template
 from .subscription_manager import SubscriptionManager
+from ..plans.plan_view_helper import PlanViewHelper
 from ..transactions.models import Transaction
 from .models import Subscription
 from ..subscription_histories.models import SubscriptionHistory
@@ -324,11 +325,29 @@ class SubscriptionImpl(SubscriptionManager):
         if not transaction_instance.renew:
 
             transaction = SubscriptionImpl._generate_first_transaction(transaction_instance, plan_instance, user_id)
+
+            cohort_response = PlanViewHelper.add_member_to_subscription_cohort(
+                plan_id=transaction_instance.plan_id,
+                user_id=user_id,
+                community_id=plan_instance.community_id)
+
+            if 'error_message' in cohort_response:
+                return {'error_message': cohort_response['error_message'],  'status_code': cohort_response['status_code']}
+
             return transaction
 
         if transaction_instance.renew:
 
             transaction = SubscriptionImpl._generate_renewal_transaction(transaction_instance, plan_instance, user_id)
+
+            cohort_response = PlanViewHelper.add_member_to_subscription_cohort(
+                plan_id=transaction_instance.plan_id,
+                user_id=user_id,
+                community_id=plan_instance.community_id)
+
+            if 'error_message' in cohort_response:
+                return {'error_message': cohort_response['error_message'],  'status_code': cohort_response['status_code']}
+
             return transaction
 
     @staticmethod
@@ -672,19 +691,21 @@ class SubscriptionImpl(SubscriptionManager):
         if subscription_instance is None:
             return {'error_message': 'no subscription exists for provided user_id and community_id'}
 
-        if subscription_instance.created_at == subscription_instance.updated_at:
-            current_time = TimeUtilities.current_time_in_milliseconds()
+        return {'success': True}
 
-            difference = current_time - subscription_instance.date_subscribed
-
-            subscription_instance.date_subscribed = current_time
-            subscription_instance.valid_till = TimeUtilities.add_milliseconds_in_epoch_time(
-                subscription_instance.valid_till, difference)
-            subscription_instance.save()
-
-            return {'success': True}
-
-        return {'error_message': 'something went wrong'}
+        # if subscription_instance.created_at == subscription_instance.updated_at:
+        #     current_time = TimeUtilities.current_time_in_milliseconds()
+        #
+        #     difference = current_time - subscription_instance.date_subscribed
+        #
+        #     subscription_instance.date_subscribed = current_time
+        #     subscription_instance.valid_till = TimeUtilities.add_milliseconds_in_epoch_time(
+        #         subscription_instance.valid_till, difference)
+        #     subscription_instance.save()
+        #
+        #     return {'success': True}
+        #
+        # return {'error_message': 'something went wrong'}
 
     @staticmethod
     def _fetch_subscriptions(user_id: str, community_id: str):

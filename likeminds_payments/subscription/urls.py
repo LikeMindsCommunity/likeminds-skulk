@@ -4,6 +4,7 @@ from .orders.order_view_impl import *
 from .transactions.transaction_view_impl import *
 from .subscriptions.subscription_view_impl import *
 from .subscription_histories.subscription_history_view_impl import *
+from .payment_page.payment_page_view_impl import *
 from .leads.lead_view_impl import *
 
 app_name = "subscription"
@@ -19,6 +20,7 @@ urlpatterns = [
     path('fetch_transactions', FetchTransactionsView.as_view(), name="fetch-transactions"),
     path('refund_transaction', RefundTransactionView.as_view(), name="refund-transaction"),
     path('create_subscription', CreateSubscriptionView.as_view(), name="create-subscription"),
+    path('transactions/download_all', DownloadAllTransactionView.as_view(), name="download-all-transaction"),
     path('start', StartSubscriptionView.as_view(), name="start-subscription"),
     path('fetch', FetchSubscriptionView.as_view(), name="fetch-subscription"),
     path('cancel', CancelSubscriptionView.as_view(), name="cancel-subscription"),
@@ -37,5 +39,12 @@ urlpatterns = [
     path('valid_event_payment_id', ValidateEventPaymentView.as_view(), name='valid_event_payment_id'),
     path('update_payment_id', UpdatePaymentView.as_view(), name='update_payment_id'),
     path('update_event_plan', UpdateEventPlanView.as_view(), name='update_event_plan'),
-    path('create_community_event_order', CreateCommunityEventOrderView.as_view(), name='create_community_event_order')
+    path('create_community_event_order', CreateCommunityEventOrderView.as_view(), name='create_community_event_order'),
+    path('payment_page/create', CreatePaymentPageView.as_view(), name='create_payment_page'),
+    path('payment_page/update', UpdatePaymentPageView.as_view(), name='update_payment_page'),
+    path('payment_page/fetch_all', FetchAllPaymentPageView.as_view(), name='fetch_all_payment_page'),
+    path('payment_page/download_all', DownloadAllPaymentPageView.as_view(), name='download_all_payment_page'),
+    path('payment_page/fetch', FetchPaymentPageView.as_view(), name='fetch_payment_page'),
+    path('payment_page/fetch_contact_us', FetchContactUsView.as_view(), name='fetch_contact_us'),
+    path('create_payment_page_order', CreatePaymentPageOrderView.as_view(), name='create_payment_page_order')
 ]

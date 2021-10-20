@@ -1,4 +1,6 @@
 from ..plans.models import SubscriptionPlan, SubscriptionEventPlan
+from ..payment_page.models import PaymentPageMeta
+from ..payment_page.constants import PAYMENT_PAGE_AMOUNT_TYPE_FIXED
 from ..utility.core_service_utilities import CoreServiceUtilities
 from ..utility.model_utilities import ModelUtilities
 from ..utility.number_utilities import NumberUtilities
@@ -329,3 +331,77 @@ class OrderViewHelper:
                     cost = cost - event_plan_instance.discount
 
         return cost
+
+    @staticmethod
+    def create_payment_page_order_body_validator(request_body) -> dict:
+
+        if not request_body:
+            return {'error_message': 'invalid request body'}
+
+        if not request_body.get('payment_page_id'):
+            return {'error_message': 'send payment_page_id'}
+
+        if not request_body.get('payment_page_url'):
+            return {'error_message': 'send payment_page_url'}
+
+        if not request_body.get('payment_name'):
+            return {'error_message': 'send payment_name'}
+
+        if not request_body.get('amount'):
+            return {'error_message': 'send amount'}
+
+        return request_body
+
+    @staticmethod
+    def _create_payment_page_order_object_data(payment_page_instance, order_body, community_data, amount=0) -> dict:
+
+        order_data = {
+            "amount": amount,
+            "currency": "INR",
+            "notes": {
+                "payment_page_id": payment_page_instance.payment_page_id,
+                "community_id": community_data['id'],
+                "community_name": community_data['name'],
+                "type": "payment_page",
+                "payment_page_url": order_body['payment_page_url'],
+                "payment_name": order_body['payment_name'],
+            }
+        }
+
+        return order_data
+
+    @staticmethod
+    def create_payment_page_order_instance_helper(order_body) -> dict:
+
+        payment_page_filter = ModelUtilities.get_model_filter(PaymentPageMeta,
+                                                              {"payment_page_id": order_body.get('payment_page_id')})
+
+        if not payment_page_filter:
+            return {'error_message': 'invalid payment_page_id'}
+
+        payment_page_instance = payment_page_filter[0]
+
+        community_data = CoreServiceUtilities.get_community_data(payment_page_instance.community_id)
+
+        if community_data.get('error_message'):
+            return {'error_message': community_data['error_message']}
+
+        if payment_page_instance.amount_type == PAYMENT_PAGE_AMOUNT_TYPE_FIXED:
+            amount = payment_page_instance.amount
+
+        else:
+            amount = order_body['amount']
+
+        order_data = OrderViewHelper._create_payment_page_order_object_data(payment_page_instance,
+                                                                            order_body,
+                                                                            community_data['community'],
+                                                                            amount)
+
+        razorpay_client = RazorpayWrapper.get_instance()
+
+        order_instance = razorpay_client.order.create(data=order_data)
+
+        if order_instance.get('error_message'):
+            return {'error_message': 'error creating order with razorpay'}
+
+        return {'order_instance': order_instance}

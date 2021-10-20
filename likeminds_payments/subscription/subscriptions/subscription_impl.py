@@ -19,6 +19,10 @@ from ..utility.states import TransactionType
 from ..utility.time_utilities import TimeUtilities
 from ..utility.number_utilities import NumberUtilities
 from ..utility.core_service_utilities import CoreServiceUtilities
+from ..utility.async_tasks import (cash_payment_membership_communication,
+                                   cash_payment_renewal_communication,
+                                   payment_page_member_payment_success_email,
+                                   payment_page_cm_payment_success_email)
 from ..external_services.razorpay.razorpay_wrapper import RazorpayWrapper
 from ..external_services.logging.logging_wrapper import LoggingWrapper
 from ..plans.constants import *
@@ -1060,6 +1064,19 @@ class SubscriptionImpl(SubscriptionManager):
                     'message': 'A mail will be sent to you with the details',
                     'status': status_codes.HTTP_200_OK}
 
+        if not self.get_member_id():
+            return {'error_message': 'send x-member-id in headers', 'status': status_codes.HTTP_400_BAD_REQUEST}
+
+        has_permission_check = CoreServiceUtilities.has_permission(self.get_community_id(), self.get_member_id())
+
+        if 'error_message' in has_permission_check:
+            return {'error_message': has_permission_check['error_message'],
+                    'status': status_codes.HTTP_500_INTERNAL_SERVER_ERROR}
+
+        if 'has_permission' in has_permission_check and has_permission_check['has_permission'] is False:
+            return {'error_message': 'You are not the Owner/CM of the community',
+                    'status': status_codes.HTTP_401_UNAUTHORIZED}
+
         create_transaction = self._create_transaction_object(request_body['plan_id'],
                                                              request_body['amount'],
                                                              request_body['member_email'],
@@ -1078,9 +1095,10 @@ class SubscriptionImpl(SubscriptionManager):
         if 'error_message' in otl_url:
             return {'error_message': otl_url['error_message'], 'status': status_codes.HTTP_500_INTERNAL_SERVER_ERROR}
 
-        return {'success': True}
+        # send communications for member migration
+        cash_payment_membership_communication.delay(transaction.id, otl_url, self.get_member_id())
 
-        # send communication via email and whatsapp to the user
+        return {'success': True}
 
     def external_renew_migrate(self, request_body: dict) -> dict:
 
@@ -1131,6 +1149,9 @@ class SubscriptionImpl(SubscriptionManager):
                 return {'error_message': create_subscription['error_message'],
                         'status': status_codes.HTTP_500_INTERNAL_SERVER_ERROR}
 
+            # send communications for member renewal migration
+            cash_payment_renewal_communication.delay(transaction.id)
+
             return {'success': True}
 
         return {'error_message': 'send member-id in headers', 'status': status_codes.HTTP_400_BAD_REQUEST}
@@ -1159,6 +1180,14 @@ class SubscriptionImpl(SubscriptionManager):
 
             if 'error_message' in create_transaction:
                 return {'error_message': create_transaction['error_message'], 'status': create_transaction['status']}
+
+            transaction = create_transaction['transaction']
+
+            # Send Payment Page member success email and whatsapp
+            payment_page_member_payment_success_email.delay(transaction.id)
+
+            # Send Payment Page CM success email
+            payment_page_cm_payment_success_email.delay(transaction.id)
 
             return {'success': True}
 

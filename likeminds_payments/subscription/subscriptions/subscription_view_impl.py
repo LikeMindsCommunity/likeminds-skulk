@@ -235,6 +235,8 @@ class ExternalMigrationView(APIView):
     def post(request, *args, **kwargs):
 
         request_body = RequestUtilities.load_request_body(request)
+        member_id = RequestUtilities.get_parameter_from_headers(request, 'HTTP_X_MEMBER_ID')
+
         validated_request_body = SubscriptionViewHelper.external_migration_body_validator(request_body)
 
         if 'error_message' in validated_request_body:
@@ -243,8 +245,7 @@ class ExternalMigrationView(APIView):
                 status=status_codes.HTTP_400_BAD_REQUEST
             )
 
-        subscription_manager = SubscriptionImpl()
-
+        subscription_manager = SubscriptionImpl(member_id=member_id, community_id=validated_request_body['community_id'])
         response_data = subscription_manager.external_migration(validated_request_body)
 
         if 'error_message' in response_data:

@@ -466,7 +466,7 @@ def cash_payment_renewal_communication(transaction_id):
     cm_emails = []
 
     for cm in cm_details.keys():
-        if cm_details[cm] is not None:
+        if cm_details[cm] is not None and cm_details[cm]['email'] is not None:
             cm_emails.append(cm_details[cm]['email'])
 
     cm_mail_template = get_template(

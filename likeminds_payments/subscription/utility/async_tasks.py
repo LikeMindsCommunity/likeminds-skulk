@@ -347,7 +347,9 @@ def payment_page_cm_payment_success_email(transaction_id):
         'message_payload': {
             'title': PAYMENT_PAGE_SUCCESS_PAYMENT_PUSH_NOTIFICATION_TO_CM_TITLE,
             'sub_title': PAYMENT_PAGE_SUCCESS_PAYMENT_PUSH_NOTIFICATION_TO_CM_SUB_TITLE.format(
-                str(transaction_instance.currency), str(transaction_instance.amount), str(payment_page_instance.title)),
+                str(transaction_instance.currency),
+                str(NumberUtilities.convert_to_rupee_or_none(transaction_instance.amount)),
+                str(payment_page_instance.title)),
             'route': PAYMENT_PAGE_SUCCESS_PAYMENT_PUSH_NOTIFICATION_TO_CM_ROUTE
         }
     }

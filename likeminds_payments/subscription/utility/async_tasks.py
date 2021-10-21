@@ -19,7 +19,10 @@ from subscription.payment_page.constants import (PAYMENT_PAGE_PAYMENT_SUCCESS_EM
                                                  PAYMENT_PAGE_PAYMENT_SUCCESS_MEMBER_WHATSAPP_BROADCAST_NAME,
                                                  PAYMENT_PAGE_PAYMENT_FAILED_MEMBER_WHATSAPP_TEMPLATE_NAME,
                                                  PAYMENT_PAGE_PAYMENT_FAILED_MEMBER_WHATSAPP_BROADCAST_NAME,
-                                                 PAYMENT_PAGE_PAYMENT_SUCCESS_EMAIL_TO_CM_BODY)
+                                                 PAYMENT_PAGE_PAYMENT_SUCCESS_EMAIL_TO_CM_BODY,
+                                                 PAYMENT_PAGE_SUCCESS_PAYMENT_PUSH_NOTIFICATION_TO_CM_TITLE,
+                                                 PAYMENT_PAGE_SUCCESS_PAYMENT_PUSH_NOTIFICATION_TO_CM_SUB_TITLE,
+                                                 PAYMENT_PAGE_SUCCESS_PAYMENT_PUSH_NOTIFICATION_TO_CM_ROUTE)
 from subscription.utility.core_service_utilities import CoreServiceUtilities
 from subscription.utility.model_utilities import ModelUtilities
 
@@ -112,17 +115,24 @@ def send_email_from_core_service(user_id, email_body):
     if send_email_response.get('success'):
         return send_email_response
 
-    return {'success': False, 'error_message': 'Some error occured while sending mail'}
+    return {'success': False, 'error_message': 'Some error occurred while sending mail'}
 
 
 @shared_task
-def send_wa_messages(user_id, whatsapp_body):
+def send_wa_messages_from_core_service(user_id, whatsapp_body):
     send_wa_message_response = CoreServiceUtilities.send_wa_messages(user_id, whatsapp_body)
 
     if send_wa_message_response.get('success'):
         return send_wa_message_response
 
-    return {'success': False, 'error_message': 'Some error occured while sending whatsapp messages'}
+    return {'success': False, 'error_message': 'Some error occurred while sending whatsapp messages'}
+
+
+@shared_task
+def send_notifications_from_core_service(user_id, notification_body):
+    send_notifications_response = CoreServiceUtilities.send_notifications(user_id, notification_body)
+
+    return {'success': True}
 
 
 @shared_task
@@ -208,7 +218,7 @@ def payment_page_member_payment_success_email(transaction_id):
         "broadcast_name": PAYMENT_PAGE_PAYMENT_SUCCESS_MEMBER_WHATSAPP_BROADCAST_NAME
     }
 
-    send_wa_messages_response = send_wa_messages(community_owner_details['id'], payment_success_whatsapp_member_body)
+    send_wa_messages_response = send_wa_messages_from_core_service(community_owner_details['id'], payment_success_whatsapp_member_body)
 
     return send_email_response, send_wa_messages_response
 
@@ -282,7 +292,8 @@ def payment_page_member_payment_failed_email(transaction_id):
         "broadcast_name": PAYMENT_PAGE_PAYMENT_FAILED_MEMBER_WHATSAPP_BROADCAST_NAME
     }
 
-    send_wa_messages_response = send_wa_messages(community_owner_details['id'], payment_success_whatsapp_member_body)
+    send_wa_messages_response = send_wa_messages_from_core_service(community_owner_details['id'],
+                                                                   payment_success_whatsapp_member_body)
 
     return send_email_response, send_wa_messages_response
 
@@ -330,14 +341,29 @@ def payment_page_cm_payment_success_email(transaction_id):
     payment_page_mail_body_payment_success_cm = PAYMENT_PAGE_PAYMENT_SUCCESS_EMAIL_TO_CM_BODY.copy()
 
     payment_page_mail_body_payment_success_cm['subject'] = payment_page_mail_body_payment_success_cm[
-        'subject'].format(transaction_instance.community_name)
+        'subject'].format(str(payment_page_instance.title))
     payment_page_mail_body_payment_success_cm['mail_body'] = cm_payment_success_mail_template
     payment_page_mail_body_payment_success_cm['mail_recipient_list'] = [transaction_instance.payment_email]
 
     send_email_response = send_email_from_core_service(community_owner_details['id'],
                                                        payment_page_mail_body_payment_success_cm)
 
-    return send_email_response, None
+    notifications_body = {
+            'member_ids': [community_owner_details['id']],
+            'message_payload': {
+                'title': PAYMENT_PAGE_SUCCESS_PAYMENT_PUSH_NOTIFICATION_TO_CM_TITLE,
+                'sub_title': PAYMENT_PAGE_SUCCESS_PAYMENT_PUSH_NOTIFICATION_TO_CM_SUB_TITLE.format(
+                    str(transaction_instance.currency),
+                    str(NumberUtilities.convert_to_rupee_or_none(transaction_instance.amount)),
+                    str(payment_page_instance.title)),
+                'route': PAYMENT_PAGE_SUCCESS_PAYMENT_PUSH_NOTIFICATION_TO_CM_ROUTE
+            }
+        }
+
+    send_notifications_response = send_notifications_from_core_service(community_owner_details['id'],
+                                                                       notifications_body)
+
+    return send_email_response, send_notifications_response
 
 
 @shared_task
@@ -376,7 +402,7 @@ def cash_payment_membership_communication(transaction_id, otl_link, user_id):
         "broadcast_name": PAYMENT_SUCCESS_MEMBERSHIP_WHATSAPP_BROADCAST_NAME
     }
 
-    send_wa_messages_response = send_wa_messages(user_id, whatsapp_member_body)
+    send_wa_messages_response = send_wa_messages_from_core_service(user_id, whatsapp_member_body)
 
     # Get CM/Owners of community
     community_owner_details = CoreServiceUtilities.get_community_admins(transaction_instance.type_id)

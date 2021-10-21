@@ -363,7 +363,7 @@ def cash_payment_membership_communication(transaction_id, otl_link, user_id):
                     },
                     {
                         "name": "link",
-                        "value": otl_link
+                        "value": otl_link['private_link']
                     },
                     {
                         "name": "payment_id",
@@ -400,7 +400,7 @@ def cash_payment_membership_communication(transaction_id, otl_link, user_id):
     cm_emails = []
 
     for cm in cm_details.keys():
-        if cm_details[cm] is not None:
+        if cm_details[cm] is not None and cm_details[cm]['email'] is not None:
             cm_emails.append(cm_details[cm]['email'])
 
     cm_mail_template = get_template(
@@ -408,7 +408,7 @@ def cash_payment_membership_communication(transaction_id, otl_link, user_id):
         {"community_name": transaction_instance.community_name,
          "member_email": transaction_instance.payment_email,
          "member_phone": transaction_instance.payment_phone,
-         "otl_link": otl_link,
+         "otl_link": otl_link['private_link'],
          "plan_name": transaction_instance.plan_name,
          "cost": transaction_instance.amount})
 
@@ -421,7 +421,7 @@ def cash_payment_membership_communication(transaction_id, otl_link, user_id):
     member_mail_template = get_template(
         'cash_payments/member_email_member_join.html').render(
         {"community_name": transaction_instance.community_name,
-         "otl_link": otl_link,
+         "otl_link": otl_link['private_link'],
          "payment_id": transaction_instance.payment_id})
 
     member_mail_body = {

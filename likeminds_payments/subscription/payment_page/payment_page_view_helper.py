@@ -85,7 +85,7 @@ class PaymentPageViewHelper:
                                                         [f.name for f in PaymentPageMeta._meta.get_fields()]):
             return {'error_message': 'invalid sort_type'}
 
-        if ('sort_order' in payment_page_meta_body) and (payment_page_meta_body['sort_order'] not in
+        if ('sort_order' in payment_page_meta_body) and (str(payment_page_meta_body['sort_order']) not in
                                                          PAYMENT_PAGE_SORT_ORDER_CHOICES):
             return {'error_message': 'invalid sort_order'}
 

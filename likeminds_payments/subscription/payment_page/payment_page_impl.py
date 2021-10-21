@@ -106,7 +106,9 @@ class PaymentPageImpl(PaymentPageManager):
 
             else:
                 payment_page_data = {**payment_page_data,
-                                     **{'payment_page_url': ''.join([settings.WEB_URL if settings.WEB_URL else '',
+                                     **{'total_payment': 0,
+                                        'total_amount': 0,
+                                        'payment_page_url': ''.join([settings.WEB_URL if settings.WEB_URL else '',
                                                                      '/payment_page?payment_page_id=',
                                                                      payment_page_data['payment_page_id']])}}
 
@@ -133,7 +135,9 @@ class PaymentPageImpl(PaymentPageManager):
 
         else:
             payment_page_object = {**payment_page_object,
-                                   **{'payment_page_url': ''.join([settings.WEB_URL if settings.WEB_URL else '',
+                                   **{'total_payment': 0,
+                                      'total_amount': 0,
+                                      'payment_page_url': ''.join([settings.WEB_URL if settings.WEB_URL else '',
                                                                    '/payment_page?payment_page_id=',
                                                                    payment_page_object['payment_page_id']])}}
 

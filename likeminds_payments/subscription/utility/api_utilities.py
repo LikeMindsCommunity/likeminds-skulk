@@ -43,4 +43,4 @@ class ApiUtilities:
             return response.json()
 
         else:
-            return {'error_message': 'error while making request'}
+            return {'error_message': 'error while making request', 'status_code': response.status_code}

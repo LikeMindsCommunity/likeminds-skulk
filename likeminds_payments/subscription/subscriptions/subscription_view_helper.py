@@ -145,11 +145,94 @@ class SubscriptionViewHelper:
     @staticmethod
     def external_migration_body_validator(request_body):
 
+        data = {
+            'members_data_url': None,
+            'emails': None,
+            'member_email': None,
+            'member_phone (with country code)': None,
+            'plan_id': None,
+            'amount': 0,
+            'community_id': None
+        }
+
         if not request_body:
             return {'error_message': 'invalid request body'}
 
-        if 'members_data_url' not in request_body or not request_body['members_data_url']:
-            return {'error_message': 'send members_data_url in body'}
+        if 'members_data_url' in request_body:
+            data['members_data_url'] = request_body['members_data_url']
+
+        if 'emails' in request_body:
+            data['emails'] = request_body['emails']
+
+        if 'member_email' in request_body:
+            data['member_email'] = request_body['member_email']
+
+        if data['members_data_url'] is None and data['member_email'] is None:
+            return {'error_message': 'send either members_data_url or member details'}
+
+        if 'member_phone (with country code)' in request_body:
+            data['member_phone (with country code)'] = request_body['member_phone (with country code)']
+
+        if 'plan_id' in request_body:
+            data['plan_id'] = request_body['plan_id']
+
+        if 'amount' in request_body:
+            data['amount'] = request_body['amount']
+
+        if 'community_id' in request_body:
+            data['community_id'] = request_body['community_id']
+
+        return data
+
+    @staticmethod
+    def external_renew_migrate_body_validator(request_body, member_id):
+
+        if not request_body:
+            return {'error_message': 'invalid request body'}
+
+        if not member_id:
+            return {'error_message': 'send x-member-id in headers'}
+
+        if 'user_id' not in request_body:
+            return {'error_message': 'send user_id in body'}
+
+        if 'community_id' not in request_body:
+            return {'error_message': 'send community_id in body'}
+
+        if 'plan_id' not in request_body:
+            return {'error_message': 'send plan_id in body'}
+
+        if 'amount' not in request_body:
+            return {'error_message': 'send amount in body'}
+
+        return request_body
+
+    @staticmethod
+    def payment_page_add_cash_body_validator(request_body, member_id):
+
+        if not request_body:
+            return {'error_message': 'invalid request body'}
+
+        if not member_id:
+            return {'error_message': 'send x-member-id in headers'}
+
+        if 'payment_name' not in request_body:
+            return {'error_message': 'send payment_name in body'}
+
+        if 'payment_email' not in request_body:
+            return {'error_message': 'send payment_email in body'}
+
+        if 'payment_phone' not in request_body:
+            return {'error_message': 'send payment_phone in body'}
+
+        if 'amount' not in request_body:
+            return {'error_message': 'send amount in body'}
+
+        if 'payment_page_id' not in request_body:
+            return {'error_message': 'send payment_page_id in body'}
+
+        if 'community_id' not in request_body:
+            return {'error_message': 'send community_id in body'}
 
         return request_body
 

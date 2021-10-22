@@ -11,6 +11,8 @@ class SubscriptionManager(metaclass=abc.ABCMeta):
                 (hasattr(subclass, 'fetch_community_meta') and callable(subclass.fetch_community_meta)) and
                 (hasattr(subclass, 'convert_to_paid') and callable(subclass.convert_to_paid)) and
                 (hasattr(subclass, 'external_migration') and callable(subclass.external_migration)) and
+                (hasattr(subclass, 'external_renew_migrate') and callable(subclass.external_renew_migrate)) and
+                (hasattr(subclass, 'payment_page_add_cash') and callable(subclass.payment_page_add_cash)) and
                 (hasattr(subclass, 'members_report') and callable(subclass.members_report)) or
                 NotImplemented)
 
@@ -51,9 +53,23 @@ class SubscriptionManager(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def external_migration(self) -> dict:
+    def external_migration(self, request_body: dict) -> dict:
         """
         migrate external communities
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def external_renew_migrate(self, request_body: dict) -> dict:
+        """
+        migrate renew cash payments
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def payment_page_add_cash(self, request_body: dict) -> dict:
+        """
+        add cash from payment pages
         """
         raise NotImplementedError
 

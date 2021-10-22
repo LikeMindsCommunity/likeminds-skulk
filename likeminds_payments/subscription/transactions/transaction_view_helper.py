@@ -5,6 +5,7 @@ from ..utility.model_utilities import ModelUtilities
 from .models import Transaction
 from ..plans.models import SubscriptionPlan
 from ..payment_page.models import PaymentPageMeta
+from ..subscriptions.constants import MIGRATION, MANUAL_PAYMENT_PAGE
 
 
 class TransactionViewHelper:
@@ -105,6 +106,9 @@ class TransactionViewHelper:
 
         if transaction_instance is None:
             return {'error_message': 'invalid transaction id'}
+
+        if transaction_instance.method in [MIGRATION, MANUAL_PAYMENT_PAGE]:
+            return {'special_case': True}
 
         plan_instance = SubscriptionPlan.get_plan_or_None(transaction_instance.plan_id)
 

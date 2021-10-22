@@ -122,6 +122,9 @@ class RefundTransactionView(TransactionMixin, APIView):
                 status=status_codes.HTTP_200_OK
             )
 
+        if 'special_case' in instance_data:
+            return JsonResponse({'success': True}, status=status_codes.HTTP_200_OK)
+
         transaction_manager = TransactionImpl(transaction_instance=instance_data['transaction_instance'])
         response_data = transaction_manager.refund_transaction()
 
@@ -131,10 +134,7 @@ class RefundTransactionView(TransactionMixin, APIView):
                 status=status_codes.HTTP_200_OK
             )
 
-        return JsonResponse(
-            {'success': True},
-            status=status_codes.HTTP_200_OK
-        )
+        return JsonResponse({'success': True}, status=status_codes.HTTP_200_OK)
 
 
 class ValidateEventTransactionView(TransactionMixin, APIView):

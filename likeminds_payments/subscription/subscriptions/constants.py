@@ -7,6 +7,8 @@ LIFETIME_DESCRIPTION = 'lifetime payment'
 RENEWAL_DESCRIPTION = 'renewal payment'
 FREE_DESCRIPTION = 'free subscription'
 DASHBOARD = 'dashboard'
+MIGRATION = 'migration'
+MANUAL_PAYMENT_PAGE = 'manual_payment_page'
 PAID = 'paid'
 ONLINE_MODE = 'online'
 FREE_MODE = 'free'
@@ -31,3 +33,9 @@ MEMBERSHIP_STATES = {
 }
 SUBSCRIPTION_COHORT_NAME = 'Subscription Plan - {}'
 SUBSCRIPTION_EXPIRED_COHORT_NAME = 'Subscription Expired Plan - {}'
+
+PAYMENT_SUCCESS_MEMBERSHIP_WHATSAPP_TEMPLATE_NAME = "payment_successful_new_v3"
+PAYMENT_SUCCESS_MEMBERSHIP_WHATSAPP_BROADCAST_NAME = "cash_membership_successful_api"
+PAYMENT_SUCCESS_MEMBERSHIP_EMAIL_TO_CM_SUBJECT = "New Member Joined"
+PAYMENT_SUCCESS_MEMBERSHIP_EMAIL_TO_MEMBER_SUBJECT = "Community Join Link - {}"
+PAYMENT_SUCCESS_MEMBERSHIP_RENEW_EMAIL_TO_CM_SUBJECT = "Membership Renewed - {}"

@@ -8,6 +8,11 @@ from subscription.plans.constants import EVENT_PAYMENT_LINK
 from subscription.plans.models import SubscriptionEventPlan
 from subscription.transactions.models import Transaction
 from subscription.payment_page.models import PaymentPageMeta
+from subscription.subscriptions.constants import (PAYMENT_SUCCESS_MEMBERSHIP_WHATSAPP_TEMPLATE_NAME,
+                                                  PAYMENT_SUCCESS_MEMBERSHIP_WHATSAPP_BROADCAST_NAME,
+                                                  PAYMENT_SUCCESS_MEMBERSHIP_EMAIL_TO_CM_SUBJECT,
+                                                  PAYMENT_SUCCESS_MEMBERSHIP_EMAIL_TO_MEMBER_SUBJECT,
+                                                  PAYMENT_SUCCESS_MEMBERSHIP_RENEW_EMAIL_TO_CM_SUBJECT)
 from subscription.payment_page.constants import (PAYMENT_PAGE_PAYMENT_SUCCESS_EMAIL_TO_MEMBER_BODY,
                                                  PAYMENT_PAGE_PAYMENT_FAILED_EMAIL_TO_MEMBER_BODY,
                                                  PAYMENT_PAGE_PAYMENT_SUCCESS_MEMBER_WHATSAPP_TEMPLATE_NAME,
@@ -287,7 +292,8 @@ def payment_page_member_payment_failed_email(transaction_id):
         "broadcast_name": PAYMENT_PAGE_PAYMENT_FAILED_MEMBER_WHATSAPP_BROADCAST_NAME
     }
 
-    send_wa_messages_response = send_wa_messages_from_core_service(community_owner_details['id'], payment_success_whatsapp_member_body)
+    send_wa_messages_response = send_wa_messages_from_core_service(community_owner_details['id'],
+                                                                   payment_success_whatsapp_member_body)
 
     return send_email_response, send_wa_messages_response
 
@@ -343,18 +349,166 @@ def payment_page_cm_payment_success_email(transaction_id):
                                                        payment_page_mail_body_payment_success_cm)
 
     notifications_body = {
-        'member_ids': [community_owner_details['id']],
-        'message_payload': {
-            'title': PAYMENT_PAGE_SUCCESS_PAYMENT_PUSH_NOTIFICATION_TO_CM_TITLE,
-            'sub_title': PAYMENT_PAGE_SUCCESS_PAYMENT_PUSH_NOTIFICATION_TO_CM_SUB_TITLE.format(
-                str(transaction_instance.currency),
-                str(NumberUtilities.convert_to_rupee_or_none(transaction_instance.amount)),
-                str(payment_page_instance.title)),
-            'route': PAYMENT_PAGE_SUCCESS_PAYMENT_PUSH_NOTIFICATION_TO_CM_ROUTE
+            'member_ids': [community_owner_details['id']],
+            'message_payload': {
+                'title': PAYMENT_PAGE_SUCCESS_PAYMENT_PUSH_NOTIFICATION_TO_CM_TITLE,
+                'sub_title': PAYMENT_PAGE_SUCCESS_PAYMENT_PUSH_NOTIFICATION_TO_CM_SUB_TITLE.format(
+                    str(transaction_instance.currency),
+                    str(NumberUtilities.convert_to_rupee_or_none(transaction_instance.amount)),
+                    str(payment_page_instance.title)),
+                'route': PAYMENT_PAGE_SUCCESS_PAYMENT_PUSH_NOTIFICATION_TO_CM_ROUTE
+            }
         }
-    }
 
     send_notifications_response = send_notifications_from_core_service(community_owner_details['id'],
                                                                        notifications_body)
 
     return send_email_response, send_notifications_response
+
+
+@shared_task
+def cash_payment_membership_communication(transaction_id, otl_link, user_id):
+
+    transaction_instance = ModelUtilities.get_model_instance_or_none(Transaction, transaction_id)
+
+    if not transaction_instance:
+        return {'error_message': "Invalid transaction_id"}
+
+    whatsapp_member_body = {
+        "receivers_list": [
+            {
+                "whatsappNumber": NumberUtilities.get_integer_from_string(transaction_instance.payment_phone),
+                "customParams": [
+                    {
+                        "name": "community_name",
+                        "value": transaction_instance.community_name
+                    },
+                    {
+                        "name": "plan_name",
+                        "value": transaction_instance.plan_name
+                    },
+                    {
+                        "name": "link",
+                        "value": otl_link['private_link']
+                    },
+                    {
+                        "name": "payment_id",
+                        "value": transaction_instance.payment_id
+                    }
+                ]
+            }
+        ],
+        "template_name": PAYMENT_SUCCESS_MEMBERSHIP_WHATSAPP_TEMPLATE_NAME,
+        "broadcast_name": PAYMENT_SUCCESS_MEMBERSHIP_WHATSAPP_BROADCAST_NAME
+    }
+
+    send_wa_messages_response = send_wa_messages_from_core_service(user_id, whatsapp_member_body)
+
+    # Get CM/Owners of community
+    community_owner_details = CoreServiceUtilities.get_community_admins(transaction_instance.type_id)
+
+    if not community_owner_details:
+        return {'error_message': "No cm/owner found for the community"}
+
+    cm_details = {}
+
+    for member in community_owner_details:
+        cm_details[member['id']] = None
+
+    for cm in cm_details.keys():
+        details = get_first_verified_email_and_phone(cm)
+
+        if 'error_message' in details:
+            continue
+
+        cm_details[cm] = details
+
+    cm_emails = []
+
+    for cm in cm_details.keys():
+        if cm_details[cm] is not None and cm_details[cm]['email'] is not None:
+            cm_emails.append(cm_details[cm]['email'])
+
+    cm_mail_template = get_template(
+        'cash_payments/cm_email_member_join.html').render(
+        {"community_name": transaction_instance.community_name,
+         "member_email": transaction_instance.payment_email,
+         "member_phone": transaction_instance.payment_phone,
+         "otl_link": otl_link['private_link'],
+         "plan_name": transaction_instance.plan_name,
+         "cost": transaction_instance.amount})
+
+    cm_mail_body = {
+        "subject": PAYMENT_SUCCESS_MEMBERSHIP_EMAIL_TO_CM_SUBJECT,
+        "mail_body": cm_mail_template,
+        "mail_recipient_list": cm_emails
+    }
+
+    member_mail_template = get_template(
+        'cash_payments/member_email_member_join.html').render(
+        {"community_name": transaction_instance.community_name,
+         "otl_link": otl_link['private_link'],
+         "payment_id": transaction_instance.payment_id})
+
+    member_mail_body = {
+        "subject": PAYMENT_SUCCESS_MEMBERSHIP_EMAIL_TO_MEMBER_SUBJECT.format(transaction_instance.community_name),
+        "mail_body": member_mail_template,
+        "mail_recipient_list": [transaction_instance.payment_email],
+        "reply_to": cm_emails
+    }
+
+    send_cm_email_response = send_email_from_core_service(user_id, cm_mail_body)
+    send_member_email_response = send_email_from_core_service(user_id, member_mail_body)
+
+    return send_cm_email_response, send_member_email_response, send_wa_messages_response
+
+
+@shared_task
+def cash_payment_renewal_communication(transaction_id):
+
+    transaction_instance = ModelUtilities.get_model_instance_or_none(Transaction, transaction_id)
+
+    if not transaction_instance:
+        return {'error_message': "Invalid transaction_id"}
+
+    community_owner_details = CoreServiceUtilities.get_community_admins(transaction_instance.type_id)
+
+    if not community_owner_details:
+        return {'error_message': "No cm/owner found for the community"}
+
+    cm_details = {}
+
+    for member in community_owner_details:
+        cm_details[member['id']] = None
+
+    for cm in cm_details.keys():
+        details = get_first_verified_email_and_phone(cm)
+
+        if 'error_message' in details:
+            continue
+
+        cm_details[cm] = details
+
+    cm_emails = []
+
+    for cm in cm_details.keys():
+        if cm_details[cm] is not None and cm_details[cm]['email'] is not None:
+            cm_emails.append(cm_details[cm]['email'])
+
+    cm_mail_template = get_template(
+        'cash_payments/cm_email_member_renew.html').render(
+        {"community_name": transaction_instance.community_name,
+         "member_email": transaction_instance.payment_email,
+         "member_phone": transaction_instance.payment_phone,
+         "plan_name": transaction_instance.plan_name,
+         "cost": transaction_instance.amount})
+
+    cm_mail_body = {
+        "subject": PAYMENT_SUCCESS_MEMBERSHIP_RENEW_EMAIL_TO_CM_SUBJECT.format(transaction_instance.community_name),
+        "mail_body": cm_mail_template,
+        "mail_recipient_list": cm_emails
+    }
+
+    send_cm_email_response = send_email_from_core_service(transaction_instance.user_id, cm_mail_body)
+
+    return send_cm_email_response, None

@@ -998,6 +998,7 @@ class SubscriptionImpl(SubscriptionManager):
         plan_instance = SubscriptionPlan.get_plan_or_None(plan_id)
 
         if plan_instance is None:
+
             if type_id != TransactionType.PAYMENT_PAGE:
                 return {'error_message': 'invalid plan_id', 'status': status_codes.HTTP_400_BAD_REQUEST}
 
@@ -1108,7 +1109,7 @@ class SubscriptionImpl(SubscriptionManager):
 
             if 'error_message' in has_permission_check:
                 return {'error_message': has_permission_check['error_message'],
-                        'status': status_codes.HTTP_500_INTERNAL_SERVER_ERROR}
+                        'status': status_codes.HTTP_504_GATEWAY_TIMEOUT}
 
             if 'has_permission' in has_permission_check and has_permission_check['has_permission'] is False:
                 return {'error_message': 'You are not the Owner/CM of the community',

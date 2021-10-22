@@ -367,12 +367,47 @@ def payment_page_cm_payment_success_email(transaction_id):
 
 
 @shared_task
-def cash_payment_membership_communication(transaction_id, otl_link, user_id):
+def payment_success_membership_join_communication(transaction_id):
 
     transaction_instance = ModelUtilities.get_model_instance_or_none(Transaction, transaction_id)
 
     if not transaction_instance:
         return {'error_message': "Invalid transaction_id"}
+
+    otl_link = CoreServiceUtilities.fetch_otl_url(community_id=transaction_instance.type_id,
+                                                  payment_id=transaction_instance.payment_id)
+
+    if 'error_message' in otl_link:
+        return {'error_message': otl_link['error_message']}
+
+    # Get CM/Owners of community
+    community_owner_details = CoreServiceUtilities.get_community_admins(transaction_instance.type_id)
+
+    if not community_owner_details:
+        return {'error_message': "No cm/owner found for the community"}
+
+    cm_details = {}
+    owner_id = None
+
+    for member in community_owner_details:
+
+        if member['is_owner']:
+            owner_id = member['id']
+        cm_details[member['id']] = None
+
+    for cm in cm_details.keys():
+        details = get_first_verified_email_and_phone(cm)
+
+        if 'error_message' in details:
+            continue
+
+        cm_details[cm] = details
+
+    cm_emails = []
+
+    for cm in cm_details.keys():
+        if cm_details[cm] is not None and cm_details[cm]['email'] is not None:
+            cm_emails.append(cm_details[cm]['email'])
 
     whatsapp_member_body = {
         "receivers_list": [
@@ -402,32 +437,7 @@ def cash_payment_membership_communication(transaction_id, otl_link, user_id):
         "broadcast_name": PAYMENT_SUCCESS_MEMBERSHIP_WHATSAPP_BROADCAST_NAME
     }
 
-    send_wa_messages_response = send_wa_messages_from_core_service(user_id, whatsapp_member_body)
-
-    # Get CM/Owners of community
-    community_owner_details = CoreServiceUtilities.get_community_admins(transaction_instance.type_id)
-
-    if not community_owner_details:
-        return {'error_message': "No cm/owner found for the community"}
-
-    cm_details = {}
-
-    for member in community_owner_details:
-        cm_details[member['id']] = None
-
-    for cm in cm_details.keys():
-        details = get_first_verified_email_and_phone(cm)
-
-        if 'error_message' in details:
-            continue
-
-        cm_details[cm] = details
-
-    cm_emails = []
-
-    for cm in cm_details.keys():
-        if cm_details[cm] is not None and cm_details[cm]['email'] is not None:
-            cm_emails.append(cm_details[cm]['email'])
+    send_wa_messages_response = send_wa_messages_from_core_service(owner_id, whatsapp_member_body)
 
     cm_mail_template = get_template(
         'cash_payments/cm_email_member_join.html').render(
@@ -457,8 +467,8 @@ def cash_payment_membership_communication(transaction_id, otl_link, user_id):
         "reply_to": cm_emails
     }
 
-    send_cm_email_response = send_email_from_core_service(user_id, cm_mail_body)
-    send_member_email_response = send_email_from_core_service(user_id, member_mail_body)
+    send_cm_email_response = send_email_from_core_service(owner_id, cm_mail_body)
+    send_member_email_response = send_email_from_core_service(owner_id, member_mail_body)
 
     return send_cm_email_response, send_member_email_response, send_wa_messages_response
 

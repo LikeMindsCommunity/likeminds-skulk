@@ -19,7 +19,7 @@ from ..utility.states import TransactionType
 from ..utility.time_utilities import TimeUtilities
 from ..utility.number_utilities import NumberUtilities
 from ..utility.core_service_utilities import CoreServiceUtilities
-from ..utility.async_tasks import (cash_payment_membership_communication,
+from ..utility.async_tasks import (payment_success_membership_join_communication,
                                    cash_payment_renewal_communication,
                                    payment_page_member_payment_success_email,
                                    payment_page_cm_payment_success_email)
@@ -1090,14 +1090,8 @@ class SubscriptionImpl(SubscriptionManager):
 
         transaction = create_transaction['transaction']
 
-        otl_url = CoreServiceUtilities.fetch_otl_url(community_id=transaction.type_id,
-                                                     payment_id=transaction.payment_id)
-
-        if 'error_message' in otl_url:
-            return {'error_message': otl_url['error_message'], 'status': status_codes.HTTP_500_INTERNAL_SERVER_ERROR}
-
         # send communications for member migration
-        cash_payment_membership_communication.delay(transaction.id, otl_url, self.get_member_id())
+        payment_success_membership_join_communication.delay(transaction.id)
 
         return {'success': True}
 

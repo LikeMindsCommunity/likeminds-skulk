@@ -16,7 +16,8 @@ from ..utility.time_utilities import TimeUtilities
 from ..utility.model_utilities import ModelUtilities
 from ..utility.core_service_utilities import CoreServiceUtilities
 from ..utility.async_tasks import (payment_page_member_payment_success_email, payment_page_member_payment_failed_email,
-                                   payment_page_cm_payment_success_email, send_email_from_core_service)
+                                   payment_page_cm_payment_success_email, send_email_from_core_service,
+                                   payment_success_membership_join_communication)
 from ..utility.csv_utilities import CsvUtilities
 from .constants import *
 from .models import Transaction
@@ -440,6 +441,9 @@ class TransactionImpl(TransactionManager):
                     acquisition_data = self._create_member_acquisition_data(transaction_instance, transaction_data)
 
                     MemberAcquisition.create_instance(acquisition_data)
+
+                    # send join community communication
+                    payment_success_membership_join_communication.delay(transaction_instance.id)
 
             if transaction_instance.type == TransactionType.EVENT and transaction_instance.user_id:
 

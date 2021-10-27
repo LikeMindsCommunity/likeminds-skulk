@@ -78,7 +78,8 @@ class FetchTransactionsView(APIView):
 
         transaction_manager = TransactionImpl(user_id=validated_request_body['user_id'],
                                               community_id=validated_request_body['community_id'])
-        response_data = transaction_manager.fetch_transactions(page=validated_request_body['page'])
+        response_data = transaction_manager.fetch_transactions(page=validated_request_body['page'],
+                                                               payment_page_id=validated_request_body['payment_page_id'])
 
         if 'error_message' in response_data:
             return JsonResponse(
@@ -121,6 +122,9 @@ class RefundTransactionView(TransactionMixin, APIView):
                 status=status_codes.HTTP_200_OK
             )
 
+        if 'special_case' in instance_data:
+            return JsonResponse({'success': True}, status=status_codes.HTTP_200_OK)
+
         transaction_manager = TransactionImpl(transaction_instance=instance_data['transaction_instance'])
         response_data = transaction_manager.refund_transaction()
 
@@ -130,10 +134,7 @@ class RefundTransactionView(TransactionMixin, APIView):
                 status=status_codes.HTTP_200_OK
             )
 
-        return JsonResponse(
-            {'success': True},
-            status=status_codes.HTTP_200_OK
-        )
+        return JsonResponse({'success': True}, status=status_codes.HTTP_200_OK)
 
 
 class ValidateEventTransactionView(TransactionMixin, APIView):
@@ -203,5 +204,31 @@ class UpdatePaymentView(TransactionMixin, APIView):
 
         if response.get('error_message'):
             return JsonResponse(response, status=status_codes.HTTP_400_BAD_REQUEST)
+
+        return JsonResponse(response)
+
+
+class DownloadAllTransactionView(TransactionMixin, APIView):
+
+    @method_decorator(csrf_exempt)
+    def dispatch(self, request, *args, **kwargs):
+        return super(DownloadAllTransactionView, self).dispatch(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+
+        member_id = RequestUtilities.get_parameter_from_headers(request, 'HTTP_X_MEMBER_ID')
+
+        request_body = RequestUtilities.fetch_request_query_params(request)
+        validate_request = TransactionViewHelper.validate_request_body_for_download_all_transaction_view(request_body)
+
+        if validate_request.get('error_message'):
+            return JsonResponse({'error_message': "Invalid request body"},
+                                status=status_codes.HTTP_400_BAD_REQUEST)
+
+        transaction_manager = TransactionImpl()
+        response = transaction_manager.download_all_transaction(validate_request, member_id)
+
+        if response.get('error_message'):
+            return JsonResponse(response, status=response.get('status_code'))
 
         return JsonResponse(response)

@@ -1,7 +1,9 @@
 from .constants import *
 from .models import SubscriptionPlan
+from ..subscriptions.constants import SUBSCRIPTION_COHORT_NAME, SUBSCRIPTION_EXPIRED_COHORT_NAME
 from ..utility.core_service_utilities import CoreServiceUtilities
 from ..utility.number_utilities import NumberUtilities
+from ..utility.states import cohort_types
 
 
 class PlanViewHelper:
@@ -275,3 +277,76 @@ class PlanViewHelper:
             return {'success': False, 'error_message': "In-valid event plan id"}
 
         return {}
+
+    @staticmethod
+    def create_subscription_plan_cohort(serialized_plan, user_id):
+        cohort_info = {
+            'member_id': user_id,
+            'name': SUBSCRIPTION_COHORT_NAME.format(serialized_plan['plan_title']),
+            'type': cohort_types.SUBSCRIPTION_PLAN,
+            'type_id': serialized_plan['plan_id'],
+            'community_id': serialized_plan['community_id'],
+            'member_ids': []
+        }
+
+        response = CoreServiceUtilities.create_cohort(cohort_info)
+
+        if response.get('error_message'):
+            return {'error_message': response['error_message'], 'status_code': response['status_code']}
+
+        return {}
+
+    @staticmethod
+    def create_subscription_expired_plan_cohort(serialized_plan, user_id):
+        cohort_info = {
+            'member_id': user_id,
+            'name': SUBSCRIPTION_EXPIRED_COHORT_NAME.format(serialized_plan['plan_title']),
+            'type': cohort_types.SUBSCRIPTION_EXPIRED_PLAN,
+            'type_id': serialized_plan['plan_id'],
+            'community_id': serialized_plan['community_id'],
+            'member_ids': []
+        }
+
+        response = CoreServiceUtilities.create_cohort(cohort_info)
+
+        if response.get('error_message'):
+            return {'error_message': response['error_message']}
+
+        return {}
+
+    @staticmethod
+    def add_member_to_subscription_cohort(plan_id, user_id, community_id):
+
+        cohort_info = {
+            'member_id': user_id,
+            'type': cohort_types.SUBSCRIPTION_PLAN,
+            'type_id': plan_id,
+            'community_id': community_id,
+            'member_ids': [int(user_id)]
+        }
+
+        response = CoreServiceUtilities.update_cohort(cohort_info)
+
+        if response.get('error_message'):
+            return {'error_message': response['error_message'], 'status_code': response['status_code']}
+
+        return {}
+
+    @staticmethod
+    def add_member_to_subscription_expired_cohort(user_id, plan_id, community_id):
+
+        cohort_info = {
+            'member_id': user_id,
+            'type': cohort_types.SUBSCRIPTION_EXPIRED_PLAN,
+            'type_id': plan_id,
+            'community_id': community_id,
+            'member_ids': [int(user_id)]
+        }
+
+        response = CoreServiceUtilities.update_cohort(cohort_info)
+
+        if response.get('error_message'):
+            return {'error_message': response['error_message'],  'status_code': response['status_code']}
+
+        return {}
+

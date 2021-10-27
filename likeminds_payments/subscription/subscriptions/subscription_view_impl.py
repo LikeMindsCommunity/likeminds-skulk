@@ -5,9 +5,12 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 
 from ..mixins import TransactionMixin
+from ..plans.plan_view_helper import PlanViewHelper
+from ..transactions.models import Transaction
 from ..utility.request_utilities import RequestUtilities
 from .subscription_impl import SubscriptionImpl
 from .subscription_view_helper import SubscriptionViewHelper
+from ..utility.states import TransactionType
 
 
 class CreateSubscriptionView(TransactionMixin, APIView):
@@ -232,6 +235,8 @@ class ExternalMigrationView(APIView):
     def post(request, *args, **kwargs):
 
         request_body = RequestUtilities.load_request_body(request)
+        member_id = RequestUtilities.get_parameter_from_headers(request, 'HTTP_X_MEMBER_ID')
+
         validated_request_body = SubscriptionViewHelper.external_migration_body_validator(request_body)
 
         if 'error_message' in validated_request_body:
@@ -240,10 +245,8 @@ class ExternalMigrationView(APIView):
                 status=status_codes.HTTP_400_BAD_REQUEST
             )
 
-        subscription_manager = SubscriptionImpl()
-
-        response_data = subscription_manager.external_migration(members_data=validated_request_body['members_data_url'],
-                                                                emails=validated_request_body['emails'])
+        subscription_manager = SubscriptionImpl(member_id=member_id, community_id=validated_request_body['community_id'])
+        response_data = subscription_manager.external_migration(validated_request_body)
 
         if 'error_message' in response_data:
             return JsonResponse(
@@ -251,10 +254,71 @@ class ExternalMigrationView(APIView):
                 status=response_data['status']
             )
 
-        return JsonResponse({
-            'success': True, 'message': 'A mail will be sent to you with the details'},
-            status=status_codes.HTTP_200_OK
-        )
+        return JsonResponse({'success': True}, status=status_codes.HTTP_200_OK)
+
+
+class ExternalRenewMigrateView(APIView):
+
+    @method_decorator(csrf_exempt)
+    def dispatch(self, request, *args, **kwargs):
+        return super(ExternalRenewMigrateView, self).dispatch(request, *args, **kwargs)
+
+    @staticmethod
+    def post(request, *args, **kwargs):
+
+        request_body = RequestUtilities.load_request_body(request)
+        member_id = RequestUtilities.get_parameter_from_headers(request, 'HTTP_X_MEMBER_ID')
+
+        validated_request_body = SubscriptionViewHelper.external_renew_migrate_body_validator(request_body, member_id)
+
+        if 'error_message' in validated_request_body:
+            return JsonResponse(
+                {'success': False, 'error_message': validated_request_body['error_message']},
+                status=status_codes.HTTP_400_BAD_REQUEST
+            )
+
+        subscription_manager = SubscriptionImpl(member_id=member_id, community_id=request_body['community_id'])
+        response_data = subscription_manager.external_renew_migrate(validated_request_body)
+
+        if 'error_message' in response_data:
+            return JsonResponse(
+                {'success': False, 'error_message': response_data['error_message']},
+                status=response_data['status']
+            )
+
+        return JsonResponse({'success': True}, status=status_codes.HTTP_200_OK)
+
+
+class PaymentPageAddCashView(APIView):
+
+    @method_decorator(csrf_exempt)
+    def dispatch(self, request, *args, **kwargs):
+        return super(PaymentPageAddCashView, self).dispatch(request, *args, **kwargs)
+
+    @staticmethod
+    def post(request, *args, **kwargs):
+
+        request_body = RequestUtilities.load_request_body(request)
+        member_id = RequestUtilities.get_parameter_from_headers(request, 'HTTP_X_MEMBER_ID')
+
+        validated_request_body = SubscriptionViewHelper.payment_page_add_cash_body_validator(request_body, member_id)
+
+        if 'error_message' in validated_request_body:
+            return JsonResponse(
+                {'success': False, 'error_message': validated_request_body['error_message']},
+                status=status_codes.HTTP_400_BAD_REQUEST
+            )
+
+        subscription_manager = SubscriptionImpl(member_id=member_id, community_id=request_body['community_id'])
+        response_data = subscription_manager.payment_page_add_cash(validated_request_body)
+
+        if 'error_message' in response_data:
+            return JsonResponse(
+                {'success': False, 'error_message': response_data['error_message']},
+                status=response_data['status']
+            )
+
+        return JsonResponse({'success': True}, status=status_codes.HTTP_200_OK)
 
 
 class MembersReportView(APIView):

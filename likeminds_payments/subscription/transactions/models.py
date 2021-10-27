@@ -1,17 +1,20 @@
 from django.db import models
+
+from ..plans.models import SubscriptionEventPlan, SubscriptionPlan
+from ..utility.states import TransactionType
 from ..utility.time_utilities import TimeUtilities
 
 
 class Transaction(models.Model):
     plan_id = models.CharField(max_length=64)
-    payment_id = models.CharField(unique=True, max_length=64)
+    payment_id = models.CharField(max_length=64)
     community_name = models.CharField(max_length=200)
     plan_name = models.CharField(max_length=128, null=True)
     plan_cost = models.IntegerField(default=0)
     renew = models.BooleanField(default=False)
     amount = models.IntegerField(default=0)
     payment_email = models.CharField(max_length=128)
-    payment_phone = models.CharField(max_length=13)
+    payment_phone = models.CharField(max_length=20)
     currency = models.CharField(max_length=3)
     is_international = models.BooleanField(default=False)
     method = models.CharField(max_length=64)
@@ -25,17 +28,22 @@ class Transaction(models.Model):
     created_at = models.BigIntegerField(default=0)
     updated_at = models.BigIntegerField(default=0)
     type = models.IntegerField(default=0)
-    community_id = models.IntegerField(default=0)
+    type_id = models.IntegerField(default=0)
+    payment_name = models.TextField(default='')
 
     def __str__(self):
         return str(self.pk)
 
     @staticmethod
-    def get_transaction_or_None(payment_id):
+    def get_transaction_or_None(payment_id, transaction_type=TransactionType.COMMUNITY_SUBSCRIPTION):
         try:
-            return Transaction.objects.get(payment_id=payment_id)
+            return Transaction.objects.get(payment_id=payment_id, type=transaction_type)
         except:
             return None
+
+    @staticmethod
+    def get_transaction_list_or_None(payment_id):
+        return Transaction.objects.filter(payment_id=payment_id)
 
     @staticmethod
     def get_transaction_with_id_or_None(transaction_id):
@@ -67,7 +75,17 @@ class Transaction(models.Model):
         instance.shared_by = transaction_body['shared_by']
         instance.grace_period = transaction_body['grace_period']
         instance.type = transaction_body.get('type', 0)
-        instance.community_id = transaction_body.get('community_id', 0)
+        instance.type_id = transaction_body.get('type_id', 0)
+        instance.payment_name = transaction_body.get('payment_name', '')
+
+        if instance.type == TransactionType.EVENT:
+            event_plan_instance = SubscriptionEventPlan.get_event_plan_or_None(transaction_body['plan_id'])
+            instance.type_id = event_plan_instance.chatroom_id
+
+        if instance.type == TransactionType.COMMUNITY_SUBSCRIPTION:
+            plan_instance = SubscriptionPlan.get_plan_or_None(transaction_body['plan_id'])
+            instance.type_id = plan_instance.community_id
+
         instance.save()
 
         return instance

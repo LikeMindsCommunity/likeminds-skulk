@@ -424,3 +424,162 @@ class CoreServiceUtilities:
         response = ApiUtilities.generate_get_request(url=url, query_params=query_params, headers=headers)
 
         return response
+
+    @staticmethod
+    def user_fetch(fetch_info):
+
+        user_id = NumberUtilities.get_integer_from_string(fetch_info.get('member_id'))
+
+        headers = {
+            'x-member-id': '{}'.format(user_id)
+        }
+
+        url = "{}/{}".format(USER_FETCH, user_id)
+
+        response = ApiUtilities.generate_get_request(url=url, headers=headers)
+
+        if 'error_message' in response:
+            return {'error_message': response['error_message']}
+
+        if 'user' not in response:
+            return {'error_message': 'invalid response from user api'}
+
+        return response
+
+    @staticmethod
+    def create_cohort(cohort_info):
+
+        if not cohort_info:
+            return
+
+        member_id = NumberUtilities.get_integer_from_string(cohort_info.get('member_id'))
+
+        url = CREATE_COHORT_API
+
+        data = {
+            'community_id': cohort_info.get('community_id'),
+            'name': cohort_info.get('name'),
+            'member_ids': cohort_info.get('member_ids'),
+            'type': cohort_info.get('type'),
+            'type_id': cohort_info.get('type_id')
+        }
+
+        headers = {
+            'x-member-id': '{}'.format(member_id)
+        }
+
+        response = ApiUtilities.generate_post_request(url=url, data=data, headers=headers)
+
+        if 'error_message' in response:
+            return {'error_message': response['error_message'], 'status_code': response['status_code']}
+
+        if 'success' not in response:
+            return {'error_message': 'invalid response from create cohort api', 'status_code': response['status_code']}
+
+        return {'success': response['success']}
+
+    @staticmethod
+    def update_cohort(cohort_info):
+
+        if not cohort_info:
+            return
+
+        member_id = NumberUtilities.get_integer_from_string(cohort_info.get('member_id'))
+
+        url = UPDATE_COHORT_API
+
+        data = {
+            'member_ids': cohort_info.get('member_ids'),
+            'type': cohort_info.get('type'),
+            'type_id': cohort_info.get('type_id')
+        }
+
+        headers = {
+            'x-member-id': '{}'.format(member_id)
+        }
+
+        response = ApiUtilities.generate_post_request(url=url, data=data, headers=headers)
+
+        if 'error_message' in response:
+            return {'error_message': response['error_message'], 'status_code': response['status_code']}
+
+        if 'success' not in response:
+            return {'error_message': 'invalid response from update cohort api', 'status_code': response['status_code']}
+
+        return {'success': response['success']}
+
+    @staticmethod
+    def get_user_details(fetch_info):
+
+        headers = {
+            'x-member-id': '{}'.format(fetch_info.get('member_id'))
+        }
+
+        url = USER_FETCH + "/{}".format(fetch_info.get('member_id'))
+
+        response = ApiUtilities.generate_get_request(url=url, headers=headers)
+
+        return response
+
+    @staticmethod
+    def send_email(user_id, email_body_object):
+
+        headers = {
+            'x-member-id': '{}'.format(user_id)
+        }
+
+        url = SEND_EMAIL
+
+        response = ApiUtilities.generate_post_request(url=url, data=email_body_object, headers=headers)
+
+        return response
+
+    @staticmethod
+    def send_wa_messages(user_id, whatsapp_body):
+        headers = {
+            'x-member-id': '{}'.format(user_id)
+        }
+
+        url = SEND_WHATSAPP_MESSAGES
+
+        response = ApiUtilities.generate_post_request(url=url, data=whatsapp_body, headers=headers)
+
+        return response
+
+    @staticmethod
+    def send_notifications(user_id, notifications_body):
+        headers = {
+            'x-member-id': '{}'.format(user_id)
+        }
+
+        url = SEND_NOTIFICATIONS
+
+        response = ApiUtilities.generate_post_request(url=url, data=notifications_body, headers=headers)
+
+        return response
+
+    @staticmethod
+    def get_community_admins(community_id, user_id=None, fetch_owner_only=False):
+
+        headers = {}
+
+        if user_id:
+            headers = {
+                'x-member-id': '{}'.format(user_id)
+            }
+
+        url = COMMUNITY_ADMINS_API + "/{}".format(community_id)
+
+        response = ApiUtilities.generate_get_request(url=url, headers=headers)
+
+        member_owner_data = response["members"]
+
+        if fetch_owner_only:
+
+            for member_detail in response["members"]:
+
+                if member_detail['is_owner']:
+                    member_owner_data = [member_detail]
+                    break
+
+        return member_owner_data

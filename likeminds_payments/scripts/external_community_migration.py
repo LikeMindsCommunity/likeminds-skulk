@@ -156,7 +156,7 @@ def create_transaction_instance(transaction):
     instance.renew = transaction['renew']
     instance.amount = transaction['amount']
     instance.payment_email = transaction['payment_email']
-    instance.payment_phone = transaction['payment_phone'][:12]
+    instance.payment_phone = transaction['payment_phone']
     instance.currency = transaction['currency']
     instance.is_international = transaction['is_international']
     instance.method = transaction['method']

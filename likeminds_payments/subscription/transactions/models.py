@@ -14,7 +14,7 @@ class Transaction(models.Model):
     renew = models.BooleanField(default=False)
     amount = models.IntegerField(default=0)
     payment_email = models.CharField(max_length=128)
-    payment_phone = models.CharField(max_length=13)
+    payment_phone = models.CharField(max_length=20)
     currency = models.CharField(max_length=3)
     is_international = models.BooleanField(default=False)
     method = models.CharField(max_length=64)

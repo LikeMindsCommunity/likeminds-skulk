@@ -11,6 +11,7 @@ from ..utility.csv_utilities import CsvUtilities
 from ..utility.time_utilities import TimeUtilities
 from ..payment_page.constants import *
 from ..payment_page.serializers import PaymentPageMetaSerializer
+from ..utility.states import TransactionStatusType
 
 from ..transactions.models import Transaction
 from ..utility.core_service_utilities import CoreServiceUtilities
@@ -44,9 +45,9 @@ class PaymentPageImpl(PaymentPageManager):
         self.payment_page_instance = payment_page_instance
 
     @staticmethod
-    def fetch_transaction_data_for_payment_page_ids(payment_page_ids):
+    def fetch_transaction_data_for_payment_page_ids(transaction_filter):
 
-        transaction_filter = ModelUtilities.get_model_filter(Transaction, {'plan_id__in': payment_page_ids}). \
+        transaction_filter = ModelUtilities.get_model_filter(Transaction, transaction_filter). \
             values('plan_id').annotate(total_amount=Sum('amount'), total_payments=Count('plan_id'))
 
         transaction_data = {}
@@ -92,7 +93,8 @@ class PaymentPageImpl(PaymentPageManager):
 
         payment_page_ids = list(payment_page_filter_paginated.values_list('payment_page_id', flat=True))
 
-        transaction_data = self.fetch_transaction_data_for_payment_page_ids(payment_page_ids)
+        transaction_data = self.fetch_transaction_data_for_payment_page_ids({'plan_id__in': payment_page_ids,
+                                                                             'status': TransactionStatusType.CAPTURED})
 
         payment_page_meta_serialized_object = PaymentPageMetaSerializer(payment_page_filter_paginated, many=True).data
 
@@ -126,7 +128,8 @@ class PaymentPageImpl(PaymentPageManager):
 
         self.set_payment_page_instance(payment_page_filter[0])
 
-        transaction_data = self.fetch_transaction_data_for_payment_page_ids([payment_page_id])
+        transaction_data = self.fetch_transaction_data_for_payment_page_ids({'plan_id__in': [payment_page_id],
+                                                                             'status': TransactionStatusType.CAPTURED})
 
         payment_page_object = PaymentPageMetaSerializer(self.get_payment_page_instance(), many=False).data
 

@@ -44,7 +44,7 @@ class CreatePaymentPageView(APIView):
             )
 
         return JsonResponse(
-            {'success': True},
+            {'success': True, "payment_page_id": instance_data.payment_page_id},
             status=status_codes.HTTP_200_OK
         )
 

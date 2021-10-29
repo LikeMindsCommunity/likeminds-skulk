@@ -6,6 +6,7 @@ from .models import Transaction
 from ..plans.models import SubscriptionPlan
 from ..payment_page.models import PaymentPageMeta
 from ..subscriptions.constants import MIGRATION, MANUAL_PAYMENT_PAGE
+from ..utility.states import TransactionType
 
 
 class TransactionViewHelper:
@@ -110,7 +111,17 @@ class TransactionViewHelper:
         if transaction_instance.method in [MIGRATION, MANUAL_PAYMENT_PAGE]:
             return {'special_case': True}
 
-        plan_instance = SubscriptionPlan.get_plan_or_None(transaction_instance.plan_id)
+        if transaction_instance.type == TransactionType.PAYMENT_PAGE:
+            plan_filter = ModelUtilities.get_model_filter(PaymentPageMeta,
+                                                          {"payment_page_id": transaction_instance.plan_id})
+
+            if not plan_filter:
+                return {'error_message': 'No payment page meta found'}
+
+            plan_instance = plan_filter[0]
+
+        else:
+            plan_instance = SubscriptionPlan.get_plan_or_None(transaction_instance.plan_id)
 
         if plan_instance is None:
             return {'error_message': 'malformed transaction'}

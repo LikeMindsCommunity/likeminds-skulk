@@ -22,9 +22,6 @@ class PaymentPageViewHelper:
         if 'title' not in payment_page_meta_body or not payment_page_meta_body['title']:
             return {'error_message': 'send title'}
 
-        if 'description' not in payment_page_meta_body or not payment_page_meta_body['description']:
-            return {'error_message': 'send description'}
-
         if 'amount_type' not in payment_page_meta_body or not payment_page_meta_body['amount_type']:
             return {'error_message': 'send amount_type'}
 

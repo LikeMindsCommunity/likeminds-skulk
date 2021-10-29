@@ -111,7 +111,7 @@ class TransactionViewHelper:
         if transaction_instance.method in [MIGRATION, MANUAL_PAYMENT_PAGE]:
             return {'special_case': True}
 
-        if transaction_instance.type == TransactionType.PAYMENT_PAGE:
+        if getattr(transaction_instance, 'type') and (transaction_instance.type == TransactionType.PAYMENT_PAGE):
             plan_filter = ModelUtilities.get_model_filter(PaymentPageMeta,
                                                           {"payment_page_id": transaction_instance.plan_id})
 

@@ -601,8 +601,7 @@ class TransactionImpl(TransactionManager):
             lambda x: PAYMENTS_STATUS_MAPPER[x.upper()] if not pd.isnull(x) else ""))
 
         transactions_df['status'] = transactions_df['status_text']
-        transactions_df['amount'] = transactions_df['amount'].apply(
-            lambda x: NumberUtilities.convert_to_rupee_or_none(x) if not pd.isnull(x) else 0)
+        transactions_df['amount'] = transactions_df['amount'].apply(lambda x: NumberUtilities.convert_to_rupee_or_none(x))
         transactions_df.rename(columns=TRANSACTION_DOWNLOAD_ALL_PAYMENT_PAGE_CSV_COLUMN_MAPPER, inplace=True)
         transactions_df = transactions_df[TRANSACTION_DOWNLOAD_ALL_CSV_COLUMN_ORDERING_PAYMENT_PAGE_ID]
 

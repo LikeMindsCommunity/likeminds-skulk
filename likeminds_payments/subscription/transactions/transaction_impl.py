@@ -403,6 +403,11 @@ class TransactionImpl(TransactionManager):
                     existing_transaction_instance.status = "refund"
                     existing_transaction_instance.save()
 
+                    return {'success': True}
+
+                else:
+                    return {'error_message': 'transaction exists with given plan_id'}
+
         transaction_data_list = self._create_transaction_data(transaction_body)
 
         for transaction_data in transaction_data_list:

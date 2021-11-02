@@ -446,7 +446,7 @@ def payment_success_membership_join_communication(transaction_id):
          "member_phone": transaction_instance.payment_phone,
          "otl_link": otl_link['private_link'],
          "plan_name": transaction_instance.plan_name,
-         "cost": transaction_instance.amount})
+         "cost": NumberUtilities.convert_to_rupee_or_none(transaction_instance.amount)})
 
     cm_mail_body = {
         "subject": PAYMENT_SUCCESS_MEMBERSHIP_EMAIL_TO_CM_SUBJECT,
@@ -511,7 +511,7 @@ def cash_payment_renewal_communication(transaction_id):
          "member_email": transaction_instance.payment_email,
          "member_phone": transaction_instance.payment_phone,
          "plan_name": transaction_instance.plan_name,
-         "cost": transaction_instance.amount})
+         "cost": NumberUtilities.convert_to_rupee_or_none(transaction_instance.amount)})
 
     cm_mail_body = {
         "subject": PAYMENT_SUCCESS_MEMBERSHIP_RENEW_EMAIL_TO_CM_SUBJECT.format(transaction_instance.community_name),

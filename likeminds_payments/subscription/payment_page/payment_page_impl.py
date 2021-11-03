@@ -86,7 +86,7 @@ class PaymentPageImpl(PaymentPageManager):
 
         if req_body.get('page'):
             payment_page_filter_paginated = ModelUtilities.paginate_queryset(payment_page_filter, int(req_body.get(
-                'page')), 20)
+                'page')), PAYMENT_PAGE_SIZE)
 
         else:
             payment_page_filter_paginated = payment_page_filter

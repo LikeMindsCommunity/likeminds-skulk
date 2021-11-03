@@ -46,3 +46,4 @@ PAYMENT_PAGE_SUCCESS_PAYMENT_PUSH_NOTIFICATION_TO_CM_TITLE = "New payment receiv
 PAYMENT_PAGE_SUCCESS_PAYMENT_PUSH_NOTIFICATION_TO_CM_SUB_TITLE = "We have received a new payment of" \
                                                                  " {} {} for {}"
 PAYMENT_PAGE_SUCCESS_PAYMENT_PUSH_NOTIFICATION_TO_CM_ROUTE = "route://testing_route_push_notification"
+PAYMENT_PAGE_SIZE = 25

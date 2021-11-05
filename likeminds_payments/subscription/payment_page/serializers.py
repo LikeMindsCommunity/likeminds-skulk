@@ -8,7 +8,7 @@ class PaymentPageMetaSerializer(serializers.ModelSerializer):
         model = PaymentPageMeta
         fields = ('id', 'payment_page_id', 'title', 'description', 'amount_type', 'amount',
                   'custom_success_message', 'redirect_url', 'community_id', 'is_active', 'contact_email',
-                  'contact_mobile_no', 'payment_page_url', 'created_at', 'updated_at')
+                  'contact_mobile_no', 'contact_country_code', 'payment_page_url', 'created_at', 'updated_at')
 
     def __init__(self, *args, **kwargs):
         super(PaymentPageMetaSerializer, self).__init__(*args, **kwargs)

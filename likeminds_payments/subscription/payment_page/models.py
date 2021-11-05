@@ -13,7 +13,7 @@ class PaymentPageMeta(models.Model):
     redirect_url = models.TextField(null=True)
     community_id = models.IntegerField(default=0)
     is_active = models.BooleanField(default=False)
-    contact_email = models.CharField(max_length=256)
+    contact_email = models.CharField(max_length=256, null=True)
     contact_mobile_no = models.BigIntegerField(null=True)
     contact_country_code = models.IntegerField(null=True)
     payment_page_url = models.TextField(null=True)

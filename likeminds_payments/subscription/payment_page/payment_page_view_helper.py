@@ -157,9 +157,16 @@ class PaymentPageViewHelper:
         if user_email_phone_object['email']:
             payment_page_body['contact_email'] = user_email_phone_object['email']
 
+        else:
+            payment_page_body['contact_email'] = None
+
         if user_email_phone_object['mobile_no']:
             payment_page_body['contact_mobile_no'] = user_email_phone_object['mobile_no']
             payment_page_body['contact_country_code'] = user_email_phone_object['country_code']
+
+        else:
+            payment_page_body['contact_mobile_no'] = None
+            payment_page_body['contact_country_code'] = None
 
         payment_page_body['payment_page_url'] = None
 

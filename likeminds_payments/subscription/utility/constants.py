@@ -21,3 +21,4 @@ SEND_NOTIFICATIONS = "{}/api/external_service_apis/send_notifications".format(se
 COMMUNITY_ADMINS_API = "{}/api/admins".format(settings.CORE_SERVICE_URL)
 CREATE_COHORT_API = "{}/api/cohort/create".format(settings.CORE_SERVICE_URL)
 UPDATE_COHORT_API = "{}/api/cohort/update".format(settings.CORE_SERVICE_URL)
+PAYMENT_PAGE_BRANCH_URL = "{}/api/community/fetch_payment_page_url".format(settings.CORE_SERVICE_URL)

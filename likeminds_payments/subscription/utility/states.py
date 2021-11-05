@@ -9,6 +9,20 @@ class TransactionType:
     PAYMENT_PAGE = 2
 
 
+class DocType:
+    AADHAR = 0
+    DRIVING_LICENCE = 1
+    PASSPORT = 2
+    VOTER_ID = 3
+    OTHER = 4
+
+
+class KYCState:
+    PENDING_APPROVAL = 0
+    APPROVED = 1
+    INACTIVE = 2
+
+
 class MemberState:
     GUEST = 0
     ADMIN = 1

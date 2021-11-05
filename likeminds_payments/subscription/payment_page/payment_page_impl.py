@@ -11,6 +11,7 @@ from ..utility.csv_utilities import CsvUtilities
 from ..utility.time_utilities import TimeUtilities
 from ..payment_page.constants import *
 from ..payment_page.serializers import PaymentPageMetaSerializer
+from ..utility.states import TransactionStatusType
 
 from ..transactions.models import Transaction
 from ..utility.core_service_utilities import CoreServiceUtilities
@@ -44,9 +45,9 @@ class PaymentPageImpl(PaymentPageManager):
         self.payment_page_instance = payment_page_instance
 
     @staticmethod
-    def fetch_transaction_data_for_payment_page_ids(payment_page_ids):
+    def fetch_transaction_data_for_payment_page_ids(transaction_filter):
 
-        transaction_filter = ModelUtilities.get_model_filter(Transaction, {'plan_id__in': payment_page_ids}). \
+        transaction_filter = ModelUtilities.get_model_filter(Transaction, transaction_filter). \
             values('plan_id').annotate(total_amount=Sum('amount'), total_payments=Count('plan_id'))
 
         transaction_data = {}
@@ -85,14 +86,15 @@ class PaymentPageImpl(PaymentPageManager):
 
         if req_body.get('page'):
             payment_page_filter_paginated = ModelUtilities.paginate_queryset(payment_page_filter, int(req_body.get(
-                'page')), 20)
+                'page')), PAYMENT_PAGE_SIZE)
 
         else:
             payment_page_filter_paginated = payment_page_filter
 
         payment_page_ids = list(payment_page_filter_paginated.values_list('payment_page_id', flat=True))
 
-        transaction_data = self.fetch_transaction_data_for_payment_page_ids(payment_page_ids)
+        transaction_data = self.fetch_transaction_data_for_payment_page_ids({'plan_id__in': payment_page_ids,
+                                                                             'status': TransactionStatusType.CAPTURED})
 
         payment_page_meta_serialized_object = PaymentPageMetaSerializer(payment_page_filter_paginated, many=True).data
 
@@ -107,10 +109,7 @@ class PaymentPageImpl(PaymentPageManager):
             else:
                 payment_page_data = {**payment_page_data,
                                      **{'total_payment': 0,
-                                        'total_amount': 0,
-                                        'payment_page_url': ''.join([settings.WEB_URL if settings.WEB_URL else '',
-                                                                     '/payment_page?payment_page_id=',
-                                                                     payment_page_data['payment_page_id']])}}
+                                        'total_amount': 0}}
 
             payment_pages_data.append(payment_page_data)
 
@@ -126,7 +125,8 @@ class PaymentPageImpl(PaymentPageManager):
 
         self.set_payment_page_instance(payment_page_filter[0])
 
-        transaction_data = self.fetch_transaction_data_for_payment_page_ids([payment_page_id])
+        transaction_data = self.fetch_transaction_data_for_payment_page_ids({'plan_id__in': [payment_page_id],
+                                                                             'status': TransactionStatusType.CAPTURED})
 
         payment_page_object = PaymentPageMetaSerializer(self.get_payment_page_instance(), many=False).data
 
@@ -136,10 +136,7 @@ class PaymentPageImpl(PaymentPageManager):
         else:
             payment_page_object = {**payment_page_object,
                                    **{'total_payment': 0,
-                                      'total_amount': 0,
-                                      'payment_page_url': ''.join([settings.WEB_URL if settings.WEB_URL else '',
-                                                                   '/payment_page?payment_page_id=',
-                                                                   payment_page_object['payment_page_id']])}}
+                                      'total_amount': 0}}
 
         # Get Community Data
         community_object = CoreServiceUtilities.get_community_data(self.get_payment_page_instance().community_id)

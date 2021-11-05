@@ -31,6 +31,12 @@ class MemberState:
     PENDING_MEMBER = 3
 
 
+class TransactionStatusType:
+    CAPTURED = 'captured'
+    REFUND = 'refund'
+    FAILED = 'failed'
+
+
 class CohortTypes:
     NORMAL = 0
     SUBSCRIPTION_PLAN = 1

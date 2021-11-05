@@ -44,9 +44,8 @@ class CreatePaymentPageView(APIView):
             )
 
         return JsonResponse(
-            {'success': True},
-            status=status_codes.HTTP_200_OK
-        )
+            {'success': True, 'payment_page_id': instance_data['payment_page_instance'].payment_page_id},
+            status=status_codes.HTTP_200_OK)
 
 
 class UpdatePaymentPageView(APIView):
@@ -132,14 +131,6 @@ class FetchPaymentPageView(APIView):
     @staticmethod
     def get(request, *args, **kwargs):
 
-        member_id = RequestUtilities.get_parameter_from_headers(request, 'HTTP_X_MEMBER_ID')
-
-        if not member_id:
-            return JsonResponse(
-                {'success': False, 'error_message': 'send member_id in headers'},
-                status=status_codes.HTTP_400_BAD_REQUEST
-            )
-
         payment_page_id = request.GET.get('payment_page_id', None)
 
         if not payment_page_id:
@@ -148,7 +139,7 @@ class FetchPaymentPageView(APIView):
                 status=status_codes.HTTP_400_BAD_REQUEST
             )
 
-        payment_page_manager = PaymentPageImpl(user_id=member_id)
+        payment_page_manager = PaymentPageImpl()
         response_data = payment_page_manager.fetch_payment_page(payment_page_id)
 
         if 'error_message' in response_data:

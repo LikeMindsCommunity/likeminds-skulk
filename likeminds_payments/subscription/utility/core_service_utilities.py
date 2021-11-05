@@ -583,3 +583,19 @@ class CoreServiceUtilities:
                     break
 
         return member_owner_data
+
+    @staticmethod
+    def get_payment_page_url(community_id, payment_page_id, user_id=None, fetch_owner_only=False):
+
+        headers = {}
+
+        if user_id:
+            headers = {
+                'x-member-id': '{}'.format(user_id)
+            }
+
+        url = PAYMENT_PAGE_BRANCH_URL + "?community_id={}&payment_page_id={}".format(community_id, payment_page_id)
+
+        response = ApiUtilities.generate_get_request(url=url, headers=headers)
+
+        return response

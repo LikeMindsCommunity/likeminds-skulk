@@ -109,10 +109,7 @@ class PaymentPageImpl(PaymentPageManager):
             else:
                 payment_page_data = {**payment_page_data,
                                      **{'total_payment': 0,
-                                        'total_amount': 0,
-                                        'payment_page_url': ''.join([settings.WEB_URL if settings.WEB_URL else '',
-                                                                     '/payment_page?payment_page_id=',
-                                                                     payment_page_data['payment_page_id']])}}
+                                        'total_amount': 0}}
 
             payment_pages_data.append(payment_page_data)
 
@@ -139,10 +136,7 @@ class PaymentPageImpl(PaymentPageManager):
         else:
             payment_page_object = {**payment_page_object,
                                    **{'total_payment': 0,
-                                      'total_amount': 0,
-                                      'payment_page_url': ''.join([settings.WEB_URL if settings.WEB_URL else '',
-                                                                   '/payment_page?payment_page_id=',
-                                                                   payment_page_object['payment_page_id']])}}
+                                      'total_amount': 0}}
 
         # Get Community Data
         community_object = CoreServiceUtilities.get_community_data(self.get_payment_page_instance().community_id)

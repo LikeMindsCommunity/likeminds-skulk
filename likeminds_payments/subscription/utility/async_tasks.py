@@ -28,6 +28,8 @@ from subscription.utility.model_utilities import ModelUtilities
 
 from subscription.utility.number_utilities import NumberUtilities
 from subscription.utility.string_utilities import StringUtilities
+from subscription.utility.url_utilities import UrlUtilities
+from .constants import BRANCH_LINK_BASE_URL
 
 
 def create_event_meta_for_webflow_update(event_plan_instance):
@@ -258,6 +260,7 @@ def payment_page_member_payment_failed_email(transaction_id):
         'payment_failed_member_email_payment_page.html').render(
         {"member_name": transaction_instance.payment_name,
          "payment_page_title": payment_page_instance.title,
+         "payment_page_url": '/'.join([BRANCH_LINK_BASE_URL, transaction_instance.payment_page_url]),
          "community_name": transaction_instance.community_name,
          "community_manager_name": community_owner_details['name']})
 

@@ -333,12 +333,12 @@ class PlanViewHelper:
         return {}
 
     @staticmethod
-    def add_member_to_subscription_expired_cohort(user_id, plan_id, community_id):
+    def add_member_to_subscription_expired_cohort(user_id, community_id):
 
         cohort_info = {
             'member_id': user_id,
             'type': cohort_types.SUBSCRIPTION_EXPIRED_PLAN,
-            'type_id': plan_id,
+            'type_id': None,
             'community_id': community_id,
             'member_ids': [int(user_id)]
         }

@@ -34,13 +34,21 @@ class RazorpayXWrapper(RazorpayXManager):
         if 'user_id' not in contact_info:
             return {'error_message': 'send user_id'}
 
+        if 'email' not in contact_info:
+            return {'error_message': 'send email'}
+
+        if 'phone' not in contact_info:
+            return {'error_message': 'send phone'}
+
         payload = {
             'headers': {
                 'Content-Type': 'application/json'
             },
             'data': {
                 'name': contact_info.get('name'),
-                'reference_id': '{}'.format(contact_info.get('user_id'))
+                'email': contact_info.get('email'),
+                'contact': contact_info.get('phone'),
+                'reference_id': contact_info.get('user_id')
             }
         }
 

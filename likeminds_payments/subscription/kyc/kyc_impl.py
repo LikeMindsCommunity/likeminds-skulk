@@ -5,6 +5,7 @@ from rest_framework import status as status_codes
 from ..utility.states import KYCState
 from ..utility.model_utilities import ModelUtilities
 from ..utility.number_utilities import NumberUtilities
+from ..utility.string_utilities import StringUtilities
 from ..utility.request_utilities import RequestUtilities
 from ..utility.core_service_utilities import CoreServiceUtilities
 from ..external_services.razorpay.razorpayX_wrapper import RazorpayXWrapper
@@ -197,16 +198,29 @@ class KycImpl(KYCManager):
 
             # Create a contact if it doesn't exist
             if updated_kyc_instance.contact_id is None:
-                contact_details = {
-                    'name': updated_kyc_instance.name,
-                    'user_id': updated_kyc_instance.user_id
-                }
+                user_details = CoreServiceUtilities.user_fetch({'member_id': updated_kyc_instance.user_id})
 
-                razorpay_X_manager = RazorpayXWrapper()
-                response = razorpay_X_manager.create_contact(contact_details)
+                if 'user' in user_details:
+                    email = user_details['user']['emails'][0]
+                    phone = user_details['user']['mobiles'][0]
 
-                if 'contact' in response:
-                    updated_kyc_instance.contact_id = response['contact'].get('id', None)
+                    contact_details = {
+                        'name': updated_kyc_instance.name,
+                        'user_id': StringUtilities.get_string_from_integer(updated_kyc_instance.user_id),
+                        'email': email['email'],
+                        'phone': '{}{}'.format(phone['country_code'], phone['mobile_no'])
+                    }
+
+                    razorpay_X_manager = RazorpayXWrapper()
+                    response = razorpay_X_manager.create_contact(contact_details)
+
+                    if 'contact' in response:
+                        updated_kyc_instance.contact_id = response['contact'].get('id', None)
+                        updated_kyc_instance.save()
+
+                # case if the user details fails
+                else:
+                    updated_kyc_instance.status = KYCState.PENDING_APPROVAL
                     updated_kyc_instance.save()
 
             # Create a fund account if it doesn't exist

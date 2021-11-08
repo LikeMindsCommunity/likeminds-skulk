@@ -32,7 +32,7 @@ MEMBERSHIP_STATES = {
     3: 'Renewal Due'
 }
 SUBSCRIPTION_COHORT_NAME = 'Subscription Plan - {}'
-SUBSCRIPTION_EXPIRED_COHORT_NAME = 'Subscription Expired Plan - {}'
+SUBSCRIPTION_EXPIRED_COHORT_NAME = 'Subscription Expired Plan'
 
 PAYMENT_SUCCESS_MEMBERSHIP_WHATSAPP_TEMPLATE_NAME = "payment_successful_new_v3"
 PAYMENT_SUCCESS_MEMBERSHIP_WHATSAPP_BROADCAST_NAME = "cash_membership_successful_api"

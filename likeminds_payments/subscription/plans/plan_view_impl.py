@@ -52,15 +52,6 @@ class CreatePlanView(TransactionMixin, APIView):
                 status=cohort_response['status_code']
             )
 
-        # Creating Subscription Plan Expired Cohort
-        cohort_response = PlanViewHelper.create_subscription_expired_plan_cohort(serialized_plan, user_id)
-
-        if 'error_message' in cohort_response:
-            return JsonResponse(
-                {'success': False, 'error_message': cohort_response['error_message']},
-                status=cohort_response['status_code']
-            )
-
         plan_manager = PlanImpl(plan_instance=instance_data['plan_instance'])
         response_data = plan_manager.create_plan()
 

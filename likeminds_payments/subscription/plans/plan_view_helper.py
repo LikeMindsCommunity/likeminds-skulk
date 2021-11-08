@@ -297,13 +297,13 @@ class PlanViewHelper:
         return {}
 
     @staticmethod
-    def create_subscription_expired_plan_cohort(serialized_plan, user_id):
+    def create_subscription_expired_plan_cohort(community_id, user_id):
         cohort_info = {
             'member_id': user_id,
-            'name': SUBSCRIPTION_EXPIRED_COHORT_NAME.format(serialized_plan['plan_title']),
+            'name': SUBSCRIPTION_EXPIRED_COHORT_NAME,
             'type': cohort_types.SUBSCRIPTION_EXPIRED_PLAN,
-            'type_id': serialized_plan['plan_id'],
-            'community_id': serialized_plan['community_id'],
+            'type_id': None,
+            'community_id': community_id,
             'member_ids': []
         }
 
@@ -333,12 +333,12 @@ class PlanViewHelper:
         return {}
 
     @staticmethod
-    def add_member_to_subscription_expired_cohort(user_id, plan_id, community_id):
+    def add_member_to_subscription_expired_cohort(user_id, community_id):
 
         cohort_info = {
             'member_id': user_id,
             'type': cohort_types.SUBSCRIPTION_EXPIRED_PLAN,
-            'type_id': plan_id,
+            'type_id': None,
             'community_id': community_id,
             'member_ids': [int(user_id)]
         }

@@ -1,15 +1,15 @@
-from .kyc_manager import KYCManager
-from .constants import *
-from .serializers import KycSerializer, MultipleKycSerializer
+from subscription.kyc.kyc_manager import KYCManager
+from subscription.kyc.constants import *
+from subscription.kyc.serializers import KycSerializer, MultipleKycSerializer
 from rest_framework import status as status_codes
-from ..utility.states import KYCState
-from ..utility.model_utilities import ModelUtilities
-from ..utility.number_utilities import NumberUtilities
-from ..utility.string_utilities import StringUtilities
-from ..utility.request_utilities import RequestUtilities
-from ..utility.core_service_utilities import CoreServiceUtilities
-from ..external_services.razorpay.razorpayX_wrapper import RazorpayXWrapper
-from ..kyc.models import CommunityKYC
+from subscription.utility.states import KYCState
+from subscription.utility.model_utilities import ModelUtilities
+from subscription.utility.number_utilities import NumberUtilities
+from subscription.utility.string_utilities import StringUtilities
+from subscription.utility.request_utilities import RequestUtilities
+from subscription.utility.core_service_utilities import CoreServiceUtilities
+from subscription.external_services.razorpay.razorpayX_wrapper import RazorpayXWrapper
+from subscription.kyc.models import CommunityKYC
 
 
 class KycImpl(KYCManager):
@@ -39,7 +39,7 @@ class KycImpl(KYCManager):
 
     def add_kyc(self, request_body) -> dict:
 
-        if self.get_member_id() is None or self.get_community_id() is None:
+        if not self.get_member_id() or not self.get_community_id():
             return {'error_message': 'send x-member-id in headers and community_id in body',
                     'status': status_codes.HTTP_400_BAD_REQUEST}
 
@@ -129,7 +129,7 @@ class KycImpl(KYCManager):
                 return {'error_message': has_permission_check['error_message'],
                         'status': status_codes.HTTP_500_INTERNAL_SERVER_ERROR}
 
-            if 'has_permission' in has_permission_check and has_permission_check['has_permission'] is False:
+            if 'has_permission' in has_permission_check and not has_permission_check['has_permission']:
                 return {'error_message': 'You are not the Owner/CM of the community',
                         'status': status_codes.HTTP_401_UNAUTHORIZED}
 

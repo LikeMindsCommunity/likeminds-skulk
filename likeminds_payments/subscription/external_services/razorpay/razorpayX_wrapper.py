@@ -2,8 +2,8 @@ from django.conf import settings
 import json
 import requests
 from requests.auth import HTTPBasicAuth
-from .constants import *
-from ..razorpay.razorpayX_manager import RazorpayXManager
+from subscription.external_services.razorpay.constants import *
+from subscription.external_services.razorpay.razorpayX_manager import RazorpayXManager
 
 
 class RazorpayXWrapper(RazorpayXManager):
@@ -57,13 +57,18 @@ class RazorpayXWrapper(RazorpayXManager):
     def create_contact(self, contact_info) -> dict:
 
         api_payload = self._create_contact_api_payload(contact_info)
-        api_response = requests.post(url=CONTACTS_API,
-                                     headers=api_payload.get('headers'),
-                                     data=json.dumps(api_payload.get('data')),
-                                     auth=HTTPBasicAuth(self.get_key_id(), self.get_key_secret()))
 
-        if hasattr(api_response, 'status_code') and int(api_response.status_code) not in [200, 201]:
-            return {'error_message': 'message: {}'.format(api_response.content.decode('utf-8'))}
+        try:
+            api_response = requests.post(url=CONTACTS_API,
+                                         headers=api_payload.get('headers'),
+                                         data=json.dumps(api_payload.get('data')),
+                                         auth=HTTPBasicAuth(self.get_key_id(), self.get_key_secret()))
+
+            if hasattr(api_response, 'status_code') and int(api_response.status_code) not in [200, 201]:
+                return {'error_message': 'message: {}'.format(api_response.content.decode('utf-8'))}
+
+        except:
+            return {'error_message': 'error making request'}
 
         return {'contact': json.loads(api_response.content)}
 
@@ -94,12 +99,17 @@ class RazorpayXWrapper(RazorpayXManager):
     def create_fund_account(self, account_info) -> dict:
 
         api_payload = self._create_account_api_payload(account_info)
-        api_response = requests.post(url=FUND_ACCOUNTS_API,
-                                     headers=api_payload.get('headers'),
-                                     data=json.dumps(api_payload.get('data')),
-                                     auth=HTTPBasicAuth(self.get_key_id(), self.get_key_secret()))
 
-        if hasattr(api_response, 'status_code') and int(api_response.status_code) not in [200, 201]:
-            return {'error_message': 'message: {}'.format(api_response.content.decode('utf-8'))}
+        try:
+            api_response = requests.post(url=FUND_ACCOUNTS_API,
+                                         headers=api_payload.get('headers'),
+                                         data=json.dumps(api_payload.get('data')),
+                                         auth=HTTPBasicAuth(self.get_key_id(), self.get_key_secret()))
+
+            if hasattr(api_response, 'status_code') and int(api_response.status_code) not in [200, 201]:
+                return {'error_message': 'message: {}'.format(api_response.content.decode('utf-8'))}
+
+        except:
+            return {'error_message': 'error making request'}
 
         return {'account': json.loads(api_response.content)}

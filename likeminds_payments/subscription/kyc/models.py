@@ -20,6 +20,8 @@ class CommunityKYC(models.Model):
     account_number = models.CharField(max_length=32, default=None, null=True)
     bank_name = models.CharField(max_length=128, default='')
     status = models.IntegerField(default=0)
+    contact_id = models.CharField(max_length=64, default=None, null=True)
+    account_id = models.CharField(max_length=64, default=None, null=True)
     created_at = models.BigIntegerField(default=0)
     updated_at = models.BigIntegerField(default=0)
 
@@ -45,6 +47,8 @@ class CommunityKYC(models.Model):
         instance.account_number = kyc_body.get('account_number', None)
         instance.bank_name = kyc_body.get('bank_name', '')
         instance.status = KYCState.PENDING_APPROVAL
+        instance.contact_id = None
+        instance.account_id = None
         instance.save()
 
         return instance

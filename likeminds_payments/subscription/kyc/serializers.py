@@ -18,6 +18,8 @@ def KycSerializer(kyc_instance) -> dict:
         'account_number': kyc_instance.account_number,
         'bank_name': kyc_instance.bank_name,
         'status': kyc_instance.status,
+        'contact_id': kyc_instance.contact_id,
+        'account_id': kyc_instance.account_id,
         'created_at': kyc_instance.created_at,
         'updated_at': kyc_instance.updated_at
     }

@@ -7,6 +7,7 @@ from ..utility.model_utilities import ModelUtilities
 from ..utility.number_utilities import NumberUtilities
 from ..utility.request_utilities import RequestUtilities
 from ..utility.core_service_utilities import CoreServiceUtilities
+from ..external_services.razorpay.razorpayX_wrapper import RazorpayXWrapper
 from ..kyc.models import CommunityKYC
 
 
@@ -193,7 +194,38 @@ class KycImpl(KYCManager):
         updated_kyc_instance = self._update_kyc_instance(kyc_instance[0], request_body)
 
         if updated_kyc_instance.status == KYCState.APPROVED:
-            # Call the razorpay apis
-            pass
+
+            # Create a contact if it doesn't exist
+            if updated_kyc_instance.contact_id is None:
+                contact_details = {
+                    'name': updated_kyc_instance.name,
+                    'user_id': updated_kyc_instance.user_id
+                }
+
+                razorpay_X_manager = RazorpayXWrapper()
+                response = razorpay_X_manager.create_contact(contact_details)
+
+                if 'contact' in response:
+                    updated_kyc_instance.contact_id = response['contact'].get('id', None)
+                    updated_kyc_instance.save()
+
+            # Create a fund account if it doesn't exist
+            if updated_kyc_instance.account_id is None and updated_kyc_instance.contact_id is not None:
+                account_details = {
+                    'contact_id': updated_kyc_instance.contact_id,
+                    'account_type': 'bank_account',
+                    'bank_account': {
+                        'name': updated_kyc_instance.bank_user_name,
+                        'ifsc': updated_kyc_instance.bank_ifsc_code,
+                        'account_number': updated_kyc_instance.account_number
+                    }
+                }
+
+                razorpay_X_manager = RazorpayXWrapper()
+                response = razorpay_X_manager.create_fund_account(account_details)
+
+                if 'account' in response:
+                    updated_kyc_instance.account_id = response['account'].get('id', None)
+                    updated_kyc_instance.save()
 
         return {'kyc': KycSerializer(updated_kyc_instance), 'status': status_codes.HTTP_200_OK}

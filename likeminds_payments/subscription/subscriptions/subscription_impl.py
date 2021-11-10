@@ -335,7 +335,7 @@ class SubscriptionImpl(SubscriptionManager):
 
             transaction = SubscriptionImpl._generate_first_transaction(transaction_instance, plan_instance, user_id)
 
-            if community_data['auto_approval']:
+            if community_data.get('auto_approval'):
 
                 cohort_response = PlanViewHelper.add_member_to_subscription_cohort(
                     plan_id=transaction_instance.plan_id,

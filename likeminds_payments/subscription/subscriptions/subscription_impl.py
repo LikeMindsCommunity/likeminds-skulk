@@ -1109,7 +1109,7 @@ class SubscriptionImpl(SubscriptionManager):
                 return {'error_message': 'You are not the Owner/CM of the community',
                         'status': status_codes.HTTP_401_UNAUTHORIZED}
 
-            user_details = CoreServiceUtilities.user_fetch({'member_id': self.get_member_id()})
+            user_details = CoreServiceUtilities.user_fetch({'member_id': request_body.get('user_id')})
 
             user_id = user_details['user']['id']
             user_emails = user_details['user']['emails']

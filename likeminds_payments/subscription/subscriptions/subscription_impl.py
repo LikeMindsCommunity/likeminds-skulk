@@ -328,15 +328,22 @@ class SubscriptionImpl(SubscriptionManager):
 
         if not transaction_instance.renew:
 
+            community_data = CoreServiceUtilities.get_community_data(plan_instance.community_id)
+
+            if community_data.get('error_message'):
+                return {'error_message': community_data['error_message'], 'status_code': community_data['status_code']}
+
             transaction = SubscriptionImpl._generate_first_transaction(transaction_instance, plan_instance, user_id)
 
-            cohort_response = PlanViewHelper.add_member_to_subscription_cohort(
-                plan_id=transaction_instance.plan_id,
-                user_id=user_id,
-                community_id=plan_instance.community_id)
+            if community_data.get('auto_approval'):
 
-            if 'error_message' in cohort_response:
-                return {'error_message': cohort_response['error_message'],  'status_code': cohort_response['status_code']}
+                cohort_response = PlanViewHelper.add_member_to_subscription_cohort(
+                    plan_id=transaction_instance.plan_id,
+                    user_id=user_id,
+                    community_id=plan_instance.community_id)
+
+                if 'error_message' in cohort_response:
+                    return {'error_message': cohort_response['error_message'],  'status_code': cohort_response['status_code']}
 
             return transaction
 

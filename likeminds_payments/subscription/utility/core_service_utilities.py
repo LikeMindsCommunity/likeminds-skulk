@@ -105,10 +105,10 @@ class CoreServiceUtilities:
         response = ApiUtilities.generate_get_request(url=url, query_params=query_params)
 
         if 'error_message' in response:
-            return {'error_message': response['error_message']}
+            return {'error_message': response['error_message'], 'status_code': response['status_code']}
 
         if 'community' not in response:
-            return {'error_message': 'no community object in community data response'}
+            return {'error_message': 'no community object in community data response', 'status_code': response['status_code']}
 
         return {'community': response['community']}
 

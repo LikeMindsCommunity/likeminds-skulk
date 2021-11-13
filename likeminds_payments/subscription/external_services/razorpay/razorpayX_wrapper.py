@@ -5,6 +5,10 @@ from requests.auth import HTTPBasicAuth
 from subscription.external_services.razorpay.constants import *
 from subscription.external_services.razorpay.razorpayX_manager import RazorpayXManager
 from subscription.utility.response_utilities import ResponseUtilities
+from ..logging.logging_wrapper import LoggingWrapper
+
+error_logger = LoggingWrapper.get_instance()
+info_logger = LoggingWrapper.get_instance()
 
 
 class RazorpayXWrapper(RazorpayXManager):
@@ -70,6 +74,7 @@ class RazorpayXWrapper(RazorpayXManager):
                     'message: {}'.format(api_response.content.decode('utf-8')))
 
         except:
+            error_logger.error('error makeing create contact request on razorpayX')
             return ResponseUtilities.get_inner_error_context('error making request')
 
         return {'contact': json.loads(api_response.content)}
@@ -113,6 +118,7 @@ class RazorpayXWrapper(RazorpayXManager):
                     'message: {}'.format(api_response.content.decode('utf-8')))
 
         except:
+            error_logger.error('error makeing create fund account request on razorpayX')
             return ResponseUtilities.get_inner_error_context('error making request')
 
         return {'account': json.loads(api_response.content)}

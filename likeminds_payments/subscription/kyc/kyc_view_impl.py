@@ -5,6 +5,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 
 from ..utility.request_utilities import RequestUtilities
+from ..utility.response_utilities import ResponseUtilities
 from .kyc_impl import KycImpl
 from .kyc_view_helper import KycViewHelper
 
@@ -24,19 +25,17 @@ class CreateKycView(APIView):
         validated_request_body = KycViewHelper.create_kyc_body_validator(request_body, member_id)
 
         if 'error_message' in validated_request_body:
-            return JsonResponse(
-                {'success': False, 'error_message': validated_request_body['error_message']},
-                status=status_codes.HTTP_400_BAD_REQUEST
-            )
+            context = ResponseUtilities.get_view_impl_error_context(validated_request_body['error_message'],
+                                                                    status_codes.HTTP_400_BAD_REQUEST)
+            return JsonResponse(context['data'], status=context['status'])
 
         kyc_manager = KycImpl(member_id=member_id, community_id=validated_request_body['community_id'])
         response_data = kyc_manager.add_kyc(validated_request_body)
 
         if 'error_message' in response_data:
-            return JsonResponse(
-                {'success': False, 'error_message': response_data['error_message']},
-                status=response_data['status']
-            )
+            context = ResponseUtilities.get_view_impl_error_context(response_data['error_message'],
+                                                                    response_data['status'])
+            return JsonResponse(context['data'], status=context['status'])
 
         return JsonResponse({'success': True, 'kyc': response_data['kyc']}, status=response_data['status'])
 
@@ -56,19 +55,17 @@ class UploadKycView(APIView):
         validated_request_body = KycViewHelper.upload_kyc_body_validator(request_body, member_id)
 
         if 'error_message' in validated_request_body:
-            return JsonResponse(
-                {'success': False, 'error_message': validated_request_body['error_message']},
-                status=status_codes.HTTP_400_BAD_REQUEST
-            )
+            context = ResponseUtilities.get_view_impl_error_context(validated_request_body['error_message'],
+                                                                    status_codes.HTTP_400_BAD_REQUEST)
+            return JsonResponse(context['data'], status=context['status'])
 
         kyc_manager = KycImpl(member_id=member_id, community_id=validated_request_body['community_id'])
         response_data = kyc_manager.upload_kyc(validated_request_body)
 
         if 'error_message' in response_data:
-            return JsonResponse(
-                {'success': False, 'error_message': response_data['error_message']},
-                status=response_data['status']
-            )
+            context = ResponseUtilities.get_view_impl_error_context(response_data['error_message'],
+                                                                    response_data['status'])
+            return JsonResponse(context['data'], status=context['status'])
 
         return JsonResponse({'success': True, 'kyc': response_data['kyc']}, status=response_data['status'])
 
@@ -90,10 +87,9 @@ class FetchKycView(APIView):
         validated_request_params = KycViewHelper.fetch_kyc_validator(request_params, member_id, x_username, x_password)
 
         if 'error_message' in validated_request_params:
-            return JsonResponse(
-                {'success': False, 'error_message': validated_request_params['error_message']},
-                status=status_codes.HTTP_400_BAD_REQUEST
-            )
+            context = ResponseUtilities.get_view_impl_error_context(validated_request_params['error_message'],
+                                                                    status_codes.HTTP_400_BAD_REQUEST)
+            return JsonResponse(context['data'], status=context['status'])
 
         kyc_manager = KycImpl(member_id=validated_request_params['member_id'],
                               community_id=validated_request_params['community_id'],
@@ -102,10 +98,9 @@ class FetchKycView(APIView):
         response_data = kyc_manager.fetch_kyc()
 
         if 'error_message' in response_data:
-            return JsonResponse(
-                {'success': False, 'error_message': response_data['error_message']},
-                status=response_data['status']
-            )
+            context = ResponseUtilities.get_view_impl_error_context(response_data['error_message'],
+                                                                    response_data['status'])
+            return JsonResponse(context['data'], status=context['status'])
 
         return JsonResponse({'success': True, 'kyc': response_data['kyc']}, status=response_data['status'])
 
@@ -126,20 +121,18 @@ class FetchAllKycView(APIView):
         validated_request_params = KycViewHelper.fetch_all_kyc_validator(request_params, x_username, x_password)
 
         if 'error_message' in validated_request_params:
-            return JsonResponse(
-                {'success': False, 'error_message': validated_request_params['error_message']},
-                status=status_codes.HTTP_400_BAD_REQUEST
-            )
+            context = ResponseUtilities.get_view_impl_error_context(validated_request_params['error_message'],
+                                                                    status_codes.HTTP_400_BAD_REQUEST)
+            return JsonResponse(context['data'], status=context['status'])
 
         kyc_manager = KycImpl(username=validated_request_params['x_username'],
                               password=validated_request_params['x_password'])
         response_data = kyc_manager.fetch_all_kyc(page=validated_request_params['page'])
 
         if 'error_message' in response_data:
-            return JsonResponse(
-                {'success': False, 'error_message': response_data['error_message']},
-                status=response_data['status']
-            )
+            context = ResponseUtilities.get_view_impl_error_context(response_data['error_message'],
+                                                                    response_data['status'])
+            return JsonResponse(context['data'], status=context['status'])
 
         return JsonResponse({'success': True, 'kyc': response_data['kyc']}, status=response_data['status'])
 
@@ -160,10 +153,9 @@ class EditKycView(APIView):
         validated_request_body = KycViewHelper.edit_kyc_body_validator(request_body, x_username, x_password)
 
         if 'error_message' in validated_request_body:
-            return JsonResponse(
-                {'success': False, 'error_message': validated_request_body['error_message']},
-                status=status_codes.HTTP_400_BAD_REQUEST
-            )
+            context = ResponseUtilities.get_view_impl_error_context(validated_request_body['error_message'],
+                                                                    status_codes.HTTP_400_BAD_REQUEST)
+            return JsonResponse(context['data'], status=context['status'])
 
         kyc_manager = KycImpl(community_id=validated_request_body['community_id'],
                               username=x_username,
@@ -171,9 +163,8 @@ class EditKycView(APIView):
         response_data = kyc_manager.edit_kyc(validated_request_body)
 
         if 'error_message' in response_data:
-            return JsonResponse(
-                {'success': False, 'error_message': response_data['error_message']},
-                status=response_data['status']
-            )
+            context = ResponseUtilities.get_view_impl_error_context(response_data['error_message'],
+                                                                    response_data['status'])
+            return JsonResponse(context['data'], status=context['status'])
 
         return JsonResponse({'success': True, 'kyc': response_data['kyc']}, status=response_data['status'])

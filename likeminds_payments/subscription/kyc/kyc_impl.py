@@ -1,3 +1,4 @@
+import json
 from subscription.kyc.kyc_manager import KYCManager
 from subscription.kyc.constants import KYC_LIST_PAGE_SIZE
 from subscription.kyc.serializers import KycSerializer
@@ -7,6 +8,7 @@ from subscription.utility.model_utilities import ModelUtilities
 from subscription.utility.number_utilities import NumberUtilities
 from subscription.utility.string_utilities import StringUtilities
 from subscription.utility.request_utilities import RequestUtilities
+from subscription.utility.response_utilities import ResponseUtilities
 from subscription.utility.core_service_utilities import CoreServiceUtilities
 from subscription.external_services.razorpay.razorpayX_wrapper import RazorpayXWrapper
 from subscription.kyc.models import CommunityKYC
@@ -40,21 +42,22 @@ class KycImpl(KYCManager):
     def add_kyc(self, request_body) -> dict:
 
         if not self.get_member_id() or not self.get_community_id():
-            return {'error_message': 'send x-member-id in headers and community_id in body',
-                    'status': status_codes.HTTP_400_BAD_REQUEST}
+            return ResponseUtilities.get_impl_error_context('send x-member-id in headers and community_id in body',
+                                                            status_codes.HTTP_400_BAD_REQUEST)
 
         has_permission_check = CoreServiceUtilities.has_permission(self.get_community_id(), self.get_member_id())
 
         if 'error_message' in has_permission_check:
-            return {'error_message': has_permission_check['error_message'],
-                    'status': status_codes.HTTP_500_INTERNAL_SERVER_ERROR}
+            return ResponseUtilities.get_impl_error_context(has_permission_check['error_message'],
+                                                            status_codes.HTTP_500_INTERNAL_SERVER_ERROR)
 
         if 'has_permission' in has_permission_check and has_permission_check['has_permission'] is False:
-            return {'error_message': 'You are not the Owner/CM of the community',
-                    'status': status_codes.HTTP_401_UNAUTHORIZED}
+            return ResponseUtilities.get_impl_error_context('You are not the Owner/CM of the community',
+                                                            status_codes.HTTP_401_UNAUTHORIZED)
 
         if ModelUtilities.is_model_filter_exists(CommunityKYC, {'community_id': self.get_community_id()}):
-            return {'error_message': 'KYC record already exists!', 'status': status_codes.HTTP_400_BAD_REQUEST}
+            return ResponseUtilities.get_impl_error_context('KYC record already exists!',
+                                                            status_codes.HTTP_400_BAD_REQUEST)
 
         request_body['user_id'] = NumberUtilities.get_integer_from_string(self.get_member_id())
         kyc_serializer = KycSerializer(data=request_body)
@@ -63,43 +66,44 @@ class KycImpl(KYCManager):
             kyc_serializer.save()
             return {'kyc': kyc_serializer.data, 'status': status_codes.HTTP_201_CREATED}
 
-        return {'error_message': str(kyc_serializer.errors), 'status': status_codes.HTTP_400_BAD_REQUEST}
+        return ResponseUtilities.get_impl_error_context(json.dumps(kyc_serializer.errors),
+                                                        status_codes.HTTP_400_BAD_REQUEST)
 
     def upload_kyc(self, request_body) -> dict:
 
         if self.get_member_id() is None or self.get_community_id() is None:
-            return {'error_message': 'send x-member-id in headers and community_id in body',
-                    'status': status_codes.HTTP_400_BAD_REQUEST}
+            return ResponseUtilities.get_impl_error_context('send x-member-id in headers and community_id in body',
+                                                            status_codes.HTTP_400_BAD_REQUEST)
 
         has_permission_check = CoreServiceUtilities.has_permission(self.get_community_id(), self.get_member_id())
 
         if 'error_message' in has_permission_check:
-            return {'error_message': has_permission_check['error_message'],
-                    'status': status_codes.HTTP_500_INTERNAL_SERVER_ERROR}
+            return ResponseUtilities.get_impl_error_context(has_permission_check['error_message'],
+                                                            status_codes.HTTP_500_INTERNAL_SERVER_ERROR)
 
         if 'has_permission' in has_permission_check and has_permission_check['has_permission'] is False:
-            return {'error_message': 'You are not the Owner/CM of the community',
-                    'status': status_codes.HTTP_401_UNAUTHORIZED}
+            return ResponseUtilities.get_impl_error_context('You are not the Owner/CM of the community',
+                                                            status_codes.HTTP_401_UNAUTHORIZED)
 
         kyc_instances = ModelUtilities.get_model_filter(CommunityKYC, {'community_id': self.get_community_id()})
 
         if len(kyc_instances) == 0:
-            return {'error_message': 'No KYC instance found for this community',
-                    'status': status_codes.HTTP_404_NOT_FOUND}
+            return ResponseUtilities.get_impl_error_context('No KYC instance found for this community',
+                                                            status_codes.HTTP_404_NOT_FOUND)
 
         kyc_instance = kyc_instances[0]
 
         if kyc_instance.doc_front_url is not None and request_body['doc_front_url'] is not None:
-            return {'error_message': 'KYC doc already uploaded for doc_front_url!',
-                    'status': status_codes.HTTP_400_BAD_REQUEST}
+            return ResponseUtilities.get_impl_error_context('KYC doc already uploaded for doc_front_url!',
+                                                            status_codes.HTTP_400_BAD_REQUEST)
 
         if kyc_instance.doc_back_url is not None and request_body['doc_back_url'] is not None:
-            return {'error_message': 'KYC doc already uploaded for doc_back_url!',
-                    'status': status_codes.HTTP_400_BAD_REQUEST}
+            return ResponseUtilities.get_impl_error_context('KYC doc already uploaded for doc_back_url!',
+                                                            status_codes.HTTP_400_BAD_REQUEST)
 
         if kyc_instance.doc_pan_url is not None and request_body['doc_pan_url'] is not None:
-            return {'error_message': 'KYC doc already uploaded for doc_pan_url!',
-                    'status': status_codes.HTTP_400_BAD_REQUEST}
+            return ResponseUtilities.get_impl_error_context('KYC doc already uploaded for doc_pan_url!',
+                                                            status_codes.HTTP_400_BAD_REQUEST)
 
         if request_body['doc_front_url'] is not None:
             kyc_instance.doc_front_url = request_body.get('doc_front_url')
@@ -119,41 +123,41 @@ class KycImpl(KYCManager):
         if self.get_member_id() is None:
 
             if self.get_username() is None or self.get_password() is None:
-                return {'error_message': 'send x-member-id or x-username/x-password in headers',
-                        'status': status_codes.HTTP_400_BAD_REQUEST}
+                return ResponseUtilities.get_impl_error_context('send x-member-id or x-username/x-password in headers',
+                                                                status_codes.HTTP_400_BAD_REQUEST)
 
             if not RequestUtilities.verify_growth_authentication(self.get_username(), self.get_password()):
-                return {'error_message': 'You are not authorized to perform this operation',
-                        'status': status_codes.HTTP_401_UNAUTHORIZED}
+                return ResponseUtilities.get_impl_error_context('You are not authorized to perform this operation',
+                                                                status_codes.HTTP_401_UNAUTHORIZED)
 
         else:
             has_permission_check = CoreServiceUtilities.has_permission(self.get_community_id(), self.get_member_id())
 
             if 'error_message' in has_permission_check:
-                return {'error_message': has_permission_check['error_message'],
-                        'status': status_codes.HTTP_500_INTERNAL_SERVER_ERROR}
+                return ResponseUtilities.get_impl_error_context(has_permission_check['error_message'],
+                                                                status_codes.HTTP_500_INTERNAL_SERVER_ERROR)
 
             if 'has_permission' in has_permission_check and not has_permission_check['has_permission']:
-                return {'error_message': 'You are not the Owner/CM of the community',
-                        'status': status_codes.HTTP_401_UNAUTHORIZED}
+                return ResponseUtilities.get_impl_error_context('You are not the Owner/CM of the community',
+                                                                status_codes.HTTP_401_UNAUTHORIZED)
 
         kyc_instances = ModelUtilities.get_model_filter(CommunityKYC, {'community_id': self.get_community_id()})
 
         if len(kyc_instances) == 0:
-            return {'error_message': 'No kyc record found for given community_id',
-                    'status': status_codes.HTTP_404_NOT_FOUND}
+            return ResponseUtilities.get_impl_error_context('No kyc record found for given community_id',
+                                                            status_codes.HTTP_404_NOT_FOUND)
 
         return {'kyc': KycSerializer(kyc_instances[0]).data, 'status': status_codes.HTTP_200_OK}
 
     def fetch_all_kyc(self, page: int = 1) -> dict:
 
         if self.get_username() is None or self.get_password() is None:
-            return {'error_message': 'x-username/x-password in headers',
-                    'status': status_codes.HTTP_400_BAD_REQUEST}
+            return ResponseUtilities.get_impl_error_context('x-username/x-password in headers',
+                                                            status_codes.HTTP_400_BAD_REQUEST)
 
         if not RequestUtilities.verify_growth_authentication(self.get_username(), self.get_password()):
-            return {'error_message': 'You are not authorized to perform this operation',
-                    'status': status_codes.HTTP_401_UNAUTHORIZED}
+            return ResponseUtilities.get_impl_error_context('You are not authorized to perform this operation',
+                                                            status_codes.HTTP_401_UNAUTHORIZED)
 
         kyc_instances = ModelUtilities.get_model_filter(CommunityKYC, {}).order_by('-created_at')
         output = ModelUtilities.paginate_queryset(kyc_instances, page, KYC_LIST_PAGE_SIZE)
@@ -185,17 +189,18 @@ class KycImpl(KYCManager):
     def edit_kyc(self, request_body) -> dict:
 
         if self.get_username() is None or self.get_password() is None:
-            return {'error_message': 'x-username/x-password in headers',
-                    'status': status_codes.HTTP_400_BAD_REQUEST}
+            return ResponseUtilities.get_impl_error_context('x-username/x-password in headers',
+                                                            status_codes.HTTP_400_BAD_REQUEST)
 
         if not RequestUtilities.verify_growth_authentication(self.get_username(), self.get_password()):
-            return {'error_message': 'You are not authorized to perform this operation',
-                    'status': status_codes.HTTP_401_UNAUTHORIZED}
+            return ResponseUtilities.get_impl_error_context('You are not authorized to perform this operation',
+                                                            status_codes.HTTP_401_UNAUTHORIZED)
 
         kyc_instance = ModelUtilities.get_model_filter(CommunityKYC, {'community_id': self.get_community_id()})
 
         if len(kyc_instance) == 0:
-            return {'error_message': 'No kyc instance for given community', 'status': status_codes.HTTP_404_NOT_FOUND}
+            return ResponseUtilities.get_impl_error_context('No kyc instance for given community',
+                                                            status_codes.HTTP_404_NOT_FOUND)
 
         updated_kyc_instance = self._update_kyc_instance(kyc_instance[0], request_body)
 

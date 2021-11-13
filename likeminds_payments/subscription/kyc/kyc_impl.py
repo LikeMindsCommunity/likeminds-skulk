@@ -1,6 +1,6 @@
 from subscription.kyc.kyc_manager import KYCManager
-from subscription.kyc.constants import *
-from subscription.kyc.serializers import KycSerializer, MultipleKycSerializer
+from subscription.kyc.constants import KYC_LIST_PAGE_SIZE
+from subscription.kyc.serializers import KycSerializer
 from rest_framework import status as status_codes
 from subscription.utility.states import KYCState
 from subscription.utility.model_utilities import ModelUtilities
@@ -57,9 +57,13 @@ class KycImpl(KYCManager):
             return {'error_message': 'KYC record already exists!', 'status': status_codes.HTTP_400_BAD_REQUEST}
 
         request_body['user_id'] = NumberUtilities.get_integer_from_string(self.get_member_id())
-        kyc_instance = CommunityKYC.create_instance(request_body)
+        kyc_serializer = KycSerializer(data=request_body)
 
-        return {'kyc': KycSerializer(kyc_instance), 'status': status_codes.HTTP_201_CREATED}
+        if kyc_serializer.is_valid():
+            kyc_serializer.save()
+            return {'kyc': kyc_serializer.data, 'status': status_codes.HTTP_201_CREATED}
+
+        return {'error_message': str(kyc_serializer.errors), 'status': status_codes.HTTP_400_BAD_REQUEST}
 
     def upload_kyc(self, request_body) -> dict:
 
@@ -108,7 +112,7 @@ class KycImpl(KYCManager):
 
         kyc_instance.save()
 
-        return {'kyc': KycSerializer(kyc_instance), 'status': status_codes.HTTP_200_OK}
+        return {'kyc': KycSerializer(kyc_instance).data, 'status': status_codes.HTTP_200_OK}
 
     def fetch_kyc(self) -> dict:
 
@@ -139,7 +143,7 @@ class KycImpl(KYCManager):
             return {'error_message': 'No kyc record found for given community_id',
                     'status': status_codes.HTTP_404_NOT_FOUND}
 
-        return {'kyc': KycSerializer(kyc_instances[0]), 'status': status_codes.HTTP_200_OK}
+        return {'kyc': KycSerializer(kyc_instances[0]).data, 'status': status_codes.HTTP_200_OK}
 
     def fetch_all_kyc(self, page: int = 1) -> dict:
 
@@ -152,12 +156,13 @@ class KycImpl(KYCManager):
                     'status': status_codes.HTTP_401_UNAUTHORIZED}
 
         kyc_instances = ModelUtilities.get_model_filter(CommunityKYC, {}).order_by('-created_at')
-        output = ModelUtilities.paginate_queryset(kyc_instances, page, PAGE_SIZE)
+        output = ModelUtilities.paginate_queryset(kyc_instances, page, KYC_LIST_PAGE_SIZE)
 
-        return {'kyc': MultipleKycSerializer(output), 'status': status_codes.HTTP_200_OK}
+        return {'kyc': KycSerializer(output, many=True).data, 'status': status_codes.HTTP_200_OK}
 
     @staticmethod
     def _update_kyc_instance(kyc_instance, kyc_data):
+
         kyc_instance.name = kyc_data.get('name', kyc_instance.name)
         kyc_instance.address = kyc_data.get('address', kyc_instance.address)
         kyc_instance.doc_type = kyc_data.get('doc_type', kyc_instance.doc_type)
@@ -242,4 +247,4 @@ class KycImpl(KYCManager):
                     updated_kyc_instance.account_id = response['account'].get('id', None)
                     updated_kyc_instance.save()
 
-        return {'kyc': KycSerializer(updated_kyc_instance), 'status': status_codes.HTTP_200_OK}
+        return {'kyc': KycSerializer(updated_kyc_instance).data, 'status': status_codes.HTTP_200_OK}

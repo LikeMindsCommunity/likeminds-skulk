@@ -4,6 +4,7 @@ import requests
 from requests.auth import HTTPBasicAuth
 from subscription.external_services.razorpay.constants import *
 from subscription.external_services.razorpay.razorpayX_manager import RazorpayXManager
+from subscription.utility.response_utilities import ResponseUtilities
 
 
 class RazorpayXWrapper(RazorpayXManager):
@@ -26,19 +27,19 @@ class RazorpayXWrapper(RazorpayXManager):
     def _create_contact_api_payload(contact_info) -> dict:
 
         if not contact_info:
-            return {'error_message': 'send contact info'}
+            return ResponseUtilities.get_inner_error_context('send contact info')
 
         if 'name' not in contact_info:
-            return {'error_message': 'send contact name'}
+            return ResponseUtilities.get_inner_error_context('send contact name')
 
         if 'user_id' not in contact_info:
-            return {'error_message': 'send user_id'}
+            return ResponseUtilities.get_inner_error_context('send user_id')
 
         if 'email' not in contact_info:
-            return {'error_message': 'send email'}
+            return ResponseUtilities.get_inner_error_context('send email')
 
         if 'phone' not in contact_info:
-            return {'error_message': 'send phone'}
+            return ResponseUtilities.get_inner_error_context('send phone')
 
         payload = {
             'headers': {
@@ -65,10 +66,11 @@ class RazorpayXWrapper(RazorpayXManager):
                                          auth=HTTPBasicAuth(self.get_key_id(), self.get_key_secret()))
 
             if hasattr(api_response, 'status_code') and int(api_response.status_code) not in [200, 201]:
-                return {'error_message': 'message: {}'.format(api_response.content.decode('utf-8'))}
+                return ResponseUtilities.get_inner_error_context(
+                    'message: {}'.format(api_response.content.decode('utf-8')))
 
         except:
-            return {'error_message': 'error making request'}
+            return ResponseUtilities.get_inner_error_context('error making request')
 
         return {'contact': json.loads(api_response.content)}
 
@@ -76,16 +78,16 @@ class RazorpayXWrapper(RazorpayXManager):
     def _create_account_api_payload(account_info) -> dict:
 
         if not account_info:
-            return {'error_message': 'send account info'}
+            return ResponseUtilities.get_inner_error_context('send account info')
 
         if 'contact_id' not in account_info:
-            return {'error_message': 'send contact id'}
+            return ResponseUtilities.get_inner_error_context('send contact id')
 
         if 'account_type' not in account_info:
-            return {'error_message': 'send account_type'}
+            return ResponseUtilities.get_inner_error_context('send account_type')
 
         if 'bank_account' not in account_info:
-            return {'error_message': 'send bank_account'}
+            return ResponseUtilities.get_inner_error_context('send bank_account')
 
         payload = {
             'headers': {
@@ -107,9 +109,10 @@ class RazorpayXWrapper(RazorpayXManager):
                                          auth=HTTPBasicAuth(self.get_key_id(), self.get_key_secret()))
 
             if hasattr(api_response, 'status_code') and int(api_response.status_code) not in [200, 201]:
-                return {'error_message': 'message: {}'.format(api_response.content.decode('utf-8'))}
+                return ResponseUtilities.get_inner_error_context(
+                    'message: {}'.format(api_response.content.decode('utf-8')))
 
         except:
-            return {'error_message': 'error making request'}
+            return ResponseUtilities.get_inner_error_context('error making request')
 
         return {'account': json.loads(api_response.content)}

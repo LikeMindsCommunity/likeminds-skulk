@@ -60,20 +60,11 @@ class KycViewHelper:
             return {'error_message': 'send community_id in body'}
 
         body = {
-            'doc_front_url': None,
-            'doc_back_url': None,
-            'doc_pan_url': None,
+            'doc_front_url': request_body.get('doc_front_url', None),
+            'doc_back_url': request_body.get('doc_back_url', None),
+            'doc_pan_url': request_body.get('doc_pan_url', None),
             'community_id': request_body.get('community_id')
         }
-
-        if 'doc_front_url' in request_body:
-            body['doc_front_url'] = request_body.get('doc_front_url')
-
-        if 'doc_back_url' in request_body:
-            body['doc_back_url'] = request_body.get('doc_back_url')
-
-        if 'doc_pan_url' in request_body:
-            body['doc_pan_url'] = request_body.get('doc_pan_url')
 
         fields_list = [body['doc_front_url'], body['doc_back_url'], body['doc_pan_url']]
 

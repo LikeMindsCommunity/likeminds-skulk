@@ -28,31 +28,6 @@ class CommunityKYC(models.Model):
     def __str__(self):
         return self.pk
 
-    @staticmethod
-    def create_instance(kyc_body):
-        instance = CommunityKYC()
-        instance.user_id = kyc_body.get('user_id')
-        instance.community_id = kyc_body.get('community_id')
-        instance.name = kyc_body.get('name', '')
-        instance.address = kyc_body.get('address', '')
-        instance.doc_type = kyc_body.get('doc_type', None)
-        instance.doc_number = kyc_body.get('doc_number', None)
-        instance.doc_front_url = kyc_body.get('doc_front_url', None)
-        instance.doc_back_url = kyc_body.get('doc_back_url', None)
-        instance.doc_pan_number = kyc_body.get('doc_pan_number', None)
-        instance.doc_pan_url = kyc_body.get('doc_pan_url', None)
-        instance.gstn = kyc_body.get('gstn', None)
-        instance.bank_user_name = kyc_body.get('bank_user_name', '')
-        instance.bank_ifsc_code = kyc_body.get('bank_ifsc_code', '')
-        instance.account_number = kyc_body.get('account_number', None)
-        instance.bank_name = kyc_body.get('bank_name', '')
-        instance.status = KYCState.PENDING_APPROVAL
-        instance.contact_id = None
-        instance.account_id = None
-        instance.save()
-
-        return instance
-
     def save(self, *args, **kwargs):
 
         current_time = TimeUtilities.current_time_in_milliseconds()

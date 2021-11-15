@@ -164,28 +164,6 @@ class KycImpl(KYCManager):
 
         return {'kyc': KycSerializer(output, many=True).data, 'status': status_codes.HTTP_200_OK}
 
-    @staticmethod
-    def _update_kyc_instance(kyc_instance, kyc_data):
-
-        kyc_instance.name = kyc_data.get('name', kyc_instance.name)
-        kyc_instance.address = kyc_data.get('address', kyc_instance.address)
-        kyc_instance.doc_type = kyc_data.get('doc_type', kyc_instance.doc_type)
-        kyc_instance.doc_number = kyc_data.get('doc_number', kyc_instance.doc_number)
-        kyc_instance.doc_front_url = kyc_data.get('doc_front_url', kyc_instance.doc_front_url)
-        kyc_instance.doc_back_url = kyc_data.get('doc_back_url', kyc_instance.doc_back_url)
-        kyc_instance.doc_pan_number = kyc_data.get('doc_pan_number', kyc_instance.doc_pan_number)
-        kyc_instance.doc_pan_url = kyc_data.get('doc_pan_url', kyc_instance.doc_pan_url)
-        kyc_instance.gstn = kyc_data.get('gstn', kyc_instance.gstn)
-        kyc_instance.bank_user_name = kyc_data.get('bank_user_name', kyc_instance.bank_user_name)
-        kyc_instance.bank_ifsc_code = kyc_data.get('bank_ifsc_code', kyc_instance.bank_ifsc_code)
-        kyc_instance.account_number = kyc_data.get('account_number', kyc_instance.account_number)
-        kyc_instance.bank_name = kyc_data.get('bank_name', kyc_instance.bank_name)
-        kyc_instance.status = kyc_data.get('status', kyc_instance.status)
-
-        kyc_instance.save()
-
-        return kyc_instance
-
     def edit_kyc(self, request_body) -> dict:
 
         if self.get_username() is None or self.get_password() is None:
@@ -202,7 +180,8 @@ class KycImpl(KYCManager):
             return ResponseUtilities.get_impl_error_context('No kyc instance for given community',
                                                             status_codes.HTTP_404_NOT_FOUND)
 
-        updated_kyc_instance = self._update_kyc_instance(kyc_instance[0], request_body)
+        serializer = KycSerializer()
+        updated_kyc_instance = serializer.update(kyc_instance[0], request_body)
 
         if updated_kyc_instance.status == KYCState.APPROVED:
 
@@ -223,6 +202,11 @@ class KycImpl(KYCManager):
 
                     razorpay_X_manager = RazorpayXWrapper()
                     response = razorpay_X_manager.create_contact(contact_details)
+
+                    if 'error_message' in response:
+                        return ResponseUtilities.get_impl_error_context(
+                            'KYC updated but status activation failed due to {}'.format(response['error_message']),
+                            status_codes.HTTP_500_INTERNAL_SERVER_ERROR)
 
                     if 'contact' in response:
                         updated_kyc_instance.contact_id = response['contact'].get('id', None)
@@ -247,6 +231,11 @@ class KycImpl(KYCManager):
 
                 razorpay_X_manager = RazorpayXWrapper()
                 response = razorpay_X_manager.create_fund_account(account_details)
+
+                if 'error_message' in response:
+                    return ResponseUtilities.get_impl_error_context(
+                        'KYC updated but status activation failed due to {}'.format(response['error_message']),
+                        status_codes.HTTP_500_INTERNAL_SERVER_ERROR)
 
                 if 'account' in response:
                     updated_kyc_instance.account_id = response['account'].get('id', None)

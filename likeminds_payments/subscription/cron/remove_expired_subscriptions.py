@@ -29,6 +29,5 @@ def handle():
 
             PlanViewHelper.add_member_to_subscription_expired_cohort(
                 user_id=subscription.user_id,
-                plan_id=subscription.plan_id,
                 community_id=subscription.community_id
             )

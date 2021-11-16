@@ -219,6 +219,15 @@ class ConvertToPaidView(TransactionMixin, APIView):
                 status=status_codes.HTTP_200_OK
             )
 
+        cohort_response = PlanViewHelper.create_subscription_expired_plan_cohort(validated_request_body['community_id'],
+                                                                                 member_id)
+
+        if 'error_message' in cohort_response:
+            return JsonResponse(
+                {'success': False, 'error_message': cohort_response['error_message']},
+                status=cohort_response['status_code']
+            )
+
         return JsonResponse(
             {'success': True},
             status=status_codes.HTTP_200_OK

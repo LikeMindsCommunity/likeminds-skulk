@@ -1,4 +1,5 @@
 import json
+from .constants import *
 
 
 class RequestUtilities:
@@ -37,3 +38,11 @@ class RequestUtilities:
             ip = RequestUtilities.get_parameter_from_headers(request, 'REMOTE_ADDR')
 
         return ip
+
+    @staticmethod
+    def verify_growth_authentication(x_username, x_password) -> bool:
+
+        if x_username == CMS_USER_NAME and x_password == CMS_PASSWORD:
+            return True
+
+        return False

@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, include
 from .plans.plan_view_impl import *
 from .orders.order_view_impl import *
 from .transactions.transaction_view_impl import *
@@ -46,5 +46,6 @@ urlpatterns = [
     path('payment_page/download_all', DownloadAllPaymentPageView.as_view(), name='download_all_payment_page'),
     path('payment_page/fetch', FetchPaymentPageView.as_view(), name='fetch_payment_page'),
     path('payment_page/fetch_contact_us', FetchContactUsView.as_view(), name='fetch_contact_us'),
-    path('create_payment_page_order', CreatePaymentPageOrderView.as_view(), name='create_payment_page_order')
+    path('create_payment_page_order', CreatePaymentPageOrderView.as_view(), name='create_payment_page_order'),
+    path('kyc/', include('subscription.kyc.urls'))
 ]

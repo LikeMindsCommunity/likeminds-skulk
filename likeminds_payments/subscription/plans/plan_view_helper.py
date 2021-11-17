@@ -338,7 +338,6 @@ class PlanViewHelper:
         cohort_info = {
             'member_id': user_id,
             'type': cohort_types.SUBSCRIPTION_EXPIRED_PLAN,
-            'type_id': None,
             'community_id': community_id,
             'member_ids': [int(user_id)]
         }

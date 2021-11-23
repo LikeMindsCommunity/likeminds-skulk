@@ -2,6 +2,7 @@ from django.conf import settings
 
 PENDING_MEMBER = 3
 ADMIN = 1
+BRANCH_LINK_BASE_URL = "https://collabmates.app.link"
 COMMUNITY_API = "{}/api/community/fetch".format(settings.CORE_SERVICE_URL)
 MEMBER_STATE_API = "{}/api/members_state".format(settings.CORE_SERVICE_URL)
 COMMUNITY_QUESTIONS_API = "{}/api/questions".format(settings.CORE_SERVICE_URL)

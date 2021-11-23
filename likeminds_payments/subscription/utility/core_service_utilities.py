@@ -105,10 +105,10 @@ class CoreServiceUtilities:
         response = ApiUtilities.generate_get_request(url=url, query_params=query_params)
 
         if 'error_message' in response:
-            return {'error_message': response['error_message']}
+            return {'error_message': response['error_message'], 'status_code': response['status_code']}
 
         if 'community' not in response:
-            return {'error_message': 'no community object in community data response'}
+            return {'error_message': 'no community object in community data response', 'status_code': response['status_code']}
 
         return {'community': response['community']}
 
@@ -491,8 +491,13 @@ class CoreServiceUtilities:
         data = {
             'member_ids': cohort_info.get('member_ids'),
             'type': cohort_info.get('type'),
-            'type_id': cohort_info.get('type_id')
         }
+
+        if cohort_info.get('type_id'):
+            data['type_id'] = cohort_info.get('type_id')
+
+        if cohort_info.get('community_id'):
+            data['community_id'] = cohort_info.get('community_id')
 
         headers = {
             'x-member-id': '{}'.format(member_id)

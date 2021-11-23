@@ -5,6 +5,7 @@ from ..utility.core_service_utilities import CoreServiceUtilities
 from ..utility.model_utilities import ModelUtilities
 from ..utility.number_utilities import NumberUtilities
 from ..utility.request_utilities import RequestUtilities
+from ..utility.url_utilities import UrlUtilities
 from ..external_services.razorpay.razorpay_wrapper import RazorpayWrapper
 from .constants import *
 from ..utility.states import MemberState, EventDiscountType
@@ -363,7 +364,8 @@ class OrderViewHelper:
                 "community_id": community_data['id'],
                 "community_name": community_data['name'],
                 "type": "payment_page",
-                "payment_page_url": order_body['payment_page_url'],
+                "payment_page_url": UrlUtilities.extract_part_from_url(payment_page_instance.payment_page_url,
+                                                                       'path', init_slash_off=True),
                 "payment_name": order_body['payment_name'],
             }
         }

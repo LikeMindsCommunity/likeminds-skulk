@@ -328,15 +328,23 @@ class SubscriptionImpl(SubscriptionManager):
 
         if not transaction_instance.renew:
 
+            community_data = CoreServiceUtilities.get_community_data(plan_instance.community_id)
+
+            if community_data.get('error_message'):
+                return {'error_message': community_data['error_message'], 'status_code': community_data['status_code']}
+
             transaction = SubscriptionImpl._generate_first_transaction(transaction_instance, plan_instance, user_id)
 
-            cohort_response = PlanViewHelper.add_member_to_subscription_cohort(
-                plan_id=transaction_instance.plan_id,
-                user_id=user_id,
-                community_id=plan_instance.community_id)
+            community_dict = community_data.get('community')
 
-            if 'error_message' in cohort_response:
-                return {'error_message': cohort_response['error_message'],  'status_code': cohort_response['status_code']}
+            if community_dict and community_dict.get('auto_approval'):
+                cohort_response = PlanViewHelper.add_member_to_subscription_cohort(
+                    plan_id=transaction_instance.plan_id,
+                    user_id=user_id,
+                    community_id=plan_instance.community_id)
+
+                if 'error_message' in cohort_response:
+                    return {'error_message': cohort_response['error_message'],  'status_code': cohort_response['status_code']}
 
             return transaction
 
@@ -1109,7 +1117,7 @@ class SubscriptionImpl(SubscriptionManager):
                 return {'error_message': 'You are not the Owner/CM of the community',
                         'status': status_codes.HTTP_401_UNAUTHORIZED}
 
-            user_details = CoreServiceUtilities.user_fetch({'member_id': self.get_member_id()})
+            user_details = CoreServiceUtilities.user_fetch({'member_id': request_body.get('user_id')})
 
             user_id = user_details['user']['id']
             user_emails = user_details['user']['emails']

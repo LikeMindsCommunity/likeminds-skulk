@@ -73,11 +73,11 @@ class RazorpayXWrapper(RazorpayXManager):
                 return ResponseUtilities.get_inner_error_context(
                     'message: {}'.format(api_response.content.decode('utf-8')))
 
-        except:
-            error_logger.error('error makeing create contact request on razorpayX')
-            return ResponseUtilities.get_inner_error_context('error making request')
+            return {'contact': json.loads(api_response.content)}
 
-        return {'contact': json.loads(api_response.content)}
+        except:
+            error_logger.error('error making create contact request on razorpayX')
+            return ResponseUtilities.get_inner_error_context('error making request')
 
     @staticmethod
     def _create_account_api_payload(account_info) -> dict:
@@ -117,8 +117,8 @@ class RazorpayXWrapper(RazorpayXManager):
                 return ResponseUtilities.get_inner_error_context(
                     'message: {}'.format(api_response.content.decode('utf-8')))
 
-        except:
-            error_logger.error('error makeing create fund account request on razorpayX')
-            return ResponseUtilities.get_inner_error_context('error making request')
+            return {'account': json.loads(api_response.content)}
 
-        return {'account': json.loads(api_response.content)}
+        except:
+            error_logger.error('error making create fund account request on razorpayX')
+            return ResponseUtilities.get_inner_error_context('error making request')

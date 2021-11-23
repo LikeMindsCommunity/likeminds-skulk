@@ -48,3 +48,13 @@ cohort_types = CohortTypes()
 
 cohort_type_list = [cohort_types.NORMAL, cohort_types.SUBSCRIPTION_PLAN,
                     cohort_types.SUBSCRIPTION_EXPIRED_PLAN, cohort_types.ALL_MEMBER]
+
+
+class SamplePlanTypes:
+    MONTHLY = 'monthly'
+    LIFETIME = 'lifetime'
+    WEEKLY = 'weekly'
+    DAYS = 'days'
+
+
+sample_plan_types = SamplePlanTypes()

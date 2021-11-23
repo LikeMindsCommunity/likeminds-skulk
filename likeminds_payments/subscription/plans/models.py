@@ -19,6 +19,7 @@ class SubscriptionPlan(models.Model):
     description = models.TextField(default='')
     referral_free_days = models.IntegerField(default=0)
     image = models.CharField(max_length=256)
+    description_icon_type = models.IntegerField(null=True)
     created_at = models.BigIntegerField(default=0)
     updated_at = models.BigIntegerField(default=0)
 
@@ -50,6 +51,7 @@ class SubscriptionPlan(models.Model):
         instance.description = plan_body['description']
         instance.referral_free_days = plan_body['referral_free_days']
         instance.image = plan_body['image']
+        instance.description_icon_type = plan_body['description_icon_type']
         instance.save()
 
         return instance
@@ -111,3 +113,91 @@ class SubscriptionEventPlan(models.Model):
         self.updated_at = current_time
 
         super(SubscriptionEventPlan, self).save(*args, **kwargs)
+
+
+class SamplePlanCategory(models.Model):
+    name = models.CharField(max_length=255)
+    image_url = models.TextField()
+    created_at = models.BigIntegerField(default=0)
+    updated_at = models.BigIntegerField(default=0)
+
+    @staticmethod
+    def create_instance(create_info):
+        instance = SamplePlanCategory()
+
+        if create_info.get('id'):
+            instance.id = create_info.get('id')
+        instance.name = create_info.get('name')
+        instance.image_url = create_info.get('image_url')
+
+        return instance
+
+    @staticmethod
+    def update_instance(instance, create_info):
+        instance.name = create_info.get('name') if create_info.get('name') else instance.name
+        instance.image_url = create_info.get('image_url') if create_info.get('image_url') else instance.image_url
+        instance.save()
+
+        return instance
+
+    def save(self, *args, **kwargs):
+        current_time = TimeUtilities.current_time_in_milliseconds()
+
+        if self.created_at == 0:
+            self.created_at = current_time
+
+        self.updated_at = current_time
+
+        super(SamplePlanCategory, self).save(*args, **kwargs)
+
+
+class SamplePlan(models.Model):
+    category = models.ForeignKey(SamplePlanCategory, on_delete=models.CASCADE)
+    name = models.CharField(max_length=255)
+    description = models.TextField(default="")
+    duration_name = models.CharField(default="", max_length=255)
+    duration_in_months = models.IntegerField(default=0)
+    cost = models.IntegerField(default=0)
+    strike_cost = models.IntegerField(default=0)
+    created_at = models.BigIntegerField(default=0)
+    updated_at = models.BigIntegerField(default=0)
+
+    @staticmethod
+    def create_instance(create_info):
+        instance = SamplePlan()
+
+        if create_info.get('id'):
+            instance.id = create_info.get('id')
+        instance.name = create_info.get('name')
+        instance.description = create_info.get('description')
+        instance.duration_name = create_info.get('duration_name')
+        instance.duration_in_months = create_info.get('duration_in_months')
+        instance.cost = create_info.get('cost')
+        instance.strike_cost = create_info.get('strike_cost')
+        instance.category = create_info.get('category_instance')
+        return instance
+
+    @staticmethod
+    def update_instance(instance, create_info):
+        instance.name = create_info.get('name') if create_info.get('name') else instance.name
+        instance.description = create_info.get('description') if create_info.get('description') else instance.description
+        instance.duration_name = create_info.get('duration_name') if create_info.get('duration_name') else instance.duration_name
+        instance.duration_in_months = create_info.get('duration_in_months') if create_info.get('duration_in_months') \
+            else instance.duration_in_months
+        instance.cost = create_info.get('cost') if create_info.get('cost') else instance.cost
+        instance.strike_cost = create_info.get('strike_cost') if create_info.get('strike_cost') else instance.strike_cost
+        instance.category = create_info.get('category_instance') if create_info.get('category_instance') else \
+            instance.category
+        instance.save()
+
+        return instance
+
+    def save(self, *args, **kwargs):
+        current_time = TimeUtilities.current_time_in_milliseconds()
+
+        if self.created_at == 0:
+            self.created_at = current_time
+
+        self.updated_at = current_time
+
+        super(SamplePlan, self).save(*args, **kwargs)

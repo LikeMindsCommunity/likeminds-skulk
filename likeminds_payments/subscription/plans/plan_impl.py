@@ -2,8 +2,8 @@ from __future__ import absolute_import, unicode_literals
 from celery import shared_task
 from .constants import EVENT_PAYMENT_LINK
 from ..plans.plan_manager import PlanManager
-from .models import SubscriptionPlan, SubscriptionEventPlan
-from .serializers import PlanSerializer, EventPlanSerializer
+from .models import SubscriptionPlan, SubscriptionEventPlan, SamplePlanCategory, SamplePlan
+from .serializers import PlanSerializer, EventPlanSerializer, SamplePlanCategorySerializers, SamplePlanSerializers
 from ..utility.async_tasks import update_event_in_webflow_service
 from ..utility.core_service_utilities import CoreServiceUtilities
 from ..utility.model_utilities import ModelUtilities
@@ -166,3 +166,29 @@ class PlanImpl(PlanManager):
         update_event_in_webflow_service.delay(event_plan_instance.event_plan_id, member_id)
 
         return {'success': True}
+
+    def fetch_sample_plan_category(self) -> dict:
+
+        sample_plan_category_filter = ModelUtilities.get_model_filter(SamplePlanCategory, {})
+
+        sample_plan_category_objects = SamplePlanCategorySerializers(sample_plan_category_filter, many=True).data
+
+        sample_plan_categories = []
+
+        for sample_plan_category in sample_plan_category_objects:
+            sample_plan_categories.append(sample_plan_category)
+
+        return {'success': True, 'sample_plan_categories': sample_plan_categories}
+
+    def fetch_sample_plans(self) -> dict:
+
+        sample_plan_filter = ModelUtilities.get_model_filter(SamplePlan, {})
+
+        sample_plan_objects = SamplePlanSerializers(sample_plan_filter, many=True).data
+
+        sample_plans = []
+
+        for sample_plan in sample_plan_objects:
+            sample_plans.append(sample_plan)
+
+        return {'success': True, 'sample_plans': sample_plans}

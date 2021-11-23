@@ -675,8 +675,11 @@ class SubscriptionImpl(SubscriptionManager):
                         return {'error_message': has_permission_check['error_message']}
 
                     if 'has_permission' in has_permission_check:
-                        if has_permission_check['has_permission'] is False:
-                            return {'error_message': 'shared_by user is not the Owner/CM of the community'}
+
+                        community_data = CoreServiceUtilities.get_community_data(self.get_community_id())
+
+                        if (has_permission_check['has_permission'] is False) and community_data['community'].get('is_paid'):
+                            return {'error_message': 'Link invalid'}
 
                         generate_free_subscription = self._generate_free_subscription(self.get_member_id(),
                                                                                       self.get_community_id())

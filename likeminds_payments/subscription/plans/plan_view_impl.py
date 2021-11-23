@@ -220,3 +220,31 @@ class UpdateEventPlanView(APIView):
             return JsonResponse({'error_message': e.args}, status=status_codes.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return JsonResponse(response_data)
+
+
+class FetchSamplePlanCategoryView(TransactionMixin, APIView):
+
+    def get(self, request, *args, **kwargs):
+
+        plan_manager = PlanImpl()
+
+        response_data = plan_manager.fetch_sample_plan_category()
+
+        if response_data.get('error_message'):
+            return JsonResponse(response_data, status=status_codes.HTTP_400_BAD_REQUEST)
+
+        return JsonResponse(response_data)
+
+
+class FetchSamplePlanView(TransactionMixin, APIView):
+
+    def get(self, request, *args, **kwargs):
+
+        plan_manager = PlanImpl()
+
+        response_data = plan_manager.fetch_sample_plans()
+
+        if response_data.get('error_message'):
+            return JsonResponse(response_data, status=status_codes.HTTP_400_BAD_REQUEST)
+
+        return JsonResponse(response_data)

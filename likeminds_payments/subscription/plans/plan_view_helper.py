@@ -63,7 +63,7 @@ class PlanViewHelper:
         return plan_body
 
     @staticmethod
-    def _create_new_plan_instance(plan_body) -> dict:
+    def _create_new_plan_instance(plan_body, user_id=0) -> dict:
 
         if 'cost' in plan_body or plan_body['cost']:
             plan_body['cost'] = NumberUtilities.convert_to_paisa_or_none(plan_body['cost'])
@@ -103,6 +103,13 @@ class PlanViewHelper:
 
         try:
             plan_instance = SubscriptionPlan.create_instance(plan_body)
+
+            # Make community paid
+            community_update = CoreServiceUtilities.edit_community(plan_body.get('community_id'), user_id)
+
+            if 'error_message' in community_update:
+                return {'error_message': community_update['error_message']}
+
         except:
             return {'error_message': 'error_while creating new plan'}
 
@@ -166,7 +173,7 @@ class PlanViewHelper:
             # if 'error_message' in plan_validator:
             #     return {'error_message': plan_validator['error_message']}
 
-            plan_instance = PlanViewHelper._create_new_plan_instance(plan_body)
+            plan_instance = PlanViewHelper._create_new_plan_instance(plan_body, user_id=user_id)
 
             if 'error_message' in plan_instance:
                 return {'error_message': plan_instance['error_message']}

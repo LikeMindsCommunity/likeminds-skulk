@@ -1,8 +1,11 @@
 from ..utility.number_utilities import NumberUtilities
 from ..utility.plan_utilities import PlanUtilities
+from ..utility.model_utilities import ModelUtilities
 from ..utility.states import EventDiscountType
 from .constants import *
 from ..subscriptions.constants import *
+from rest_framework import serializers
+from .models import SamplePlanCategory, SamplePlan
 
 
 def PlanSerializer(plans) -> list:
@@ -24,7 +27,8 @@ def PlanSerializer(plans) -> list:
             'description': plan.description,
             'referral_free_days': plan.referral_free_days,
             'image': plan.image,
-            'url': PlanUtilities.generate_plan_url(plan.plan_id)
+            'url': PlanUtilities.generate_plan_url(plan.plan_id),
+            'description_icon_type': plan.description_icon_type
         }
 
         if plan.strike_cost is not None:
@@ -79,3 +83,52 @@ def EventPlanSerializer(plan_instance) -> dict:
         plan_context['discount'] = NumberUtilities.convert_to_rupee_or_none(plan_instance.discount)
 
     return plan_context
+
+
+class SamplePlanCategorySerializers(serializers.ModelSerializer):
+
+    class Meta:
+        model = SamplePlanCategory
+        fields = ('id', 'name', 'image_url')
+
+    def __init__(self, *args, **kwargs):
+        super(SamplePlanCategorySerializers, self).__init__(*args, **kwargs)
+
+    def to_representation(self, sample_plan_category):
+        data = super(SamplePlanCategorySerializers, self).to_representation(sample_plan_category)
+
+        fields = self._readable_fields
+
+        for field in fields:
+
+            if data[field.field_name] is None:
+                del data[field.field_name]
+
+        return data
+
+
+class SamplePlanSerializers(serializers.ModelSerializer):
+    class Meta:
+        model = SamplePlan
+        fields = ('id', 'name', 'description', 'duration_name', 'duration_in_months', 'cost', 'strike_cost',
+                  'category_id')
+
+    def __init__(self, *args, **kwargs):
+        super(SamplePlanSerializers, self).__init__(*args, **kwargs)
+
+    def to_representation(self, sample_plan):
+        data = super(SamplePlanSerializers, self).to_representation(sample_plan)
+
+        data['category'] = SamplePlanCategorySerializers(ModelUtilities.get_model_instance_or_none(
+            SamplePlanCategory, sample_plan.category_id), many=False).data
+
+        fields = self._readable_fields
+
+        for field in fields:
+
+            if data[field.field_name] is None:
+                del data[field.field_name]
+
+        del data['category_id']
+
+        return data

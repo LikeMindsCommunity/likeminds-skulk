@@ -23,6 +23,14 @@ class KYCState:
     INACTIVE = 2
 
 
+class SettlementStatus:
+    QUEUED = 0
+    INITIATED = 1
+    PROCESSED = 2
+    REVERSED = 3
+    FAILED = 4
+
+
 class MemberState:
     GUEST = 0
     ADMIN = 1

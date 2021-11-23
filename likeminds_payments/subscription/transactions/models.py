@@ -25,11 +25,12 @@ class Transaction(models.Model):
     payment_page_url = models.CharField(max_length=1000)
     shared_by = models.IntegerField(null=True, default=None)
     grace_period = models.IntegerField(default=0)
-    created_at = models.BigIntegerField(default=0)
-    updated_at = models.BigIntegerField(default=0)
     type = models.IntegerField(default=0)
     type_id = models.IntegerField(default=0)
     payment_name = models.TextField(default='')
+    settlement_id = models.CharField(max_length=64, null=True, default=None)
+    created_at = models.BigIntegerField(default=0)
+    updated_at = models.BigIntegerField(default=0)
 
     def __str__(self):
         return str(self.pk)

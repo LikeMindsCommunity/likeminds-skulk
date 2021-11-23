@@ -7,6 +7,7 @@ from ..plans.models import SubscriptionPlan
 from ..payment_page.models import PaymentPageMeta
 from ..subscriptions.constants import MIGRATION, MANUAL_PAYMENT_PAGE
 from ..utility.states import TransactionType
+from subscription.transactions.transaction_impl import TransactionImpl
 
 
 class TransactionViewHelper:
@@ -36,6 +37,26 @@ class TransactionViewHelper:
         return request_body
 
     @staticmethod
+    def get_transactions_query_params(request):
+
+        query_params = {
+            'created_at__gte': request.GET.get('start_epoch', None),
+            'created_at__lte': request.GET.get('end_epoch', None),
+            'payment_email': request.GET.get('payment_email', None),
+            'payment_phone': request.GET.get('payment_phone', None),
+            'type': request.GET.get('type', None),
+            'status': request.GET.get('status', None)
+        }
+
+        output = {}
+
+        for param in query_params.keys():
+            if query_params[param] is not None:
+                output[param] = query_params[param]
+
+        return output
+
+    @staticmethod
     def get_transactions_body_validator(request_body, user_id):
 
         if not request_body:
@@ -45,19 +66,15 @@ class TransactionViewHelper:
             return {'error_message': 'send x-member-id in headers'}
 
         body = {
-            'community_id': None,
-            'user_id': None,
+            'community_id': request_body.get('community_id', None),
+            'user_id': request_body.get('user_id', None),
             'page': 1,
-            'payment_page_id': None
+            'payment_page_id': request_body.get('payment_page_id', None),
+            'settlement_id': request_body.get('settlement_id', None)
         }
 
         if 'community_id' not in request_body or not request_body['community_id']:
             return {'error_message': 'send community_id in body'}
-
-        body['community_id'] = request_body['community_id']
-
-        if 'user_id' in request_body:
-            body['user_id'] = request_body['user_id']
 
         if 'page' in request_body and isinstance(request_body['page'], int):
             body['page'] = NumberUtilities.get_integer_from_string(request_body['page'])
@@ -68,8 +85,6 @@ class TransactionViewHelper:
 
             if not payment_page_filter:
                 return {'error_message': 'Invalid payment_page_id'}
-
-            body['payment_page_id'] = request_body.get('payment_page_id')
 
         return body
 
@@ -134,6 +149,16 @@ class TransactionViewHelper:
         if 'has_permission' in has_permission_check and has_permission_check['has_permission'] is False:
             return {'error_message': 'You are not the Owner/CM of the community'}
 
+        settlement_data = TransactionImpl.get_settlement_amount_data(plan_instance.community_id)
+
+        if 'error_message' in settlement_data:
+            return {'error_message': settlement_data['error_message']}
+
+        paid_amount = settlement_data.get('paid_amount')
+
+        if not (transaction_instance.settlement_id is None and transaction_instance.amount <= paid_amount):
+            return {'error_message': 'You have insufficient balance, we can not refund the transaction'}
+
         return {'transaction_instance': transaction_instance}
 
     @staticmethod
@@ -179,3 +204,27 @@ class TransactionViewHelper:
             return {'error_message': "Invalid payment_page_id"}
 
         return req_body
+
+    @staticmethod
+    def fetch_settlement_amount_body_validator(req_body):
+
+        if not req_body:
+            return {'error_message': 'send community_id in query params'}
+
+        if 'community_id' not in req_body:
+            return {'error_message': 'send community_id in query params'}
+
+        return req_body
+
+    @staticmethod
+    def fetch_settlement_amount_authenticator(community_id, user_id):
+
+        has_permission_check = CoreServiceUtilities.has_permission(community_id, user_id)
+
+        if 'error_message' in has_permission_check:
+            return {'error_message': has_permission_check['error_message']}
+
+        if 'has_permission' in has_permission_check and has_permission_check['has_permission'] is False:
+            return {'error_message': 'You are not the Owner/CM of the community'}
+
+        return {'success': True}

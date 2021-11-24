@@ -58,3 +58,12 @@ PLAN_IMAGES = {
 }
 
 EVENT_PAYMENT_LINK = "%s/event_pay?event_plan_id=%s&chatroom_id=%s&community_id=%s"
+CREATE_PLAN_ANALYTICS_EVENT_NAME = "Membership plan created (Subscription Service)"
+EDIT_PLAN_ANALYTICS_EVENT_NAME = "Membership plan edited (Subscription Service)"
+DELETE_PLAN_ANALYTICS_EVENT_NAME = "Membership plan deleted (Subscription Service)"
+
+SUBSCRIPTION_PLAN_DAYS_MULTIPLIER = {
+    "days": 1,
+    "weekly": 7,
+    "monthly": 30
+}

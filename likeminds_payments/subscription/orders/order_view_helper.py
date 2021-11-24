@@ -258,15 +258,14 @@ class OrderViewHelper:
     @staticmethod
     def create_community_event_order_instance_helper(order_body) -> dict:
 
-        event_plan_instance = ModelUtilities.get_model_instance_or_none(SubscriptionEventPlan,
-                                                                        order_body.get('event_plan_id'))
+        event_plan_instance = SubscriptionEventPlan.get_event_plan_or_None(order_body.get('event_plan_id'))
 
         if not event_plan_instance:
             return {'error_message': 'invalid event_plan_id'}
 
         community_data = CoreServiceUtilities.get_community_data(event_plan_instance.community_id)
 
-        community_plan_instance = ModelUtilities.get_model_instance_or_none(SubscriptionPlan, order_body.get('plan_id'))
+        community_plan_instance = SubscriptionPlan.get_plan_or_None(order_body.get('plan_id'))
 
         if event_plan_instance.community_id != community_plan_instance.community_id:
             return {'error_message': 'plan_id and event_plan_id should belong to same community'}

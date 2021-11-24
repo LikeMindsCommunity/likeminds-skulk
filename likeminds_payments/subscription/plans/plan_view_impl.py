@@ -9,6 +9,7 @@ from ..mixins import TransactionMixin
 from ..utility.json_utilities import JsonUtilities
 from ..utility.request_utilities import RequestUtilities
 from ..plans.plan_impl import PlanImpl
+from ..plans.constants import *
 from ..plans.plan_view_helper import PlanViewHelper
 
 
@@ -32,6 +33,12 @@ class CreatePlanView(TransactionMixin, APIView):
                 status=status_codes.HTTP_400_BAD_REQUEST
             )
 
+        if validated_request_body.get('plan_id'):
+            analytics_event_name = EDIT_PLAN_ANALYTICS_EVENT_NAME
+
+        else:
+            analytics_event_name = CREATE_PLAN_ANALYTICS_EVENT_NAME
+
         instance_data = PlanViewHelper.create_plan_instance_helper(validated_request_body, user_id)
 
         if 'error_message' in instance_data:
@@ -42,6 +49,9 @@ class CreatePlanView(TransactionMixin, APIView):
 
         serialized_plan_list = PlanSerializer([instance_data['plan_instance']])
         serialized_plan = serialized_plan_list[0]
+
+        # Add Event Analytics
+        PlanViewHelper.add_event_for_membership_plan(serialized_plan, analytics_event_name, user_id)
 
         # Creating Subscription Plan Cohort
         cohort_response = PlanViewHelper.create_subscription_plan_cohort(serialized_plan, user_id)
@@ -125,6 +135,11 @@ class DeletePlanView(TransactionMixin, APIView):
 
         plan_manager = PlanImpl(plan_instance=instance_data['plan_instance'])
         response_data = plan_manager.delete_plan()
+
+        # Add Event Analytics
+        serialized_plan_list = PlanSerializer([instance_data['plan_instance']])
+        serialized_plan = serialized_plan_list[0]
+        PlanViewHelper.add_event_for_membership_plan(serialized_plan, DELETE_PLAN_ANALYTICS_EVENT_NAME, user_id)
 
         if 'error_message' in response_data:
             return JsonResponse(

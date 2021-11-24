@@ -52,7 +52,10 @@ def PlanSerializer(plans) -> list:
                 plan_object['duration_in_months'],
                 SUBSCRIPTION_PLAN_NAMES[plan_object['duration_name']]['subtitle'])
 
-        if SUBSCRIPTION_PLAN_NAMES[plan_object['duration_name']]['unique']:
+        if plan.name:
+            plan_title = plan.name
+
+        elif SUBSCRIPTION_PLAN_NAMES[plan_object['duration_name']]['unique']:
             plan_title = SUBSCRIPTION_PLAN_NAMES[plan_object['duration_name']]['title']
 
         else:

@@ -8,42 +8,42 @@ sample_plan_category_list = [
     {
         "id": 1,
         "name": "Language Learning",
-        "image_url": ""
+        "image_url": "https://prod-likeminds-media.s3.ap-south-1.amazonaws.com/files/utilities/language.png"
     },
     {
         "id": 2,
         "name": "Exam preparation",
-        "image_url": ""
+        "image_url": "https://prod-likeminds-media.s3.ap-south-1.amazonaws.com/files/utilities/exam.png"
     },
     {
         "id": 3,
         "name": "Health & fitness",
-        "image_url": ""
+        "image_url": "https://prod-likeminds-media.s3.ap-south-1.amazonaws.com/files/utilities/healthcare.png"
     },
     {
         "id": 4,
         "name": "Hobby Training",
-        "image_url": ""
+        "image_url": "https://prod-likeminds-media.s3.ap-south-1.amazonaws.com/files/utilities/hobby.png"
     },
     {
         "id": 5,
         "name": "Life Coaching",
-        "image_url": ""
+        "image_url": "https://prod-likeminds-media.s3.ap-south-1.amazonaws.com/files/utilities/life.png"
     },
     {
         "id": 6,
         "name": "Income Generation",
-        "image_url": ""
+        "image_url": "https://prod-likeminds-media.s3.ap-south-1.amazonaws.com/files/utilities/Income.png"
     },
     {
         "id": 7,
         "name": "Professional Skilling",
-        "image_url": ""
+        "image_url": "https://prod-likeminds-media.s3.ap-south-1.amazonaws.com/files/utilities/professional_skilling.png"
     },
     {
         "id": 8,
         "name": "Entertainment experiences",
-        "image_url": ""
+        "image_url": "https://prod-likeminds-media.s3.ap-south-1.amazonaws.com/files/utilities/entertainment_experiences.png"
     }
 ]
 

@@ -427,7 +427,8 @@ def payment_success_membership_join_communication(transaction_id):
                     },
                     {
                         "name": "link",
-                        "value": otl_link['private_link']
+                        "value": UrlUtilities.extract_part_from_url(otl_link['private_link'],
+                                                                    'path', init_slash_off=True),
                     },
                     {
                         "name": "payment_id",

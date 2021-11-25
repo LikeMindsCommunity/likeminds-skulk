@@ -582,6 +582,38 @@ class SubscriptionImpl(SubscriptionManager):
 
         return {'error_message': 'Invalid user_id'}
 
+    @staticmethod
+    def _send_analytics_for_free_days_add(user_id, community_id, valid_till, n_days):
+
+        community_data = CoreServiceUtilities.get_community_data(community_id)
+
+        if 'community' in community_data:
+            analytics_data = {
+                'community_id': community_id,
+                'community_name': community_data['community'].get('name')
+            }
+
+            if n_days is not None:
+                analytics_data['days_added'] = n_days
+
+            if valid_till is not None:
+                analytics_data['date_till_added'] = TimeUtilities.convert_epoch_to_date(valid_till)
+
+            analytics.track(user_id, 'Extra days added (Backend)', analytics_data)
+
+    @staticmethod
+    def _send_common_analytics(community_id, user_id, event_name):
+
+        community_data = CoreServiceUtilities.get_community_data(community_id)
+
+        if 'community' in community_data:
+            analytics_data = {
+                'community_id': community_id,
+                'community_name': community_data['community'].get('name')
+            }
+
+            analytics.track(user_id, event_name, analytics_data)
+
     def create_subscription(self, n_days: str = None, valid_till: str = None, shared_by: str = None) -> dict:
 
         if self.get_payment_id() is not None:
@@ -638,6 +670,10 @@ class SubscriptionImpl(SubscriptionManager):
                     if 'error_message' in add_free_days:
                         return {'error_message': add_free_days['error_message']}
 
+                    self._send_analytics_for_free_days_add(self.get_user_id(),
+                                                           self.get_community_id(),
+                                                           valid_till, n_days)
+
                     return {'success': True}
 
                 if self.get_subscription_type() == PAID:
@@ -647,6 +683,10 @@ class SubscriptionImpl(SubscriptionManager):
 
                     if 'error_message' in generate_free_limited_subscription:
                         return {'error_message': generate_free_limited_subscription['error_message']}
+
+                    self._send_common_analytics(self.get_community_id(),
+                                                self.get_user_id(),
+                                                'Converted to paid (Backend)')
 
                     return {'success': True}
 
@@ -666,6 +706,10 @@ class SubscriptionImpl(SubscriptionManager):
                             self.get_user_id(), self.get_community_id())
 
                         self._send_subscription_event(subscription_history_instance, subscription_instance)
+
+                        self._send_common_analytics(self.get_community_id(),
+                                                    self.get_user_id(),
+                                                    'Convert to free (Backend)')
 
                         return {'success': True}
 
@@ -1342,6 +1386,10 @@ class SubscriptionImpl(SubscriptionManager):
                         'status': status_codes.HTTP_401_UNAUTHORIZED}
 
             self._fetch_all_member_data.delay(self.get_community_id(), self.get_member_id())
+
+            self._send_common_analytics(self.get_community_id(),
+                                        self.get_user_id(),
+                                        'Download member list (Backend)')
 
             return {'success': True}
 

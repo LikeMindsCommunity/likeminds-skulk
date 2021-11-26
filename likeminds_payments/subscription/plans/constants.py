@@ -58,3 +58,19 @@ PLAN_IMAGES = {
 }
 
 EVENT_PAYMENT_LINK = "%s/event_pay?event_plan_id=%s&chatroom_id=%s&community_id=%s"
+
+FIRST_MEMBERSHIP_PLAN_CM_MAIL_SUBJECT = "Hi {}! You have successfully created a membership plan"
+FIRST_MEMBERSHIP_PLAN_CM_MAIL_BODY = """
+<p>Hi {}!</p>
+<p>Congratulations on creating your first membership plan with LikeMinds. You have taken the first step to build a paid 
+membership community. Start inviting members to the community by using the link below or head over to the community 
+to view the details.</p> 
+"""
+FIRST_MEMBERSHIP_PLAN_CM_MAIL_AFTER_CODE = """
+<p>If you are facing any issues or want some help, we would love to help you thought the process. Just reply to this 
+email and we will be right there</p>  
+<p>Regards</p>
+<p>Team LikeMinds</p>"""
+FIRST_MEMBERSHIP_PLAN_CM_REPLY_EMAIL = "LikeMinds<hi@likeminds.community>"
+FIRST_MEMBERSHIP_PLAN_CM_MAIL_BUTTON_TEXT = "INVITE MEMBERS"
+

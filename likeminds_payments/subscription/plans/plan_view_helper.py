@@ -1,9 +1,13 @@
+from celery import shared_task
+from django.template.loader import get_template
 from .constants import *
 from .models import SubscriptionPlan
 from ..subscriptions.constants import SUBSCRIPTION_COHORT_NAME, SUBSCRIPTION_EXPIRED_COHORT_NAME
 from ..utility.core_service_utilities import CoreServiceUtilities
 from ..utility.number_utilities import NumberUtilities
+from ..utility.model_utilities import ModelUtilities
 from ..utility.states import cohort_types
+from ..utility.async_tasks import send_email_from_core_service, get_first_verified_email_and_phone
 
 
 class PlanViewHelper:
@@ -109,6 +113,10 @@ class PlanViewHelper:
 
             if 'error_message' in community_update:
                 return {'error_message': community_update['error_message']}
+
+            # Send first plan creation mail
+            PlanViewHelper.send_email_for_first_plan_creation.delay(community_id=plan_body.get('community_id'),
+                                                                    user_id=user_id)
 
         except:
             return {'error_message': 'error_while creating new plan'}
@@ -356,3 +364,50 @@ class PlanViewHelper:
 
         return {}
 
+    @staticmethod
+    @shared_task
+    def send_email_for_first_plan_creation(community_id, user_id):
+
+        plan_filter = ModelUtilities.get_model_filter(SubscriptionPlan, {'community_id': community_id})
+
+        if len(plan_filter) == 1:
+            community_data = CoreServiceUtilities.get_community_data(community_id)
+            user_data = CoreServiceUtilities.get_user_details({'member_id': user_id})
+
+            if not community_data.get('community'):
+                return
+
+            community_data = community_data.get('community')
+
+            if not user_data.get('user'):
+                return
+
+            verified_email = get_first_verified_email_and_phone(user_id, user_data)
+
+            if not verified_email.get('email'):
+                return
+
+            user_data = user_data.get('user')
+
+            mail_subject = FIRST_MEMBERSHIP_PLAN_CM_MAIL_SUBJECT.format(user_data.get('name'))
+
+            mail_template = get_template('cm_onboarding/cm_onboarding_main.html').render({
+                "community_logo": community_data.get('image_url'),
+                "community_name": community_data.get('name'),
+                "mail_body": FIRST_MEMBERSHIP_PLAN_CM_MAIL_BODY.format(user_data.get('name')),
+                "community_brand_color": community_data.get('brand_color'),
+                "after_button_code": FIRST_MEMBERSHIP_PLAN_CM_MAIL_AFTER_CODE,
+                "button_text": FIRST_MEMBERSHIP_PLAN_CM_MAIL_BUTTON_TEXT,
+                "button_link": 'https://web.likeminds.community'
+            })
+
+            print(mail_template)
+
+            mail_body = {
+                'subject': mail_subject,
+                'mail_body': mail_template,
+                'mail_recipient_list': [verified_email.get('email')],
+                'reply_to': [FIRST_MEMBERSHIP_PLAN_CM_REPLY_EMAIL]
+            }
+
+            send_email_response = send_email_from_core_service(user_id, mail_body)

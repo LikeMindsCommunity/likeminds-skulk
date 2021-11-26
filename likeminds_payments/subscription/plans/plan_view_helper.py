@@ -1,5 +1,7 @@
 from celery import shared_task
 from django.template.loader import get_template
+import analytics
+
 from .constants import *
 from .models import SubscriptionPlan
 from ..subscriptions.constants import SUBSCRIPTION_COHORT_NAME, SUBSCRIPTION_EXPIRED_COHORT_NAME
@@ -411,3 +413,19 @@ class PlanViewHelper:
             }
 
             send_email_response = send_email_from_core_service(user_id, mail_body)
+
+    @staticmethod
+    def add_event_for_membership_plan(plan_serialized_object, event_name, user_id):
+
+        days_multiplier = SUBSCRIPTION_PLAN_DAYS_MULTIPLIER.get(plan_serialized_object.get('duration_name')) if \
+            plan_serialized_object.get('duration_name') in SUBSCRIPTION_PLAN_DAYS_MULTIPLIER else \
+            SUBSCRIPTION_PLAN_DAYS_MULTIPLIER.get('monthly')
+
+        plan_event_metadata = {
+            'cost': plan_serialized_object.get('cost'),
+            'duration_in_days': plan_serialized_object.get('duration_in_months') * days_multiplier,
+            'plan_name': plan_serialized_object.get('plan_title'),
+            'plan_id': plan_serialized_object.get('plan_id')
+        }
+
+        analytics.track(user_id, event_name, plan_event_metadata)

@@ -74,3 +74,12 @@ email and we will be right there</p>
 FIRST_MEMBERSHIP_PLAN_CM_REPLY_EMAIL = "LikeMinds<hi@likeminds.community>"
 FIRST_MEMBERSHIP_PLAN_CM_MAIL_BUTTON_TEXT = "INVITE MEMBERS"
 
+CREATE_PLAN_ANALYTICS_EVENT_NAME = "Membership plan created (Subscription Service)"
+EDIT_PLAN_ANALYTICS_EVENT_NAME = "Membership plan edited (Subscription Service)"
+DELETE_PLAN_ANALYTICS_EVENT_NAME = "Membership plan deleted (Subscription Service)"
+
+SUBSCRIPTION_PLAN_DAYS_MULTIPLIER = {
+    "days": 1,
+    "weekly": 7,
+    "monthly": 30
+}

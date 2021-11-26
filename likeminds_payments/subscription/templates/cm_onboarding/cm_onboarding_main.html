@@ -1,0 +1,39 @@
+
+    <div style="background-color: #F9F9F9;width: 100%;padding: 64px 0px;">
+        <div style="max-width: 380px;padding: 40px;background: white;border-radius: 8px;border: .8px solid rgb(235, 235, 235);line-height: 140%;color: rgb(146, 146, 146);margin: 0px auto;">
+            <div style="display: flex; flex-direction: column; align-items: center;margin-top: -80px;">
+                <img style="object-fit: cover;border-radius: 12px;" src="{{community_logo}}" height="96px" width="96px"
+                     alt="">
+                <span style="font-size: 20px;margin-top: 12px;">{{community_name}}</span>
+                <div style="max-width: 100px;margin:12px auto 0px auto;display: flex;text-align: center;width: 100%;justify-content: center;color: rgb(146, 146, 146);border-top: 1px solid rgb(194, 194, 194);">
+                    <hr style="margin: 0px;">
+                </div>
+            </div>
+            <br>
+            <b style="color: rgb(48, 48, 48);font-size: 15px;">Hello!</b>
+            <br>
+           <div style="font-size: 14px;">
+            {{ mail_body | safe }}
+           </div>
+           <div style="width: 100%;margin-top: 24px;display: flex;">
+                <a href="{{button_link}}"
+                   style="width: 100%;text-align: center; text-decoration: none;background-color: {{community_brand_color}};padding: 12px;color: white;border-radius: 24px;cursor: pointer;">{{button_text}}</a>
+            </div>
+            <br>
+            {{ after_button_code | safe}}
+        </div>
+        <div style="max-width: 380px;padding: 32px;margin:-5px auto;display: flex;text-align: center;width: 100%;justify-content: center;color: rgb(146, 146, 146);">
+            <i style="opacity:.8;font-size: 12px;text-align: center;">You’ve been invited to join {{community_name}}. Get the LikeMinds App to access the community.</i>
+        </div>
+        <div style="max-width: 380px;padding: 0px;margin:-24px auto;display: flex;text-align: center;width: 100%;justify-content: center;color: rgb(146, 146, 146);">
+            <a href="https://play.google.com/store/apps/details?id=com.collabmates&hl=en_IN&gl=US" target="_blank"><img src="https://prod-likeminds-media.s3.ap-south-1.amazonaws.com/files/utilities/google-play-img.png" height="64px" alt=""></a>
+            <a href="https://apps.apple.com/in/app/likeminds-community-chat/id1526635028" target="_blank"><img style="margin-top: 10px;" src="https://prod-likeminds-media.s3.ap-south-1.amazonaws.com/files/utilities/app-store-logo.png" height="44px" alt=""></a>
+        </div>
+        <div style="max-width: 200px;margin:32px auto 0px auto;display: flex;text-align: center;width: 100%;justify-content: center;color: rgb(146, 146, 146);border-top: 1px solid rgb(194, 194, 194);">
+            <hr>
+        </div>
+        <div style="max-width: 380px;padding: 0px;margin:-5px auto;display: flex;text-align: center;width: 100%;justify-content: center;color: rgb(146, 146, 146);">
+            <span style="opacity:.8;font-size: 12px;text-align: center;">{{community_name}} is powered by <a
+                    href="https://www.likeminds.community" target="blank" style="text-decoration: none;color: #01897B;"><b>LikeMinds</b></a></span>
+        </div>
+    </div>

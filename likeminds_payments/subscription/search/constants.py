@@ -1,0 +1,11 @@
+import enum
+
+
+class SearchIndexes(enum.Enum):
+    SUBSCRIPTION_PLAN = "subscription_plan"
+
+
+SUBSCRIPTION_PLAN_SUB_TITLE_FIELD = "plan_sub_title"
+SUBSCRIPTION_JOINED_SINCE_FIELD = "active_users.date_subscribed"
+
+SUBSCRIPTION_PLAN_SUPPORTED_SEARCH_FIELDS = [SUBSCRIPTION_PLAN_SUB_TITLE_FIELD, SUBSCRIPTION_JOINED_SINCE_FIELD]

@@ -2,6 +2,7 @@ from ..utility.number_utilities import NumberUtilities
 from ..utility.plan_utilities import PlanUtilities
 from ..utility.model_utilities import ModelUtilities
 from ..utility.states import EventDiscountType
+from ..utility.core_service_utilities import CoreServiceUtilities
 from .constants import *
 from ..subscriptions.constants import *
 from rest_framework import serializers
@@ -30,6 +31,11 @@ def PlanSerializer(plans) -> list:
             'url': PlanUtilities.generate_plan_url(plan.plan_id),
             'description_icon_type': plan.description_icon_type
         }
+
+        community_data = CoreServiceUtilities.get_community_data(plan.community_id)
+
+        if 'community' in community_data:
+            plan_object['community_name'] = community_data['community'].get('name')
 
         if plan.strike_cost is not None:
             plan_object['strike_cost'] = plan.strike_cost // 100

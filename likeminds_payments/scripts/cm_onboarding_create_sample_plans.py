@@ -44,6 +44,11 @@ sample_plan_category_list = [
         "id": 8,
         "name": "Entertainment experiences",
         "image_url": "https://prod-likeminds-media.s3.ap-south-1.amazonaws.com/files/utilities/entertainment_experiences.png"
+    },
+    {
+        "id": 9,
+        "name": "Others",
+        "image_url": "https://prod-likeminds-media.s3.ap-south-1.amazonaws.com/files/utilities/others.png"
     }
 ]
 
@@ -364,6 +369,56 @@ $#events worth 15k """,
         "cost": 1000,
         "strike_cost": 1400,
         "category_id": 8
+    },
+{
+        "id": 25,
+        "name": "Monthly Membership",
+        "description": """$#Live weekend classes
+$#Interview prep
+$#Exam Prep
+$#Informal conversations with the community
+$#1-1 sessions with the mentors
+$#Communication skills booster
+$#Guest lectures
+$#Regular tests""",
+        "duration_name": sample_plan_types.MONTHLY,
+        "duration_in_months": 1,
+        "cost": 200,
+        "strike_cost": 300,
+        "category_id": 9
+    },
+    {
+        "id": 26,
+        "name": "Half-Yearly Membership",
+        "description": """$#Daily live meditation session
+$#Daily live yoga session
+$#Support and motivation from likeminded people
+$#Weekly fitness contests
+$#4 one-to-one sessions
+$#Customised diet plans for gain or lose 
+$#Vegan diet plans""",
+        "duration_name": sample_plan_types.MONTHLY,
+        "duration_in_months": 6,
+        "cost": 600,
+        "strike_cost": 800,
+        "category_id": 9
+    },
+    {
+        "id": 27,
+        "name": "Yearly Membership",
+        "description": """$#Weekly live sessions
+$#Recorded sessions
+$#Community discussions
+$#Exposure to the experts
+$#25% off on one on one consultation
+$#50% off on one to one courses
+$#Client acquisition training 
+$#Freelance job oppurtunities""",
+        "duration_name": sample_plan_types.MONTHLY,
+        "duration_in_months": 12,
+        "cost": 1000,
+        "strike_cost": 1400,
+        "category_id": 9
     }
 ]
 

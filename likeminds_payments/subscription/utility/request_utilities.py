@@ -1,5 +1,6 @@
 import json
 from .constants import *
+from .number_utilities import NumberUtilities
 
 
 class RequestUtilities:
@@ -46,3 +47,11 @@ class RequestUtilities:
             return True
 
         return False
+
+    @staticmethod
+    def get_page_number(request, key: str = "page", default: int = 1) -> int:
+        return NumberUtilities.get_integer_from_string(request.GET.get(key, default))
+
+    @staticmethod
+    def get_page_size(request, key: str = "page_size", default: int = 50) -> int:
+        return NumberUtilities.get_integer_from_string(request.GET.get(key, default))

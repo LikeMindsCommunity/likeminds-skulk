@@ -10,12 +10,12 @@ class SearchViewHelper:
             'search': None
         }
 
-        if request.GET.get('community_id'):
+        if not request.GET.get('community_id'):
             return {'error_message': "Invalid Community ID"}
 
         query_params['community_id'] = request.GET.get('community_id')
 
-        if request.GET.get('search'):
+        if not request.GET.get('search'):
             return {'error_message': "Invalid Search Term"}
 
         query_params['search'] = request.GET.get('search')

@@ -218,10 +218,11 @@ class PlanViewHelper:
             'event_plan_id': request.GET.get('event_plan_id', None)
         }
 
-        try:
-            query_params['chatroom_id__in'] = JsonUtilities.load_json(request.GET.get('chatroom_ids'))
-        except:
-            query_params['chatroom_id__in'] = None
+        if request.GET.get('chatroom_ids'):
+            try:
+                query_params['chatroom_id__in'] = JsonUtilities.load_json(request.GET.get('chatroom_ids', None))
+            except:
+                query_params['chatroom_id__in'] = None
 
         output = {}
 

@@ -5,6 +5,7 @@ from rest_framework import status as status_codes
 from django.template.loader import get_template
 from .subscription_manager import SubscriptionManager
 from ..plans.plan_view_helper import PlanViewHelper
+from ..search.sync import ElasticSearchSync
 from ..transactions.models import Transaction
 from .models import Subscription
 from ..subscription_histories.models import SubscriptionHistory
@@ -335,6 +336,7 @@ class SubscriptionImpl(SubscriptionManager):
                 return {'error_message': community_data['error_message'], 'status_code': community_data['status_code']}
 
             transaction = SubscriptionImpl._generate_first_transaction(transaction_instance, plan_instance, user_id)
+            ElasticSearchSync.update_subscription_plan(plan_id=plan_instance.plan_id)
 
             community_dict = community_data.get('community')
 
@@ -352,6 +354,7 @@ class SubscriptionImpl(SubscriptionManager):
         if transaction_instance.renew:
 
             transaction = SubscriptionImpl._generate_renewal_transaction(transaction_instance, plan_instance, user_id)
+            ElasticSearchSync.update_subscription_plan(plan_id=plan_instance.plan_id)
 
             cohort_response = PlanViewHelper.add_member_to_subscription_cohort(
                 plan_id=transaction_instance.plan_id,

@@ -3,7 +3,6 @@ import time
 
 
 class TimeUtilities:
-
     MILLISECONDS_IN_A_DAY = 86400000
 
     DAYS_IN_A_WEEK = 7
@@ -111,3 +110,11 @@ class TimeUtilities:
             epoch_time = TimeUtilities.convert_milliseconds_to_sec(epoch_time)
 
         return time.strftime('%I:%M %p', time.localtime(epoch_time))
+
+    @staticmethod
+    def convert_epoch_to_month_year_format(epoch: int) -> str:
+
+        if TimeUtilities.is_epoch_in_milliseconds(epoch):
+            epoch = TimeUtilities.convert_milliseconds_to_sec(epoch)
+
+        return time.strftime('%b %Y', time.gmtime(epoch))

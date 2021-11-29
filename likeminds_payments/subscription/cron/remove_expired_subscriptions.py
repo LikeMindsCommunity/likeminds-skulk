@@ -34,4 +34,4 @@ def handle():
             )
 
             if subscription.plan_id:
-                ElasticSearchSync.update_subscription_plan_at_removal(plan_id=subscription.plan_id)
+                ElasticSearchSync.update_subscription_plan(plan_id=subscription.plan_id)

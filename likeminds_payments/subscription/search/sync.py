@@ -54,7 +54,7 @@ class ElasticSearchSync:
                                            query_dict=query_dict)
 
     @staticmethod
-    def update_subscription_plan_at_removal(plan_id: str):
+    def update_subscription_plan(plan_id: str):
         """
         @param plan_id:
         @return: None

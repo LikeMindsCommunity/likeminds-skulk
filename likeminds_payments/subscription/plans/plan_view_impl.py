@@ -6,6 +6,7 @@ from django.utils.decorators import method_decorator
 
 from .serializers import PlanSerializer
 from ..mixins import TransactionMixin
+from ..search.sync import ElasticSearchSync
 from ..utility.json_utilities import JsonUtilities
 from ..utility.request_utilities import RequestUtilities
 from ..plans.plan_impl import PlanImpl
@@ -131,6 +132,8 @@ class DeletePlanView(TransactionMixin, APIView):
                 {'success': False, 'error_message': response_data['error_message']},
                 status=status_codes.HTTP_200_OK
             )
+
+        ElasticSearchSync.delete_subscription_plan(validated_request_body.get('plan_id'))
 
         return JsonResponse(
             {'success': True},

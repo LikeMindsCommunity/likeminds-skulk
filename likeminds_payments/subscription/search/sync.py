@@ -36,7 +36,7 @@ class ElasticSearchSync:
         """
         @param instance_list: list of instances
         @return: None
-        @description: updates documents in elastics search
+        @description: updates documents in elastic search
         """
         for instance in instance_list:
             registry.update(instance)
@@ -49,15 +49,27 @@ class ElasticSearchSync:
         @description: Delete a subscription plan
         """
 
-        query_dict = ElasticSearchQueryHelper.get_all_plan_filter(plan_id=plan_id)
+        query_dict = ElasticSearchQueryHelper.get_plan_with_plan_id(plan_id=plan_id)
         ElasticSearchSync.delete_documents(index=SearchIndexes.SUBSCRIPTION_PLAN,
                                            query_dict=query_dict)
+
+    @staticmethod
+    def update_subscription_plan_at_removal(plan_id: str):
+        """
+        @param plan_id:
+        @return: None
+        @description: Updates a subscription plan after removal of any user
+        """
+
+        query_dict = ElasticSearchQueryHelper.get_plan_with_plan_id(plan_id=plan_id)
+        ElasticSearchSync.bulk_update_documents(index=SearchIndexes.SUBSCRIPTION_PLAN,
+                                                query_dict=query_dict)
 
 
 class ElasticSearchQueryHelper:
 
     @staticmethod
-    def get_all_plan_filter(plan_id: str):
+    def get_plan_with_plan_id(plan_id: str):
         """
         @param plan_id:
         @return: dict

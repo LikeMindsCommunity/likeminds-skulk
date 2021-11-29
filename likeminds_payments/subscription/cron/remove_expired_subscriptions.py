@@ -1,4 +1,5 @@
 from subscription.plans.plan_view_helper import PlanViewHelper
+from subscription.search.sync import ElasticSearchSync
 from subscription.subscriptions.models import Subscription
 from subscription.utility.time_utilities import TimeUtilities
 from subscription.utility.core_service_utilities import CoreServiceUtilities
@@ -31,3 +32,6 @@ def handle():
                 user_id=subscription.user_id,
                 community_id=subscription.community_id
             )
+
+            if subscription.plan_id:
+                ElasticSearchSync.update_subscription_plan_at_removal(plan_id=subscription.plan_id)

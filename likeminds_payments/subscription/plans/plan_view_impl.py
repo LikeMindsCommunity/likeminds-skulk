@@ -91,7 +91,7 @@ class FetchPlanView(APIView):
             )
 
         plan_manager = PlanImpl(community_id=query_params['community_id'])
-        response_data = plan_manager.fetch_plan()
+        response_data = plan_manager.fetch_plan(plan_id=query_params['plan_id'])
 
         if 'error_message' in response_data:
             return JsonResponse(
@@ -184,30 +184,27 @@ class FetchEventPlanView(TransactionMixin, APIView):
 
     def get(self, request, *args, **kwargs):
 
-        query_params = self.get_event_plan_params(request)
+        query_params = PlanViewHelper.get_event_plan_params(request)
 
-        if query_params.get('error_message'):
-            return JsonResponse(query_params, status=status_codes.HTTP_400_BAD_REQUEST)
+        if 'error_message' in query_params:
+            return JsonResponse(
+                {'success': False, 'error_message': query_params['error_message']},
+                status=status_codes.HTTP_400_BAD_REQUEST
+            )
 
-        chatroom_ids = query_params.get('chatroom_ids')
         plan_manager = PlanImpl()
+        response_data = plan_manager.fetch_event_plan(filters=query_params)
 
-        response_data = plan_manager.fetch_event_plan(chatroom_ids)
+        if 'error_message' in response_data:
+            return JsonResponse(
+                {'success': False, 'error_message': response_data['error_message']},
+                status=status_codes.HTTP_200_OK
+            )
 
-        return JsonResponse(response_data)
-
-    def get_event_plan_params(self, request):
-
-        query_params = {}
-
-        chatroom_ids = JsonUtilities.load_json(request.GET.get('chatroom_ids'))
-
-        if not chatroom_ids:
-            return {'error_message': "In-valid chatroom ids"}
-
-        query_params['chatroom_ids'] = chatroom_ids
-
-        return query_params
+        return JsonResponse(
+            {'success': True, 'event_plans': response_data['event_plans']},
+            status=status_codes.HTTP_200_OK
+        )
 
 
 class UpdateEventPlanView(APIView):

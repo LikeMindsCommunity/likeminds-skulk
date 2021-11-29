@@ -427,8 +427,6 @@ class PlanViewHelper:
                 "button_link": 'https://web.likeminds.community'
             })
 
-            print(mail_template)
-
             mail_body = {
                 'subject': mail_subject,
                 'mail_body': mail_template,

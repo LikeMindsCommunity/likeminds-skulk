@@ -3,7 +3,9 @@ from .models import SubscriptionPlan
 from ..subscriptions.constants import SUBSCRIPTION_COHORT_NAME, SUBSCRIPTION_EXPIRED_COHORT_NAME
 from ..utility.core_service_utilities import CoreServiceUtilities
 from ..utility.number_utilities import NumberUtilities
+from ..utility.response_utilities import ResponseUtilities
 from ..utility.states import cohort_types
+from ..utility.json_utilities import JsonUtilities
 
 
 class PlanViewHelper:
@@ -198,15 +200,37 @@ class PlanViewHelper:
     @staticmethod
     def get_plan_filter_params(request) -> dict:
 
-        query_params = {}
+        query_params = {
+            'community_id': request.GET.get('community_id'),
+            'plan_id': request.GET.get('plan_id')
+        }
 
-        if request.GET.get('community_id'):
-            query_params['community_id'] = request.GET.get('community_id')
-
-        else:
-            return {'error_message': 'send community_id in query params'}
+        if not query_params['community_id'] and not query_params['plan_id']:
+            return ResponseUtilities.get_inner_error_context('send community_id or plan_id in query params')
 
         return query_params
+
+    @staticmethod
+    def get_event_plan_params(request) -> dict:
+
+        query_params = {
+            'chatroom_id__in': None,
+            'event_plan_id': request.GET.get('event_plan_id', None)
+        }
+
+        if request.GET.get('chatroom_ids'):
+            try:
+                query_params['chatroom_id__in'] = JsonUtilities.load_json(request.GET.get('chatroom_ids', None))
+            except:
+                query_params['chatroom_id__in'] = None
+
+        output = {}
+
+        for param in query_params.keys():
+            if query_params[param] is not None:
+                output[param] = query_params[param]
+
+        return output
 
     @staticmethod
     def delete_plan_body_validator(request_body, user_id) -> dict:

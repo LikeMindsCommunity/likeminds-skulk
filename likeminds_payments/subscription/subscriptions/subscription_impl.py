@@ -18,6 +18,7 @@ from ..utility.constants import *
 from ..utility.states import TransactionType
 from ..utility.time_utilities import TimeUtilities
 from ..utility.number_utilities import NumberUtilities
+from ..utility.string_utilities import StringUtilities
 from ..utility.core_service_utilities import CoreServiceUtilities
 from ..utility.async_tasks import (payment_success_membership_join_communication,
                                    cash_payment_renewal_communication,
@@ -453,6 +454,8 @@ class SubscriptionImpl(SubscriptionManager):
         n_days = NumberUtilities.get_integer_from_string(n_days)
         subscription_instance = Subscription.get_subscription_or_None(user_id, community_id)
 
+        current_time = TimeUtilities.current_time_in_milliseconds()
+
         if subscription_instance is not None:
 
             existing_valid_till = subscription_instance.valid_till
@@ -471,6 +474,10 @@ class SubscriptionImpl(SubscriptionManager):
 
             SubscriptionImpl._remove_member_notifications(subscription_instance.user_id,
                                                           subscription_instance.community_id)
+
+            if subscription_instance.is_removed and subscription_instance.valid_till >= current_time:
+                CoreServiceUtilities.renew_member(StringUtilities.get_string_from_integer(community_id),
+                                                  StringUtilities.get_string_from_integer(user_id))
 
             subscription_history_data = {
                 "start_date": existing_valid_till,

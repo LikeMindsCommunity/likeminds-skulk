@@ -9,7 +9,6 @@ from subscription.plans.models import SubscriptionPlan
 from subscription.subscriptions.constants import LIFETIME_PAYMENT
 from subscription.subscriptions.models import Subscription
 from subscription.utility.model_utilities import ModelUtilities
-from subscription.utility.time_utilities import TimeUtilities
 
 INDEX = Index(settings.ELASTICSEARCH_INDEX_NAMES[__name__])
 

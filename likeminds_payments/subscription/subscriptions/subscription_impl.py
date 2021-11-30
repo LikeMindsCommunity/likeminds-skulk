@@ -470,6 +470,9 @@ class SubscriptionImpl(SubscriptionManager):
             subscription_instance.renewal_due = TimeUtilities.subtract_days_in_epoch_time(
                 subscription_instance.valid_till, NOTIFY_PERIOD)
 
+            if subscription_instance.valid_till > current_time:
+                subscription_instance.is_removed = False
+
             subscription_instance.save()
 
             SubscriptionImpl._remove_member_notifications(subscription_instance.user_id,

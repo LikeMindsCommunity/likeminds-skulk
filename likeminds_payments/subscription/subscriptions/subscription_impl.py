@@ -1395,7 +1395,7 @@ class SubscriptionImpl(SubscriptionManager):
             self._fetch_all_member_data.delay(self.get_community_id(), self.get_member_id())
 
             self._send_common_analytics(self.get_community_id(),
-                                        self.get_user_id(),
+                                        self.get_member_id(),
                                         'Download member list (Backend)')
 
             return {'success': True}

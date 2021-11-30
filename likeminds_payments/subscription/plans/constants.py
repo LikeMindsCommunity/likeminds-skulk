@@ -73,6 +73,7 @@ email and we will be right there</p>
 <p>Team LikeMinds</p>"""
 FIRST_MEMBERSHIP_PLAN_CM_REPLY_EMAIL = "LikeMinds<hi@likeminds.community>"
 FIRST_MEMBERSHIP_PLAN_CM_MAIL_BUTTON_TEXT = "INVITE MEMBERS"
+DEFAULT_CM_ONBOARDING_EMAIL_BUTTON_COLOR = "#00897B"
 
 CREATE_PLAN_ANALYTICS_EVENT_NAME = "Membership plan created (Subscription Service)"
 EDIT_PLAN_ANALYTICS_EVENT_NAME = "Membership plan edited (Subscription Service)"

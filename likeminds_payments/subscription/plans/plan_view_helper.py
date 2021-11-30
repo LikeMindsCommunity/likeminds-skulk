@@ -417,14 +417,19 @@ class PlanViewHelper:
 
             mail_subject = FIRST_MEMBERSHIP_PLAN_CM_MAIL_SUBJECT.format(user_data.get('name'))
 
+            cm_onboarding_branch_url = CoreServiceUtilities.get_cm_onboarding_community_feed_url(
+                community_data.get('id'))
+
             mail_template = get_template('cm_onboarding/cm_onboarding_main.html').render({
                 "community_logo": community_data.get('image_url'),
                 "community_name": community_data.get('name'),
                 "mail_body": FIRST_MEMBERSHIP_PLAN_CM_MAIL_BODY.format(user_data.get('name')),
-                "community_brand_color": community_data.get('brand_color'),
+                "community_brand_color": community_data.get('brand_color') if community_data.get('brand_color') else
+                DEFAULT_CM_ONBOARDING_EMAIL_BUTTON_COLOR,
                 "after_button_code": FIRST_MEMBERSHIP_PLAN_CM_MAIL_AFTER_CODE,
                 "button_text": FIRST_MEMBERSHIP_PLAN_CM_MAIL_BUTTON_TEXT,
-                "button_link": 'https://web.likeminds.community'
+                "button_link": cm_onboarding_branch_url.get('feed_url') if cm_onboarding_branch_url.get('feed_url')
+                else ''
             })
 
             mail_body = {

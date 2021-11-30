@@ -96,27 +96,37 @@ class PlanImpl(PlanManager):
         return response
 
     @staticmethod
-    def _fetch_plans(community_id: str):
-        return SubscriptionPlan.objects.filter(community_id=community_id, is_deleted=False).order_by('created_at')
+    def _fetch_plans(filters: dict):
+        return ModelUtilities.get_model_filter(SubscriptionPlan, filters).order_by('created_at')
 
     @staticmethod
     def _serialize_plans(plans) -> list:
         return PlanSerializer(plans)
 
     @staticmethod
-    def _serialize_event_plan_list(chatroom_ids):
+    def _serialize_event_plan_list(filters):
 
-        event_filter = SubscriptionEventPlan.objects.filter(chatroom_id__in=chatroom_ids).order_by('created_at')
+        event_filter = ModelUtilities.get_model_filter(SubscriptionEventPlan, filters).order_by('created_at')
         event_plans = [EventPlanSerializer(plan_instance) for plan_instance in event_filter]
 
         return event_plans
 
-    def fetch_plan(self) -> dict:
+    def fetch_plan(self, plan_id=None) -> dict:
 
-        plans = self._fetch_plans(self.get_community_id())
+        filters = {
+            'is_deleted': False
+        }
+
+        if plan_id:
+            filters['plan_id'] = plan_id
+
+        if self.get_community_id():
+            filters['community_id'] = self.get_community_id()
+
+        plans = self._fetch_plans(filters)
 
         if len(plans) == 0:
-            return {'error_message': 'no plans exist with provided community_id'}
+            return {'error_message': 'no plans exist with provided details'}
 
         return {'plans': self._serialize_plans(plans)}
 
@@ -145,9 +155,9 @@ class PlanImpl(PlanManager):
 
         return {'success': True}
 
-    def fetch_event_plan(self, chatroom_ids) -> dict:
+    def fetch_event_plan(self, filters=None) -> dict:
 
-        event_plans = self._serialize_event_plan_list(chatroom_ids)
+        event_plans = self._serialize_event_plan_list(filters)
 
         return {'event_plans': event_plans}
 

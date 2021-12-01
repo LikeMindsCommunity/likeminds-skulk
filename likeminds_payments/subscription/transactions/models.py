@@ -29,6 +29,7 @@ class Transaction(models.Model):
     type_id = models.IntegerField(default=0)
     payment_name = models.TextField(default='')
     settlement_id = models.CharField(max_length=64, null=True, default=None)
+    refund_handled = models.IntegerField(default=0)
     created_at = models.BigIntegerField(default=0)
     updated_at = models.BigIntegerField(default=0)
 

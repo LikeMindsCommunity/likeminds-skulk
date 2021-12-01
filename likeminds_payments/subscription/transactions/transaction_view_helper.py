@@ -126,6 +126,9 @@ class TransactionViewHelper:
         if transaction_instance.method in [MIGRATION, MANUAL_PAYMENT_PAGE]:
             return {'special_case': True}
 
+        if transaction_instance.status != PAYMENTS_STATUS_MAPPER['CAPTURED']:
+            return {'error_message': 'transaction was never captured'}
+
         if getattr(transaction_instance, 'type') and (transaction_instance.type == TransactionType.PAYMENT_PAGE):
             plan_filter = ModelUtilities.get_model_filter(PaymentPageMeta,
                                                           {"payment_page_id": transaction_instance.plan_id})
@@ -156,7 +159,7 @@ class TransactionViewHelper:
 
         paid_amount = settlement_data.get('paid_amount')
 
-        if not (transaction_instance.settlement_id is None and transaction_instance.amount <= paid_amount):
+        if not (transaction_instance.amount <= paid_amount):
             return {'error_message': 'You have insufficient balance, we can not refund the transaction'}
 
         return {'transaction_instance': transaction_instance}

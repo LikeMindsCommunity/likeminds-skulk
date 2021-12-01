@@ -9,8 +9,9 @@ from subscription.utility.response_utilities import ResponseUtilities
 from subscription.utility.core_service_utilities import CoreServiceUtilities
 from subscription.external_services.razorpay.razorpayX_wrapper import RazorpayXWrapper
 from subscription.transactions.transaction_impl import TransactionImpl
+from subscription.transactions.constants import (PAYMENTS_STATUS_FILTER)
 from subscription.settlements.models import Settlement
-from subscription.utility.states import SettlementStatus, TransactionType
+from subscription.utility.states import SettlementStatus, TransactionType, TransactionRefundState
 from subscription.kyc.models import CommunityKYC
 from subscription.transactions.models import Transaction
 from subscription.plans.models import SubscriptionEventPlan
@@ -193,6 +194,23 @@ class SettlementImpl(SettlementManager):
 
         for transaction in transaction_instances:
             transaction.settlement_id = settlement_instance.settlement_id
+            transaction.save()
+
+        refund_transaction_instances = (
+                ModelUtilities.get_model_filter(Transaction, {'type_id': settlement_instance.community_id,
+                                                              'type__in': [TransactionType.PAYMENT_PAGE,
+                                                                           TransactionType.COMMUNITY_SUBSCRIPTION],
+                                                              'status': PAYMENTS_STATUS_FILTER['REFUNDED'],
+                                                              'refund_handled': TransactionRefundState.NOT_HANDLED}) |
+                ModelUtilities.get_model_filter(Transaction, {'plan_id__in': valid_event_plan_ids,
+                                                              'type': TransactionType.EVENT,
+                                                              'status': PAYMENTS_STATUS_FILTER['REFUNDED'],
+                                                              'refund_handled': TransactionRefundState.NOT_HANDLED
+                                                              })
+        )
+
+        for transaction in refund_transaction_instances:
+            transaction.refund_handled = TransactionRefundState.HANDLED
             transaction.save()
 
         return {'success': True}

@@ -11,7 +11,7 @@ from rest_framework import status as status_codes
 from ..external_services.razorpay.razorpay_wrapper import RazorpayWrapper
 from ..external_services.segment.segment_impl import SegmentImpl
 from ..utility.number_utilities import NumberUtilities
-from ..utility.states import TransactionType, SettlementStatus
+from ..utility.states import TransactionType, SettlementStatus, TransactionRefundState
 from ..utility.time_utilities import TimeUtilities
 from ..utility.model_utilities import ModelUtilities
 from ..utility.core_service_utilities import CoreServiceUtilities
@@ -708,6 +708,16 @@ class TransactionImpl(TransactionManager):
                                                               })
         ).values('type').annotate(revenue=Sum('amount'), count=Count('type'), start_date=Min('created_at'))
 
+        subscription_and_payment_pages_refund_transactions = (
+            ModelUtilities.get_model_filter(Transaction, {'settlement_id__isnull': False,
+                                                          'status': PAYMENTS_STATUS_FILTER['REFUNDED'],
+                                                          'refund_handled': TransactionRefundState.NOT_HANDLED,
+                                                          'type_id': community_id,
+                                                          'type__in': [TransactionType.PAYMENT_PAGE,
+                                                                       TransactionType.COMMUNITY_SUBSCRIPTION]
+                                                          })
+        ).values('type').annotate(revenue=Sum('amount'), count=Count('type'))
+
         valid_event_plans = ModelUtilities.get_model_filter(SubscriptionEventPlan, {'community_id': community_id})
 
         valid_event_plan_ids = [plan.event_plan_id for plan in valid_event_plans]
@@ -725,17 +735,39 @@ class TransactionImpl(TransactionManager):
                                                           })
         ).values('type').annotate(revenue=Sum('amount'), count=Count('type'), start_date=Min('created_at'))
 
+        event_refund_transactions = (
+            ModelUtilities.get_model_filter(Transaction, {'settlement_id__isnull': False,
+                                                          'status': PAYMENTS_STATUS_FILTER['REFUNDED'],
+                                                          'refund_handled': TransactionRefundState.NOT_HANDLED,
+                                                          'type': TransactionType.EVENT,
+                                                          'plan_id__in': valid_event_plan_ids})
+        ).values('type').annotate(revenue=Sum('amount'), count=Count('type'))
+
         membership_data = subscription_and_payment_pages_transactions.filter(
+            type=TransactionType.COMMUNITY_SUBSCRIPTION)
+        membership_refund_data = subscription_and_payment_pages_refund_transactions.filter(
             type=TransactionType.COMMUNITY_SUBSCRIPTION)
         payment_pages_data = subscription_and_payment_pages_transactions.filter(
             type=TransactionType.PAYMENT_PAGE)
+        payment_pages_refund_data = subscription_and_payment_pages_refund_transactions.filter(
+            type=TransactionType.PAYMENT_PAGE
+        )
         event_data = event_transactions
+        event_refund_data = event_refund_transactions
 
         revenue_membership = membership_data[0]['revenue'] if len(membership_data) else 0
         revenue_event = event_data[0]['revenue'] if len(event_data) else 0
         revenue_payment_pages = payment_pages_data[0]['revenue'] if len(payment_pages_data) else 0
 
-        revenue = revenue_membership + revenue_event + revenue_payment_pages
+        revenue_membership_refund = membership_refund_data[0]['revenue'] if len(membership_refund_data) else 0
+        revenue_event_refund = event_refund_data[0]['revenue'] if len(event_refund_data) else 0
+        revenue_payment_pages_refund = payment_pages_refund_data[0]['revenue'] if len(payment_pages_refund_data) else 0
+
+        final_revenue_membership = revenue_membership - revenue_membership_refund
+        final_revenue_event = revenue_event - revenue_event_refund
+        final_revenue_payment_pages = revenue_payment_pages - revenue_payment_pages_refund
+
+        revenue = final_revenue_membership + final_revenue_event + final_revenue_payment_pages
 
         count_membership = membership_data[0]['count'] if len(membership_data) else 0
         count_event = event_data[0]['count'] if len(event_data) else 0
@@ -743,9 +775,9 @@ class TransactionImpl(TransactionManager):
 
         count = count_membership + count_event + count_payment_pages
 
-        paid_amount = sum([(1-(fee_membership/100))*revenue_membership,
-                           (1-(fee_event/100))*revenue_event,
-                           (1-(fee_payment_pages/100))*revenue_payment_pages])
+        paid_amount = sum([(1-(fee_membership/100))*final_revenue_membership,
+                           (1-(fee_event/100))*final_revenue_event,
+                           (1-(fee_payment_pages/100))*final_revenue_payment_pages])
 
         fee_amount = revenue - paid_amount
         fee_amount_percent = (fee_amount/revenue)*100 if revenue > 0 else (fee_membership+fee_event+fee_payment_pages)/3

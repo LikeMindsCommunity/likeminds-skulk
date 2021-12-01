@@ -9,6 +9,11 @@ class TransactionType:
     PAYMENT_PAGE = 2
 
 
+class TransactionRefundState:
+    NOT_HANDLED = 0
+    HANDLED = 1
+
+
 class DocType:
     AADHAR = 0
     DRIVING_LICENCE = 1

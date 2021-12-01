@@ -16,6 +16,9 @@ from subscription.transactions.models import Transaction
 from subscription.plans.models import SubscriptionEventPlan
 from subscription.settlements.constants import (PAYOUT_MODE, PAYOUT_PURPOSE, PAYOUT_NARRATION, PAYOUT_QUEUE,
                                                 PAYOUT_STATUS_MAP, SETTLEMENTS_PAGE_SIZE)
+from subscription.utility.async_tasks import (settlement_processed_communication,
+                                              settlement_failed_cm_communication,
+                                              settlement_failed_admin_communication)
 from django.conf import settings
 import hmac
 import hashlib
@@ -224,6 +227,15 @@ class SettlementImpl(SettlementManager):
 
         if PAYOUT_STATUS_MAP[payout_entity.get('status')] == SettlementStatus.PROCESSED:
             self._update_settlement_transactions(settlement_instance)
+
+            # email communication for processed settlement
+            settlement_processed_communication.delay(settlement_instance.id)
+
+        if PAYOUT_STATUS_MAP[payout_entity.get('status')] in [SettlementStatus.FAILED, SettlementStatus.REVERSED]:
+
+            # email communication for failed settlement
+            settlement_failed_cm_communication.delay(settlement_instance.id)
+            settlement_failed_admin_communication.delay(settlement_instance.id)
 
         return {'success': True}
 

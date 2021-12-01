@@ -402,6 +402,7 @@ class SubscriptionImpl(SubscriptionManager):
 
         user_id = NumberUtilities.get_integer_from_string(user_id)
         community_id = NumberUtilities.get_integer_from_string(community_id)
+        current_time = TimeUtilities.current_time_in_milliseconds()
 
         subscription_instance = Subscription.get_subscription_or_None(user_id, community_id)
 
@@ -433,6 +434,10 @@ class SubscriptionImpl(SubscriptionManager):
             subscription_instance.transaction = data['subscription_data']['transaction']
             subscription_instance.is_removed = False
             subscription_instance.save()
+
+            if subscription_instance.is_removed and subscription_instance.valid_till >= current_time:
+                CoreServiceUtilities.renew_member(StringUtilities.get_string_from_integer(community_id),
+                                                  StringUtilities.get_string_from_integer(user_id))
 
             SubscriptionImpl._remove_member_notifications(subscription_instance.user_id,
                                                           subscription_instance.community_id)

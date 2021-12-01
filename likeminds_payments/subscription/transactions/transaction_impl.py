@@ -39,6 +39,7 @@ from ..external_services.s3.s3_wrapper import S3Wrapper
 import hmac
 import hashlib
 import razorpay
+import analytics
 
 
 class TransactionImpl(TransactionManager):
@@ -350,6 +351,23 @@ class TransactionImpl(TransactionManager):
 
         return acquisition_data
 
+    @staticmethod
+    def _send_analytics_for_membership_refund(transaction_instance):
+
+        community_data = CoreServiceUtilities.get_community_data(transaction_instance.type_id)
+
+        if 'community' in community_data:
+            analytics_data = {
+                'community_id': transaction_instance.type_id,
+                'community_name': community_data['community'].get('name'),
+                'member_email': transaction_instance.payment_email,
+                'member_phone': transaction_instance.payment_phone,
+                'amount': NumberUtilities.convert_to_rupee_or_none(transaction_instance.amount),
+                'payment_id': transaction_instance.payment_id
+            }
+
+            analytics.track(transaction_instance.user_id, 'Membership transaction refunded (Backend)', analytics_data)
+
     def create_transaction(self) -> dict:
 
         transaction_raw_body = self.get_transaction_raw_body()
@@ -375,6 +393,8 @@ class TransactionImpl(TransactionManager):
                 if transaction_body["event"] == "refund.processed":
                     existing_transaction_instance.status = "refund"
                     existing_transaction_instance.save()
+
+                    self._send_analytics_for_membership_refund(existing_transaction_instance)
 
                     if existing_transaction_instance.user_id is not None:
                         subscription_instance = Subscription.get_subscription_or_None(

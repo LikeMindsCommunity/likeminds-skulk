@@ -252,9 +252,15 @@ class FetchSamplePlanView(TransactionMixin, APIView):
 
     def get(self, request, *args, **kwargs):
 
+        category_id = request.GET.get('category_id')
+
+        if not category_id:
+            return JsonResponse({'success': False, 'error_message': 'Invalid category_id'},
+                                status=status_codes.HTTP_400_BAD_REQUEST)
+
         plan_manager = PlanImpl()
 
-        response_data = plan_manager.fetch_sample_plans()
+        response_data = plan_manager.fetch_sample_plans(category_id=category_id)
 
         if response_data.get('error_message'):
             return JsonResponse(response_data, status=status_codes.HTTP_400_BAD_REQUEST)

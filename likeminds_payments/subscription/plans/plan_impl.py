@@ -190,9 +190,9 @@ class PlanImpl(PlanManager):
 
         return {'success': True, 'sample_plan_categories': sample_plan_categories}
 
-    def fetch_sample_plans(self) -> dict:
+    def fetch_sample_plans(self, category_id) -> dict:
 
-        sample_plan_filter = ModelUtilities.get_model_filter(SamplePlan, {})
+        sample_plan_filter = ModelUtilities.get_model_filter(SamplePlan, {'category': category_id})
 
         sample_plan_objects = SamplePlanSerializers(sample_plan_filter, many=True).data
 

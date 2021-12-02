@@ -69,7 +69,7 @@ class PlanManager(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def fetch_sample_plans(self) -> dict:
+    def fetch_sample_plans(self, category_id) -> dict:
         """
         return samples plans
         """

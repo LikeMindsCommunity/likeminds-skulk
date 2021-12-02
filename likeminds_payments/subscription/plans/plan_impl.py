@@ -143,6 +143,8 @@ class PlanImpl(PlanManager):
         })
         update_event_in_webflow_service.delay(instance.event_plan_id, member_id)
 
+        CoreServiceUtilities.trigger_event_creation_mail_in_core_service(instance.chatroom_id, instance.cost)
+
         return {'success': True}
 
     def fetch_event_plan(self, chatroom_ids) -> dict:

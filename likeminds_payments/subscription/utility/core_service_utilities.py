@@ -604,3 +604,15 @@ class CoreServiceUtilities:
         response = ApiUtilities.generate_get_request(url=url, headers=headers)
 
         return response
+
+    @staticmethod
+    def trigger_event_creation_mail_in_core_service(chatroom_id, event_cost):
+
+        payload = {
+            'chatroom_id': chatroom_id,
+            'event_cost': NumberUtilities.convert_to_rupee_or_none(event_cost)
+        }
+
+        response = ApiUtilities.generate_post_request(url=TRIGGER_EVENT_CREATION_MAIL, data=payload)
+
+        print(response)

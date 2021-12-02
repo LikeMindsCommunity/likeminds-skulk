@@ -1,7 +1,7 @@
 from elasticsearch_dsl import Search, UpdateByQuery
 from elasticsearch import Elasticsearch
 
-from .constants import SearchIndexes
+from .constants import SearchIndices
 from django_elasticsearch_dsl.registries import registry
 
 client = Elasticsearch()
@@ -10,9 +10,9 @@ client = Elasticsearch()
 class ElasticSearchSync:
 
     @staticmethod
-    def bulk_update_documents(index: SearchIndexes, query_dict: dict):
+    def bulk_update_documents(index: SearchIndices, query_dict: dict):
         """
-        @param index: enum SearchIndexes
+        @param index: enum SearchIndices
         @param query_dict: dict
         @return: None
         @description: bulk updates all documents with matching condition
@@ -21,9 +21,9 @@ class ElasticSearchSync:
         s.execute()
 
     @staticmethod
-    def delete_documents(index: SearchIndexes, query_dict: dict):
+    def delete_documents(index: SearchIndices, query_dict: dict):
         """
-        @param index: enum SearchIndexes
+        @param index: enum SearchIndices
         @param query_dict: dict
         @return: None
         @description: delete documents from elastic search permanently
@@ -50,7 +50,7 @@ class ElasticSearchSync:
         """
 
         query_dict = ElasticSearchQueryHelper.get_plan_with_plan_id(plan_id=plan_id)
-        ElasticSearchSync.delete_documents(index=SearchIndexes.SUBSCRIPTION_PLAN,
+        ElasticSearchSync.delete_documents(index=SearchIndices.SUBSCRIPTION_PLAN,
                                            query_dict=query_dict)
 
     @staticmethod
@@ -62,7 +62,7 @@ class ElasticSearchSync:
         """
 
         query_dict = ElasticSearchQueryHelper.get_plan_with_plan_id(plan_id=plan_id)
-        ElasticSearchSync.bulk_update_documents(index=SearchIndexes.SUBSCRIPTION_PLAN,
+        ElasticSearchSync.bulk_update_documents(index=SearchIndices.SUBSCRIPTION_PLAN,
                                                 query_dict=query_dict)
 
 

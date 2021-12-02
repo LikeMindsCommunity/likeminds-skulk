@@ -1,9 +1,11 @@
 from typing import Union
 
+from subscription.search.constants import SearchIndices
 from subscription.search.search_manager import SearchManager
 from elasticsearch_dsl import Search
 
 from subscription.utility.number_utilities import NumberUtilities
+from subscription.utility.time_utilities import TimeUtilities
 
 
 class SearchImpl(SearchManager):
@@ -45,7 +47,15 @@ class SearchImpl(SearchManager):
 
         return search_response
 
-    def _get_plan_search_ngram_query_dict(self):
+    def search_history(self):
+        res = Search().from_dict(self._get_history_search_ngram_query_dict()).execute()
+
+        search_response = set([hit['user_id'] for hit in res])
+        search_response = list(search_response)
+
+        return search_response
+
+    def _get_plan_search_ngram_query_dict(self, index=SearchIndices.SUBSCRIPTION_PLAN):
         """
         @return: dict
         """
@@ -66,10 +76,46 @@ class SearchImpl(SearchManager):
                                 f"{self.get_search_field()}"
                             ]
                         }
-                    }
-                    ],
+                    }],
                     "filter": [
                         {"term": {"community_id": f"{self.get_community_id()}"}},
+                        {"term": {"_index": index.value}}
+                    ]
+                }
+            }
+        }
+
+    def _get_history_search_ngram_query_dict(self, index=SearchIndices.SUBSCRIPTION_HISTORY):
+        """
+        @return: dict
+        """
+        return {
+            "from": self.get_page_size() * (self.get_page_number() - 1),
+            "size": self.get_page_size(),
+            "sort": {
+                "_score": {
+                    "order": "desc"
+                }
+            },
+            "query": {
+                "bool": {
+                    "must": [{
+                        "query_string": {
+                            "query": f"*{self.get_search_term()}*",
+                            "fields": [
+                                f"{self.get_search_field()}"
+                            ]
+                        }
+                    }, {
+                        "range": {
+                            "end_date": {
+                                "lt": TimeUtilities.current_time_in_milliseconds()
+                            }
+                        }
+                    }],
+                    "filter": [
+                        {"term": {"community_id": f"{self.get_community_id()}"}},
+                        {"term": {"_index": index.value}}
                     ]
                 }
             }

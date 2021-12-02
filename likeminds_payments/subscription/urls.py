@@ -1,7 +1,7 @@
 from django.urls import path, include
 from .plans.plan_view_impl import *
 from .orders.order_view_impl import *
-from .search.search_views import SearchView
+from .search.search_views import SearchView, SearchHistoryView
 from .transactions.transaction_view_impl import *
 from .subscriptions.subscription_view_impl import *
 from .subscription_histories.subscription_history_view_impl import *
@@ -49,5 +49,6 @@ urlpatterns = [
     path('payment_page/fetch_contact_us', FetchContactUsView.as_view(), name='fetch_contact_us'),
     path('create_payment_page_order', CreatePaymentPageOrderView.as_view(), name='create_payment_page_order'),
     path('search', SearchView.as_view(), name='search'),
+    path('search_history', SearchHistoryView.as_view(), name='search_history'),
     path('kyc/', include('subscription.kyc.urls'))
 ]

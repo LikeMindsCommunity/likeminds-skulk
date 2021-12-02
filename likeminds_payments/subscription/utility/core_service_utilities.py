@@ -1,3 +1,4 @@
+from celery.app import shared_task
 from .constants import *
 from ..utility.api_utilities import ApiUtilities
 from ..utility.number_utilities import NumberUtilities
@@ -605,6 +606,7 @@ class CoreServiceUtilities:
 
         return response
 
+    @shared_task
     @staticmethod
     def trigger_event_creation_mail_in_core_service(chatroom_id, event_cost):
 

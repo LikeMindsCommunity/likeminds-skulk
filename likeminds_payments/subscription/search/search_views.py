@@ -36,11 +36,11 @@ class SearchView(APIView):
                                     search_field=query_params.get('search_field'),
                                     page=page, page_size=page_size, community_id=query_params.get('community_id'))
 
-        plans = search_manager.search_plan()
+        data = search_manager.search_plan()
 
         response = {
             'success': True,
-            'plans': plans
+            'data': data
         }
 
         return JsonResponse(response, status=status_codes.HTTP_200_OK)

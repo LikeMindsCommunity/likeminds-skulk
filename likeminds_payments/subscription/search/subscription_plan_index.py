@@ -9,6 +9,7 @@ from subscription.plans.models import SubscriptionPlan
 from subscription.subscriptions.constants import LIFETIME_PAYMENT
 from subscription.subscriptions.models import Subscription
 from subscription.utility.model_utilities import ModelUtilities
+from subscription.utility.time_utilities import TimeUtilities
 
 INDEX = Index(settings.ELASTICSEARCH_INDEX_NAMES[__name__])
 
@@ -53,7 +54,10 @@ class SubscriptionPlanDocument(Document):
     strike_cost = IntegerField()
     duration_in_months = IntegerField()
     plan_sub_title = StringField()
-    active_user_ids = IntegerField(multi=True)
+    active_user_context = fields.NestedField(properties={
+        'id': IntegerField(),
+        'member_since': StringField()
+    })
 
     class Django(object):
         """Inner nested class Django."""
@@ -74,13 +78,20 @@ class SubscriptionPlanDocument(Document):
             SUBSCRIPTION_PLAN_NAMES[instance.duration_name]['subtitle'])
 
     @staticmethod
-    def prepare_active_user_ids(instance):
+    def prepare_active_user_context(instance):
         filter_dict = {
             'plan_id': instance.plan_id,
             'is_removed': False
         }
         subscription_filter = ModelUtilities.get_model_filter(Subscription, filter_dict).exclude(user_id=None)
+        active_user_context = []
 
-        active_user_ids = list(subscription_filter.values_list('user_id', flat=True))
+        for subscription_instance in subscription_filter:
+            user_dict = dict()
+            user_dict['id'] = subscription_instance.user_id
+            user_dict['member_since'] = TimeUtilities.convert_epoch_to_month_year_format(
+                epoch=subscription_instance.date_subscribed
+            )
+            active_user_context.append(user_dict)
 
-        return active_user_ids
+        return active_user_context

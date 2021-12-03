@@ -1,4 +1,4 @@
-from subscription.search.constants import SUBSCRIPTION_PLAN_SUB_TITLE_FIELD
+from subscription.search.constants import SUBSCRIPTION_PLAN_SUB_TITLE_FIELD, SUBSCRIPTION_PLAN_FIELDS_DICTIONARY_MAPPING
 
 
 class SearchViewHelper:
@@ -20,5 +20,8 @@ class SearchViewHelper:
 
         query_params['search'] = request.GET.get('search')
         query_params['search_field'] = request.GET.get('search_field', SUBSCRIPTION_PLAN_SUB_TITLE_FIELD)
+
+        if query_params['search_field'].lower() not in SUBSCRIPTION_PLAN_FIELDS_DICTIONARY_MAPPING:
+            return {"error_message": "Invalid Search Type"}
 
         return query_params

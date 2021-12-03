@@ -1,5 +1,7 @@
 from typing import Union
 
+from subscription.search.constants import SUBSCRIPTION_PLAN_SUB_TITLE_FIELD, SUBSCRIPTION_PLAN_MEMBER_SINCE_FIELD, \
+    SUBSCRIPTION_PLAN_FIELDS_DICTIONARY_MAPPING
 from subscription.search.search_manager import SearchManager
 from elasticsearch_dsl import Search
 
@@ -39,9 +41,30 @@ class SearchImpl(SearchManager):
         return NumberUtilities.get_integer_from_string(self.community_id)
 
     def search_plan(self):
+        if self.get_search_field() == SUBSCRIPTION_PLAN_SUB_TITLE_FIELD:
+            filtered_plans = self.search_plans_based_on_sub_title()
+            return {'plans': filtered_plans}
+
+        elif self.get_search_field() == SUBSCRIPTION_PLAN_MEMBER_SINCE_FIELD:
+            filtered_ids = self.search_member_since_filtered_ids()
+            return {'ids': filtered_ids}
+
+        return {}
+
+    def search_plans_based_on_sub_title(self):
         res = Search.from_dict(self._get_plan_search_ngram_query_dict()).execute()
 
         search_response = [hit.to_dict() for hit in res]
+
+        return search_response
+
+    def search_member_since_filtered_ids(self):
+        res = Search.from_dict(self._get_member_since_search_ngram_query_dict()).execute()
+        search_response = []
+
+        for hit in res:
+            filtered_ids = [inner_hit.to_dict().get('id') for inner_hit in hit.meta.inner_hits.active_user_context]
+            search_response.extend(filtered_ids)
 
         return search_response
 
@@ -63,13 +86,60 @@ class SearchImpl(SearchManager):
                         "query_string": {
                             "query": f"*{self.get_search_term()}*",
                             "fields": [
-                                f"{self.get_search_field()}"
+                                SUBSCRIPTION_PLAN_FIELDS_DICTIONARY_MAPPING[self.get_search_field()]
                             ]
                         }
                     }
                     ],
                     "filter": [
                         {"term": {"community_id": f"{self.get_community_id()}"}},
+                    ]
+                }
+            }
+        }
+
+    def _get_member_since_search_ngram_query_dict(self):
+        return {
+            "from": self.get_page_size() * (self.get_page_number() - 1),
+            "size": self.get_page_size(),
+            "sort": {
+                "_score": {
+                    "order": "desc"
+                }
+            },
+            "query": {
+                "bool": {
+                    "must": [
+                        {
+                            "term": {
+                                "community_id": self.get_community_id()
+                            }
+                        },
+                        {
+                            "nested": {
+                                "path": "active_user_context",
+                                "inner_hits": {
+                                    "_source": [
+                                        "active_user_context"
+                                    ]
+                                },
+                                "query": {
+                                    "bool": {
+                                        "must": [
+                                            {
+                                                "query_string": {
+                                                    "query": f"*{self.get_search_term()}*",
+                                                    "fields": [
+                                                        SUBSCRIPTION_PLAN_FIELDS_DICTIONARY_MAPPING[
+                                                            self.get_search_field()]
+                                                    ]
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
                     ]
                 }
             }

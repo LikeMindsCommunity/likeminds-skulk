@@ -532,8 +532,7 @@ def cash_payment_renewal_communication(transaction_id):
     return send_cm_email_response, None
 
 
-@shared_task
-def settlement_processed_communication(settlement_id):
+def _settlement_validator(settlement_id) -> dict:
 
     settlement_instance = ModelUtilities.get_model_instance_or_none(Settlement, settlement_id)
 
@@ -550,29 +549,12 @@ def settlement_processed_communication(settlement_id):
     if not community_owner_details:
         return {'error_message': "No cm/owner found for the community"}
 
-    cm_details = {}
-    owner_id = None
+    return {'settlement_instance': settlement_instance,
+            'community_details': community_details,
+            'community_owner_details': community_owner_details}
 
-    for member in community_owner_details:
-        if member['is_owner']:
-            owner_id = member['id']
-        cm_details[member['id']] = None
 
-    for cm in cm_details.keys():
-        details = get_first_verified_email_and_phone(cm)
-
-        if 'error_message' in details:
-            continue
-
-        cm_details[cm] = details
-
-    cm_emails = []
-
-    for cm in cm_details.keys():
-        if cm_details[cm] is not None and cm_details[cm]['email'] is not None:
-            cm_emails.append(cm_details[cm]['email'])
-
-    cm_emails.append(ADMIN_EMAIL)
+def _get_settlement_processed_template_context(community_details, settlement_instance):
 
     cm_mail_template = get_template(
         'settlements/settlement_processed_cm_email').render(
@@ -581,38 +563,11 @@ def settlement_processed_communication(settlement_id):
          "amount": NumberUtilities.convert_to_rupee_or_none(settlement_instance.amount),
          "settlement_id": settlement_instance.settlement_id})
 
-    cm_mail_body = {
-        "subject": SETTLEMENT_PROCESSED_EMAIL_TO_CM_SUBJECT.format(
-            community_details['community'].get('name'),
-            '{} {}'.format(TimeUtilities.convert_epoch_to_date(settlement_instance.created_at),
-                           TimeUtilities.convert_epoch_time_in_hh_mm_am_pm(settlement_instance.created_at))
-        ),
-        "mail_body": cm_mail_template,
-        "mail_recipient_list": cm_emails
-    }
-
-    send_cm_email_response = send_email_from_core_service(owner_id, cm_mail_body)
-
-    return send_cm_email_response, None
+    return cm_mail_template
 
 
-@shared_task
-def settlement_failed_cm_communication(settlement_id):
-
-    settlement_instance = ModelUtilities.get_model_instance_or_none(Settlement, settlement_id)
-
-    if not settlement_instance:
-        return {'error_message': "Invalid settlement_id"}
-
-    community_details = CoreServiceUtilities.get_community_data(settlement_instance.community_id)
-
-    if not community_details or 'community' not in community_details:
-        return {'error_message': "No community details found for the community"}
-
-    community_owner_details = CoreServiceUtilities.get_community_admins(settlement_instance.community_id)
-
-    if not community_owner_details:
-        return {'error_message': "No cm/owner found for the community"}
+def _get_settlement_processed_email_context(community_details, community_owner_details, settlement_instance,
+                                            template_context):
 
     cm_details = {}
     owner_id = None
@@ -638,6 +593,47 @@ def settlement_failed_cm_communication(settlement_id):
 
     cm_emails.append(ADMIN_EMAIL)
 
+    cm_mail_body = {
+        "subject": SETTLEMENT_PROCESSED_EMAIL_TO_CM_SUBJECT.format(
+            community_details['community'].get('name'),
+            '{} {}'.format(TimeUtilities.convert_epoch_to_date(settlement_instance.created_at),
+                           TimeUtilities.convert_epoch_time_in_hh_mm_am_pm(settlement_instance.created_at))
+        ),
+        "mail_body": template_context,
+        "mail_recipient_list": cm_emails
+    }
+
+    return {'email_context': cm_mail_body,
+            'owner_id': owner_id}
+
+
+@shared_task
+def settlement_processed_communication(settlement_id):
+
+    communication_validator = _settlement_validator(settlement_id)
+
+    if 'error_message' in communication_validator:
+        return communication_validator['error_message']
+
+    communication_template_context = _get_settlement_processed_template_context(
+        communication_validator.get('community_details'),
+        communication_validator.get('settlement_instance'))
+
+    communication_email_details = _get_settlement_processed_email_context(
+        communication_validator.get('community_details'),
+        communication_validator.get('community_owner_details'),
+        communication_validator.get('settlement_instance'),
+        communication_template_context
+    )
+
+    send_cm_email_response = send_email_from_core_service(communication_email_details.get('owner_id'),
+                                                          communication_email_details.get('email_context'))
+
+    return send_cm_email_response, None
+
+
+def _get_settlement_failed_cm_template_context(community_details, settlement_instance):
+
     cm_mail_template = get_template(
         'settlements/settlement_failed_cm_email').render(
         {"community_name": community_details['community'].get('name'),
@@ -645,38 +641,11 @@ def settlement_failed_cm_communication(settlement_id):
          "amount": NumberUtilities.convert_to_rupee_or_none(settlement_instance.amount),
          "settlement_id": settlement_instance.settlement_id})
 
-    cm_mail_body = {
-        "subject": SETTLEMENT_FAILED_EMAIL_TO_CM_SUBJECT.format(
-            community_details['community'].get('name'),
-            '{} {}'.format(TimeUtilities.convert_epoch_to_date(settlement_instance.created_at),
-                           TimeUtilities.convert_epoch_time_in_hh_mm_am_pm(settlement_instance.created_at))
-        ),
-        "mail_body": cm_mail_template,
-        "mail_recipient_list": cm_emails
-    }
-
-    send_cm_email_response = send_email_from_core_service(owner_id, cm_mail_body)
-
-    return send_cm_email_response, None
+    return cm_mail_template
 
 
-@shared_task
-def settlement_failed_admin_communication(settlement_id):
-
-    settlement_instance = ModelUtilities.get_model_instance_or_none(Settlement, settlement_id)
-
-    if not settlement_instance:
-        return {'error_message': "Invalid settlement_id"}
-
-    community_details = CoreServiceUtilities.get_community_data(settlement_instance.community_id)
-
-    if not community_details or 'community' not in community_details:
-        return {'error_message': "No community details found for the community"}
-
-    community_owner_details = CoreServiceUtilities.get_community_admins(settlement_instance.community_id)
-
-    if not community_owner_details:
-        return {'error_message': "No cm/owner found for the community"}
+def _get_settlement_failed_cm_email_context(community_details, community_owner_details, settlement_instance,
+                                            template_context):
 
     cm_details = {}
     owner_id = None
@@ -685,6 +654,63 @@ def settlement_failed_admin_communication(settlement_id):
         if member['is_owner']:
             owner_id = member['id']
         cm_details[member['id']] = None
+
+    for cm in cm_details.keys():
+        details = get_first_verified_email_and_phone(cm)
+
+        if 'error_message' in details:
+            continue
+
+        cm_details[cm] = details
+
+    cm_emails = []
+
+    for cm in cm_details.keys():
+        if cm_details[cm] is not None and cm_details[cm]['email'] is not None:
+            cm_emails.append(cm_details[cm]['email'])
+
+    cm_emails.append(ADMIN_EMAIL)
+
+    cm_mail_body = {
+        "subject": SETTLEMENT_FAILED_EMAIL_TO_CM_SUBJECT.format(
+            community_details['community'].get('name'),
+            '{} {}'.format(TimeUtilities.convert_epoch_to_date(settlement_instance.created_at),
+                           TimeUtilities.convert_epoch_time_in_hh_mm_am_pm(settlement_instance.created_at))
+        ),
+        "mail_body": template_context,
+        "mail_recipient_list": cm_emails
+    }
+
+    return {'email_context': cm_mail_body,
+            'owner_id': owner_id}
+
+
+@shared_task
+def settlement_failed_cm_communication(settlement_id):
+
+    communication_validator = _settlement_validator(settlement_id)
+
+    if 'error_message' in communication_validator:
+        return communication_validator['error_message']
+
+    communication_template_context = _get_settlement_failed_cm_template_context(
+        communication_validator.get('community_details'),
+        communication_validator.get('settlement_instance'))
+
+    communication_email_details = _get_settlement_failed_cm_email_context(
+        communication_validator.get('community_details'),
+        communication_validator.get('community_owner_details'),
+        communication_validator.get('settlement_instance'),
+        communication_template_context
+    )
+
+    send_cm_email_response = send_email_from_core_service(communication_email_details.get('owner_id'),
+                                                          communication_email_details.get('email_context'))
+
+    return send_cm_email_response, None
+
+
+def _get_settlement_failed_admin_template_context(community_details, settlement_instance):
 
     admin_mail_template = get_template(
         'settlements/settlement_failed_admin_email').render(
@@ -694,16 +720,54 @@ def settlement_failed_admin_communication(settlement_id):
          "settlement_id": settlement_instance.settlement_id,
          "status": SETTLEMENT_STATUS_MAP_FOR_EMAIL[settlement_instance.status]})
 
+    return admin_mail_template
+
+
+def _get_settlement_failed_admin_email_context(community_details, community_owner_details, settlement_instance,
+                                               template_context):
+
+    cm_details = {}
+    owner_id = None
+
+    for member in community_owner_details:
+        if member['is_owner']:
+            owner_id = member['id']
+        cm_details[member['id']] = None
+
     admin_mail_body = {
         "subject": SETTLEMENT_FAILED_EMAIL_TO_CM_SUBJECT.format(
             community_details['community'].get('name'),
             '{} {}'.format(TimeUtilities.convert_epoch_to_date(settlement_instance.created_at),
                            TimeUtilities.convert_epoch_time_in_hh_mm_am_pm(settlement_instance.created_at))
         ),
-        "mail_body": admin_mail_template,
+        "mail_body": template_context,
         "mail_recipient_list": [ADMIN_EMAIL]
     }
 
-    send_admin_email_response = send_email_from_core_service(owner_id, admin_mail_body)
+    return {'email_context': admin_mail_body,
+            'owner_id': owner_id}
 
-    return send_admin_email_response, None
+
+@shared_task
+def settlement_failed_admin_communication(settlement_id):
+
+    communication_validator = _settlement_validator(settlement_id)
+
+    if 'error_message' in communication_validator:
+        return communication_validator['error_message']
+
+    communication_template_context = _get_settlement_failed_admin_template_context(
+        communication_validator.get('community_details'),
+        communication_validator.get('settlement_instance'))
+
+    communication_email_details = _get_settlement_failed_admin_email_context(
+        communication_validator.get('community_details'),
+        communication_validator.get('community_owner_details'),
+        communication_validator.get('settlement_instance'),
+        communication_template_context
+    )
+
+    send_cm_email_response = send_email_from_core_service(communication_email_details.get('owner_id'),
+                                                          communication_email_details.get('email_context'))
+
+    return send_cm_email_response, None

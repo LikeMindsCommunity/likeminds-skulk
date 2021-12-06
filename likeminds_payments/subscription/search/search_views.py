@@ -10,7 +10,7 @@ from ..utility.request_utilities import RequestUtilities
 from ..utility.response_utilities import ResponseUtilities
 
 # ------------  do not remove this import ------------------
-
+# Reason: whenever we create any document for indexing, elasticsearch can not detect document without this import.
 from .subscription_plan_index import SubscriptionPlanDocument
 
 # ----------------------------------------------------------

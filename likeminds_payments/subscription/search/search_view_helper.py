@@ -11,12 +11,12 @@ class SearchViewHelper:
         }
 
         if not request.GET.get('community_id'):
-            return {'error_message': "Invalid Community ID"}
+            return {'error_message': "Invalid community_id"}
 
         query_params['community_id'] = request.GET.get('community_id')
 
         if not request.GET.get('search'):
-            return {'error_message': "Invalid Search Term"}
+            return {'error_message': "Invalid search"}
 
         query_params['search'] = request.GET.get('search')
         query_params['search_field'] = request.GET.get('search_field', SUBSCRIPTION_PLAN_SUB_TITLE_FIELD)

@@ -7,9 +7,7 @@ class SubscriptionPlanDocumentSerializer(DocumentSerializer):
 
     class Meta:
         """Meta options."""
-
         document = SubscriptionPlanDocument
-
         fields = '__all__'
 
     def to_representation(self, obj):

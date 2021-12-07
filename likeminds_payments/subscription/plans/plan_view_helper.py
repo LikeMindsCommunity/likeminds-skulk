@@ -109,6 +109,9 @@ class PlanViewHelper:
             else:
                 plan_body['image'] = PLAN_IMAGES['default']
 
+        if 'description_icon_type' not in plan_body:
+            plan_body['description_icon_type'] = None
+
         try:
             plan_instance = SubscriptionPlan.create_instance(plan_body)
 
@@ -391,6 +394,54 @@ class PlanViewHelper:
         return {}
 
     @staticmethod
+    def parameter_validation_for_first_plan_creation_email(user_data, community_data, user_id):
+
+        if not community_data.get('community'):
+            return
+
+        community_data = community_data.get('community')
+
+        if not user_data.get('user'):
+            return
+
+        verified_email = get_first_verified_email_and_phone(user_id, user_data)
+
+        if not verified_email.get('email'):
+            return
+
+        user_data = user_data.get('user')
+
+        return user_data, community_data, verified_email
+
+    @staticmethod
+    def prepare_email_data_for_first_plan_creation(user_data, community_data, verified_email):
+
+        mail_subject = FIRST_MEMBERSHIP_PLAN_CM_MAIL_SUBJECT.format(user_data.get('name'))
+
+        cm_onboarding_branch_url = CoreServiceUtilities.get_cm_onboarding_community_feed_url(
+            community_data.get('id'))
+
+        mail_template = get_template('cm_onboarding/first_plan_creation_cm_onboarding_email.html').render({
+            "community_logo": community_data.get('image_url'),
+            "community_name": community_data.get('name'),
+            "cm_name": user_data.get('name'),
+            "community_brand_color": community_data.get('brand_color') if community_data.get('brand_color') else
+            DEFAULT_CM_ONBOARDING_EMAIL_BUTTON_COLOR,
+            "button_text": FIRST_MEMBERSHIP_PLAN_CM_MAIL_BUTTON_TEXT,
+            "button_link": cm_onboarding_branch_url.get('feed_url') if cm_onboarding_branch_url.get('feed_url')
+            else ''
+        })
+
+        mail_body = {
+            'subject': mail_subject,
+            'mail_body': mail_template,
+            'mail_recipient_list': [verified_email.get('email')],
+            'reply_to': [FIRST_MEMBERSHIP_PLAN_CM_REPLY_EMAIL]
+        }
+
+        return mail_body
+
+    @staticmethod
     @shared_task
     def send_email_for_first_plan_creation(community_id, user_id):
 
@@ -400,44 +451,11 @@ class PlanViewHelper:
             community_data = CoreServiceUtilities.get_community_data(community_id)
             user_data = CoreServiceUtilities.get_user_details({'member_id': user_id})
 
-            if not community_data.get('community'):
-                return
+            user_data, community_data, verified_email = PlanViewHelper.parameter_validation_for_first_plan_creation_email(
+                user_data, community_data, user_id)
 
-            community_data = community_data.get('community')
-
-            if not user_data.get('user'):
-                return
-
-            verified_email = get_first_verified_email_and_phone(user_id, user_data)
-
-            if not verified_email.get('email'):
-                return
-
-            user_data = user_data.get('user')
-
-            mail_subject = FIRST_MEMBERSHIP_PLAN_CM_MAIL_SUBJECT.format(user_data.get('name'))
-
-            cm_onboarding_branch_url = CoreServiceUtilities.get_cm_onboarding_community_feed_url(
-                community_data.get('id'))
-
-            mail_template = get_template('cm_onboarding/cm_onboarding_main.html').render({
-                "community_logo": community_data.get('image_url'),
-                "community_name": community_data.get('name'),
-                "mail_body": FIRST_MEMBERSHIP_PLAN_CM_MAIL_BODY.format(user_data.get('name')),
-                "community_brand_color": community_data.get('brand_color') if community_data.get('brand_color') else
-                DEFAULT_CM_ONBOARDING_EMAIL_BUTTON_COLOR,
-                "after_button_code": FIRST_MEMBERSHIP_PLAN_CM_MAIL_AFTER_CODE,
-                "button_text": FIRST_MEMBERSHIP_PLAN_CM_MAIL_BUTTON_TEXT,
-                "button_link": cm_onboarding_branch_url.get('feed_url') if cm_onboarding_branch_url.get('feed_url')
-                else ''
-            })
-
-            mail_body = {
-                'subject': mail_subject,
-                'mail_body': mail_template,
-                'mail_recipient_list': [verified_email.get('email')],
-                'reply_to': [FIRST_MEMBERSHIP_PLAN_CM_REPLY_EMAIL]
-            }
+            mail_body = PlanViewHelper.prepare_email_data_for_first_plan_creation(user_data, community_data,
+                                                                                  verified_email)
 
             send_email_response = send_email_from_core_service(user_id, mail_body)
 

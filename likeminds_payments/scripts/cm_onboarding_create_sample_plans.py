@@ -1,4 +1,5 @@
 from subscription.plans.models import SamplePlanCategory, SamplePlan
+from subscription.plans.serializers import SamplePlanSerializers, SamplePlanCategorySerializers
 from subscription.utility.model_utilities import ModelUtilities
 from subscription.utility.states import sample_plan_types
 
@@ -431,11 +432,13 @@ def create_or_update_sample_plan_category():
                                                                       {'id': sample_plan_category.get('id')})
 
         if not sample_plan_category_filter:
-            sample_plan_category_instance = SamplePlanCategory.create_instance(sample_plan_category)
-            sample_plan_category_instance.save()
+            sample_plan_category_instance = SamplePlanCategorySerializers(data=sample_plan_category)
+
+            if sample_plan_category_instance.is_valid():
+                sample_plan_category_instance.save()
 
         else:
-            SamplePlanCategory.update_instance(sample_plan_category_filter[0], sample_plan_category)
+            SamplePlanCategorySerializers.update_instance(sample_plan_category_filter[0], sample_plan_category)
 
 
 def create_or_update_sample_plans():
@@ -444,17 +447,21 @@ def create_or_update_sample_plans():
 
         sample_plan_filter = ModelUtilities.get_model_filter(SamplePlan, {'id': sample_plan.get('id')})
 
-        category_instance = ModelUtilities.get_model_instance_or_none(SamplePlanCategory, sample_plan.get(
-            'category_id'))
+        category_filter = ModelUtilities.get_model_filter(SamplePlanCategory, {'id': sample_plan.get('category_id')})
 
-        sample_plan['category_instance'] = category_instance
+        if not category_filter:
+            continue
+
+        sample_plan['category'] = category_filter[0].id
 
         if not sample_plan_filter:
-            sample_pan_instance = SamplePlan.create_instance(sample_plan)
-            sample_pan_instance.save()
+            sample_pan_instance = SamplePlanSerializers(data=sample_plan)
+
+            if sample_pan_instance.is_valid():
+                sample_pan_instance.save()
 
         else:
-            SamplePlan.update_instance(sample_plan_filter[0], sample_plan)
+            SamplePlanSerializers.update_instance(sample_plan_filter[0], sample_plan)
 
 
 started = time.time()

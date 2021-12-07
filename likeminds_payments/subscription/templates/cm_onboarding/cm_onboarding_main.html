@@ -7,14 +7,16 @@
     <div style="font-size: 20px; color: #666; text-align: left; font-weight: bold;">Hello!</div>
     <div style="text-align: left; margin-top: 20px;">
       <div style="color: #718297; font-size: 16px;">
-        {{ mail_body | safe }}
+        {% block main_body %}
+        {% endblock %}
       </div>
       <div style="margin-top: 24px; display: flex; width: 100%;">
         <a href="{{button_link}}" style="width: 100%; text-align: center; text-decoration: none; background-color: {{community_brand_color}}; padding: 12px; color: white; border-radius: 24px;">{{button_text}}</a>
       </div>
       <br>
       <div style="color: #718297; font-size: 16px;">
-        {{ after_button_code | safe}}
+        {% block after_body %}
+        {% endblock %}
       </div>
     </div>
   </div>

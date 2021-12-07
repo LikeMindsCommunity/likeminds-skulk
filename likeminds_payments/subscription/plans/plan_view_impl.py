@@ -8,6 +8,7 @@ from .serializers import PlanSerializer
 from ..mixins import TransactionMixin
 from ..utility.json_utilities import JsonUtilities
 from ..utility.request_utilities import RequestUtilities
+from ..utility.response_utilities import ResponseUtilities
 from ..plans.plan_impl import PlanImpl
 from ..plans.constants import *
 from ..plans.plan_view_helper import PlanViewHelper
@@ -243,7 +244,8 @@ class FetchSamplePlanCategoryView(TransactionMixin, APIView):
         response_data = plan_manager.fetch_sample_plan_category()
 
         if response_data.get('error_message'):
-            return JsonResponse(response_data, status=status_codes.HTTP_400_BAD_REQUEST)
+            return JsonResponse(**ResponseUtilities.get_view_impl_error_context(response_data.get('error_message'),
+                                                                                status_codes.HTTP_400_BAD_REQUEST))
 
         return JsonResponse(response_data)
 
@@ -255,14 +257,15 @@ class FetchSamplePlanView(TransactionMixin, APIView):
         category_id = request.GET.get('category_id')
 
         if not category_id:
-            return JsonResponse({'success': False, 'error_message': 'Invalid category_id'},
-                                status=status_codes.HTTP_400_BAD_REQUEST)
+            return JsonResponse(**ResponseUtilities.get_view_impl_error_context('Invalid category_id',
+                                                                                status_codes.HTTP_400_BAD_REQUEST))
 
         plan_manager = PlanImpl()
 
         response_data = plan_manager.fetch_sample_plans(category_id=category_id)
 
         if response_data.get('error_message'):
-            return JsonResponse(response_data, status=status_codes.HTTP_400_BAD_REQUEST)
+            return JsonResponse(**ResponseUtilities.get_view_impl_error_context(response_data.get('error_message'),
+                                                                                status_codes.HTTP_400_BAD_REQUEST))
 
         return JsonResponse(response_data)

@@ -557,7 +557,7 @@ def _settlement_validator(settlement_id) -> dict:
 def _get_settlement_processed_template_context(community_details, settlement_instance):
 
     cm_mail_template = get_template(
-        'settlements/settlement_processed_cm_email').render(
+        'settlements/settlement_processed_cm_email.html').render(
         {"community_name": community_details['community'].get('name'),
          "currency": settlement_instance.currency,
          "amount": NumberUtilities.convert_to_rupee_or_none(settlement_instance.amount),
@@ -635,7 +635,7 @@ def settlement_processed_communication(settlement_id):
 def _get_settlement_failed_cm_template_context(community_details, settlement_instance):
 
     cm_mail_template = get_template(
-        'settlements/settlement_failed_cm_email').render(
+        'settlements/settlement_failed_cm_email.html').render(
         {"community_name": community_details['community'].get('name'),
          "currency": settlement_instance.currency,
          "amount": NumberUtilities.convert_to_rupee_or_none(settlement_instance.amount),
@@ -713,7 +713,7 @@ def settlement_failed_cm_communication(settlement_id):
 def _get_settlement_failed_admin_template_context(community_details, settlement_instance):
 
     admin_mail_template = get_template(
-        'settlements/settlement_failed_admin_email').render(
+        'settlements/settlement_failed_admin_email.html').render(
         {"community_name": community_details['community'].get('name'),
          "currency": settlement_instance.currency,
          "amount": NumberUtilities.convert_to_rupee_or_none(settlement_instance.amount),

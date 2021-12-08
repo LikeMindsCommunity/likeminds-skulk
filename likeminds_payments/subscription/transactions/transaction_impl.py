@@ -356,7 +356,7 @@ class TransactionImpl(TransactionManager):
 
         community_data = CoreServiceUtilities.get_community_data(transaction_instance.type_id)
 
-        if 'community' in community_data:
+        if 'community' in community_data and transaction_instance.user_id:
             analytics_data = {
                 'community_id': transaction_instance.type_id,
                 'community_name': community_data['community'].get('name'),

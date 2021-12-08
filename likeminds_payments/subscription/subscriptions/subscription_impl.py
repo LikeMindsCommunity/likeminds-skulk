@@ -402,6 +402,7 @@ class SubscriptionImpl(SubscriptionManager):
 
         user_id = NumberUtilities.get_integer_from_string(user_id)
         community_id = NumberUtilities.get_integer_from_string(community_id)
+        current_time = TimeUtilities.current_time_in_milliseconds()
 
         subscription_instance = Subscription.get_subscription_or_None(user_id, community_id)
 
@@ -431,6 +432,11 @@ class SubscriptionImpl(SubscriptionManager):
             subscription_instance.type = data['subscription_data']['type']
             subscription_instance.renewal_due = data['subscription_data']['renewal_due']
             subscription_instance.transaction = data['subscription_data']['transaction']
+
+            if subscription_instance.is_removed and subscription_instance.valid_till >= current_time:
+                CoreServiceUtilities.renew_member(StringUtilities.get_string_from_integer(community_id),
+                                                  StringUtilities.get_string_from_integer(user_id))
+
             subscription_instance.is_removed = False
             subscription_instance.save()
 
@@ -470,6 +476,10 @@ class SubscriptionImpl(SubscriptionManager):
             subscription_instance.renewal_due = TimeUtilities.subtract_days_in_epoch_time(
                 subscription_instance.valid_till, NOTIFY_PERIOD)
 
+            if subscription_instance.is_removed and subscription_instance.valid_till >= current_time:
+                CoreServiceUtilities.renew_member(StringUtilities.get_string_from_integer(community_id),
+                                                  StringUtilities.get_string_from_integer(user_id))
+
             if subscription_instance.valid_till > current_time:
                 subscription_instance.is_removed = False
 
@@ -477,10 +487,6 @@ class SubscriptionImpl(SubscriptionManager):
 
             SubscriptionImpl._remove_member_notifications(subscription_instance.user_id,
                                                           subscription_instance.community_id)
-
-            if subscription_instance.is_removed and subscription_instance.valid_till >= current_time:
-                CoreServiceUtilities.renew_member(StringUtilities.get_string_from_integer(community_id),
-                                                  StringUtilities.get_string_from_integer(user_id))
 
             subscription_history_data = {
                 "start_date": existing_valid_till,

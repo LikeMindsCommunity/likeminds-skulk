@@ -80,8 +80,8 @@ class TransactionViewHelper:
             body['page'] = NumberUtilities.get_integer_from_string(request_body['page'])
 
         if 'payment_page_id' in request_body and request_body.get('payment_page_id'):
-            payment_page_filter = ModelUtilities.get_model_filter(PaymentPageMeta,
-                                                                  {'payment_page_id': request_body.get('payment_page_id')})
+            payment_page_filter = ModelUtilities.get_model_filter(
+                PaymentPageMeta, {'payment_page_id': request_body.get('payment_page_id')})
 
             if not payment_page_filter:
                 return {'error_message': 'Invalid payment_page_id'}

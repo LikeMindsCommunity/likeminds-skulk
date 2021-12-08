@@ -225,7 +225,8 @@ class SettlementImpl(SettlementManager):
         signature_verification = self._verify_payout_signature(payout_raw_body, payout_signature)
 
         if 'error_message' in signature_verification:
-            return {'error_message': signature_verification['error_message']}
+            return ResponseUtilities.get_impl_error_context(signature_verification['error_message'],
+                                                            status_codes.HTTP_400_BAD_REQUEST)
 
         existing_settlement_list = ModelUtilities.get_model_filter(
             Settlement, {'settlement_id': payout_entity.get('id')})
@@ -239,7 +240,8 @@ class SettlementImpl(SettlementManager):
             create_settlement = self._create_settlement_instance(payout_entity)
 
             if 'error_message' in create_settlement:
-                return ResponseUtilities(create_settlement['error_message'], create_settlement['status'])
+                return ResponseUtilities.get_impl_error_context(create_settlement['error_message'],
+                                                                create_settlement['status'])
 
             settlement_instance = create_settlement['settlement_instance']
 

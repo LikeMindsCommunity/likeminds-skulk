@@ -126,7 +126,7 @@ class TransactionViewHelper:
         if transaction_instance.method in [MIGRATION, MANUAL_PAYMENT_PAGE]:
             return {'special_case': True}
 
-        if transaction_instance.status != PAYMENTS_STATUS_MAPPER['CAPTURED']:
+        if transaction_instance.status != PAYMENTS_STATUS_FILTER['CAPTURED']:
             return {'error_message': 'transaction was never captured'}
 
         if getattr(transaction_instance, 'type') and (transaction_instance.type == TransactionType.PAYMENT_PAGE):

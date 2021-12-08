@@ -1,6 +1,5 @@
 from django.db import models
 from ..utility.time_utilities import TimeUtilities
-from ..utility.states import KYCState
 
 
 class CommunityKYC(models.Model):

@@ -4,7 +4,7 @@ VALID_WEBHOOK_EVENTS = [
     "payment.captured",
     "payment.failed",
 ]
-PAGE_SIZE = 10
+TRANSACTIONS_PAGE_SIZE = 50
 CHATROOM_LINK = "%s/collabcard/%s"
 
 TRANSACTION_DOWNLOAD_ALL_CSV_COLUMN_ORDERING_PAYMENT_PAGE_ID = ["Payment ID", "Name", "Phone", "Email ID", "Amount",
@@ -24,6 +24,12 @@ PAYMENTS_STATUS_MAPPER = {
     'FAILED': 'Failed',
     'CAPTURED': 'Received',
     'REFUND': 'Refunded'
+}
+
+PAYMENTS_STATUS_FILTER = {
+    'FAILED': 'failed',
+    'CAPTURED': 'captured',
+    'REFUNDED': 'refund'
 }
 
 TRANSACTION_DOWNLOAD_ALL_PAYMENT_PAGE_FILE_NAME = "Payment_page_report_{}_{}.csv"

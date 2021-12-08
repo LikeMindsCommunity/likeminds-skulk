@@ -87,7 +87,7 @@ class SettlementImpl(SettlementManager):
             return ResponseUtilities.get_impl_error_context(settlement_data.get('error_message'),
                                                             settlement_data.get('status'))
 
-        if settlement_data.get('paid_amount', 0) == 0:
+        if settlement_data.get('paid_amount', 0) <= 0:
             return ResponseUtilities.get_impl_error_context('Not enough balance to settle',
                                                             status_codes.HTTP_400_BAD_REQUEST)
 

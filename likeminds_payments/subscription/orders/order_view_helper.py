@@ -136,19 +136,15 @@ class OrderViewHelper:
     def create_event_order_body_validator(request_body) -> dict:
 
         if not request_body:
-
             return {'error_message': 'invalid request body'}
 
         if not request_body.get('event_plan_id'):
-
             return {'error_message': 'send event_plan_id'}
 
         if not request_body.get('payment_page_url'):
-
             return {'error_message': 'send payment_page_url'}
 
         if not request_body.get('user_id'):
-
             return {'error_message': 'Invalid user id'}
 
         return request_body
@@ -234,23 +230,18 @@ class OrderViewHelper:
     def create_community_event_order_body_validator(request_body) -> dict:
 
         if not request_body:
-
             return {'error_message': 'invalid request body'}
 
         if not request_body.get('event_plan_id'):
-
             return {'error_message': 'send event_plan_id'}
 
         if not request_body.get('payment_page_url'):
-
             return {'error_message': 'send payment_page_url'}
 
         if not request_body.get('user_id'):
-
             return {'error_message': 'Invalid user id'}
 
         if not request_body.get('plan_id'):
-
             return {'error_message': 'Invalid plan id'}
 
         return request_body
@@ -286,12 +277,15 @@ class OrderViewHelper:
                                                              order_body.get('user_id'))
 
         if (member_state == MemberState.GUEST) and event_plan_instance.strike_cost:
-            cost = event_plan_instance.strike_cost
+            event_cost = event_plan_instance.cost
+
+        elif 'renew' in order_body or order_body['renew'] == 'true':
+            event_cost = event_plan_instance.cost
 
         else:
-            cost = event_plan_instance.cost
+            event_cost = event_plan_instance.strike_cost
 
-        total_cost = cost + community_plan_instance.cost
+        total_cost = event_cost + community_plan_instance.cost
 
         order_data = OrderViewHelper._create_community_event_order_object_data(event_plan_instance,
                                                                                community_plan_instance,

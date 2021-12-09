@@ -2,7 +2,7 @@ from django.conf import settings
 import json
 import requests
 from requests.auth import HTTPBasicAuth
-from subscription.external_services.razorpay.constants import *
+from subscription.external_services.razorpay.constants import (CONTACTS_API, FUND_ACCOUNTS_API, PAYOUTS_API)
 from subscription.external_services.razorpay.razorpayX_manager import RazorpayXManager
 from subscription.utility.response_utilities import ResponseUtilities
 from ..logging.logging_wrapper import LoggingWrapper
@@ -121,4 +121,57 @@ class RazorpayXWrapper(RazorpayXManager):
 
         except:
             error_logger.error('error making create fund account request on razorpayX')
+            return ResponseUtilities.get_inner_error_context('error making request')
+
+    @staticmethod
+    def _create_payout_api_payload(payout_info) -> dict:
+
+        if not payout_info:
+            return ResponseUtilities.get_inner_error_context('send payout info')
+
+        if 'account_number' not in payout_info:
+            return ResponseUtilities.get_inner_error_context('send account_number')
+
+        if 'fund_account_id' not in payout_info:
+            return ResponseUtilities.get_inner_error_context('send fund_account_id')
+
+        if 'amount' not in payout_info:
+            return ResponseUtilities.get_inner_error_context('send amount')
+
+        if 'currency' not in payout_info:
+            return ResponseUtilities.get_inner_error_context('send currency')
+
+        if 'mode' not in payout_info:
+            return ResponseUtilities.get_inner_error_context('send mode')
+
+        if 'purpose' not in payout_info:
+            return ResponseUtilities.get_inner_error_context('send purpose')
+
+        payload = {
+            'headers': {
+                'Content-Type': 'application/json'
+            },
+            'data': payout_info
+        }
+
+        return payload
+
+    def create_payout(self, payout_info) -> dict:
+
+        api_payload = self._create_payout_api_payload(payout_info)
+
+        try:
+            api_response = requests.post(url=PAYOUTS_API,
+                                         headers=api_payload.get('headers'),
+                                         data=json.dumps(api_payload.get('data')),
+                                         auth=HTTPBasicAuth(self.get_key_id(), self.get_key_secret()))
+
+            if hasattr(api_response, 'status_code') and int(api_response.status_code) not in [200, 201]:
+                return ResponseUtilities.get_inner_error_context(
+                    'message: {}'.format(api_response.content.decode('utf-8')))
+
+            return {'payout': json.loads(api_response.content)}
+
+        except:
+            error_logger.error('error making payout request on razorpayX')
             return ResponseUtilities.get_inner_error_context('error making request')

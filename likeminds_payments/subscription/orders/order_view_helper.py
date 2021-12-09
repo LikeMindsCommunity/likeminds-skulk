@@ -1,6 +1,10 @@
 from ..plans.models import SubscriptionPlan, SubscriptionEventPlan
 from ..payment_page.models import PaymentPageMeta
 from ..payment_page.constants import PAYMENT_PAGE_AMOUNT_TYPE_FIXED
+from ..subscriptions.constants import STATUS_EXPIRED
+from ..subscriptions.models import Subscription
+from ..subscriptions.serializers import SubscriptionSerializer
+from ..subscriptions.subscription_impl import SubscriptionImpl
 from ..utility.core_service_utilities import CoreServiceUtilities
 from ..utility.model_utilities import ModelUtilities
 from ..utility.number_utilities import NumberUtilities
@@ -136,19 +140,15 @@ class OrderViewHelper:
     def create_event_order_body_validator(request_body) -> dict:
 
         if not request_body:
-
             return {'error_message': 'invalid request body'}
 
         if not request_body.get('event_plan_id'):
-
             return {'error_message': 'send event_plan_id'}
 
         if not request_body.get('payment_page_url'):
-
             return {'error_message': 'send payment_page_url'}
 
         if not request_body.get('user_id'):
-
             return {'error_message': 'Invalid user id'}
 
         return request_body
@@ -193,7 +193,20 @@ class OrderViewHelper:
         member_state = CoreServiceUtilities.get_member_state(community_data['community']['id'],
                                                              order_body.get('user_id'))
 
+        subscription = Subscription.get_subscription_or_None(user_id=order_body.get('user_id'),
+                                                             community_id=community_data['community']['id'])
+        subscription_object = None
+
+        if subscription:
+            subscription_objects = SubscriptionSerializer([subscription])
+
+            if subscription_objects:
+                subscription_object = subscription_objects[0]
+
         if (member_state == MemberState.GUEST) and plan_instance.strike_cost:
+            amount = plan_instance.strike_cost
+
+        elif (subscription_object.get('membership_state') == STATUS_EXPIRED) and subscription_object and plan_instance.strike_cost:
             amount = plan_instance.strike_cost
 
         else:
@@ -234,23 +247,18 @@ class OrderViewHelper:
     def create_community_event_order_body_validator(request_body) -> dict:
 
         if not request_body:
-
             return {'error_message': 'invalid request body'}
 
         if not request_body.get('event_plan_id'):
-
             return {'error_message': 'send event_plan_id'}
 
         if not request_body.get('payment_page_url'):
-
             return {'error_message': 'send payment_page_url'}
 
         if not request_body.get('user_id'):
-
             return {'error_message': 'Invalid user id'}
 
         if not request_body.get('plan_id'):
-
             return {'error_message': 'Invalid plan id'}
 
         return request_body
@@ -258,7 +266,8 @@ class OrderViewHelper:
     @staticmethod
     def create_community_event_order_instance_helper(order_body) -> dict:
 
-        event_plan_filter = ModelUtilities.get_model_filter(SubscriptionEventPlan, {'event_plan_id': order_body.get('event_plan_id')})
+        event_plan_filter = ModelUtilities.get_model_filter(SubscriptionEventPlan,
+                                                            {'event_plan_id': order_body.get('event_plan_id')})
 
         if not event_plan_filter:
             return {'error_message': 'invalid event_plan_id'}
@@ -267,7 +276,8 @@ class OrderViewHelper:
 
         community_data = CoreServiceUtilities.get_community_data(event_plan_instance.community_id)
 
-        community_plan_filter = ModelUtilities.get_model_filter(SubscriptionPlan, {'plan_id': order_body.get('plan_id')})
+        community_plan_filter = ModelUtilities.get_model_filter(SubscriptionPlan,
+                                                                {'plan_id': order_body.get('plan_id')})
 
         if not community_plan_filter:
             return {'error_message': 'invalid plan_id'}
@@ -280,10 +290,7 @@ class OrderViewHelper:
         if community_data.get('error_message'):
             return {'error_message': community_data['error_message']}
 
-        cost = OrderViewHelper.get_cost_for_event_in_community_event_order(event_plan_instance,
-                                                                           order_body.get('user_id'))
-
-        total_cost = cost + community_plan_instance.cost
+        total_cost = event_plan_instance.cost + community_plan_instance.cost
 
         order_data = OrderViewHelper._create_community_event_order_object_data(event_plan_instance,
                                                                                community_plan_instance,
@@ -318,6 +325,9 @@ class OrderViewHelper:
                 "user_id": order_body['user_id'],
             }
         }
+
+        if 'renew' in order_body:
+            order_data['notes']['renew'] = order_body['renew']
 
         return order_data
 

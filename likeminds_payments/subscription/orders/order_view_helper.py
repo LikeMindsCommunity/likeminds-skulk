@@ -1,6 +1,10 @@
 from ..plans.models import SubscriptionPlan, SubscriptionEventPlan
 from ..payment_page.models import PaymentPageMeta
 from ..payment_page.constants import PAYMENT_PAGE_AMOUNT_TYPE_FIXED
+from ..subscriptions.constants import STATUS_EXPIRED
+from ..subscriptions.models import Subscription
+from ..subscriptions.serializers import SubscriptionSerializer
+from ..subscriptions.subscription_impl import SubscriptionImpl
 from ..utility.core_service_utilities import CoreServiceUtilities
 from ..utility.model_utilities import ModelUtilities
 from ..utility.number_utilities import NumberUtilities
@@ -189,7 +193,20 @@ class OrderViewHelper:
         member_state = CoreServiceUtilities.get_member_state(community_data['community']['id'],
                                                              order_body.get('user_id'))
 
+        subscription = Subscription.get_subscription_or_None(user_id=order_body.get('user_id'),
+                                                             community_id=community_data['community']['id'])
+        subscription_object = None
+
+        if subscription:
+            subscription_objects = SubscriptionSerializer([subscription])
+
+            if subscription_objects:
+                subscription_object = subscription_objects[0]
+
         if (member_state == MemberState.GUEST) and plan_instance.strike_cost:
+            amount = plan_instance.strike_cost
+
+        elif (subscription_object.get('membership_state') == STATUS_EXPIRED) and subscription_object and plan_instance.strike_cost:
             amount = plan_instance.strike_cost
 
         else:

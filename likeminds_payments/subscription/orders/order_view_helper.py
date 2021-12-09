@@ -319,6 +319,9 @@ class OrderViewHelper:
             }
         }
 
+        if 'renew' in order_body:
+            order_data['notes']['renew'] = order_body['renew']
+
         return order_data
 
     @staticmethod

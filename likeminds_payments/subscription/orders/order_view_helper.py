@@ -273,19 +273,7 @@ class OrderViewHelper:
         if community_data.get('error_message'):
             return {'error_message': community_data['error_message']}
 
-        member_state = CoreServiceUtilities.get_member_state(event_plan_instance.community_id,
-                                                             order_body.get('user_id'))
-
-        if (member_state == MemberState.GUEST) and event_plan_instance.strike_cost:
-            event_cost = event_plan_instance.cost
-
-        elif 'renew' in order_body or order_body['renew'] == 'true':
-            event_cost = event_plan_instance.cost
-
-        else:
-            event_cost = event_plan_instance.strike_cost
-
-        total_cost = event_cost + community_plan_instance.cost
+        total_cost = event_plan_instance.cost + community_plan_instance.cost
 
         order_data = OrderViewHelper._create_community_event_order_object_data(event_plan_instance,
                                                                                community_plan_instance,

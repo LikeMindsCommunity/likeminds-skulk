@@ -129,7 +129,7 @@ class TransactionImpl(TransactionManager):
         if 'amount' in refund_instance:
             transaction_data['refund_amount'] = refund_instance['amount']
 
-        if 'user_id' in order_notes:
+        if 'user_id' in order_notes and transaction_data['renew']:
             transaction_data['user_id'] = order_notes['user_id']
 
         if 'shared_by' in order_notes:

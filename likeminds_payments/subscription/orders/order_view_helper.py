@@ -258,7 +258,8 @@ class OrderViewHelper:
     @staticmethod
     def create_community_event_order_instance_helper(order_body) -> dict:
 
-        event_plan_filter = ModelUtilities.get_model_filter(SubscriptionEventPlan, {'event_plan_id': order_body.get('event_plan_id')})
+        event_plan_filter = ModelUtilities.get_model_filter(SubscriptionEventPlan,
+                                                            {'event_plan_id': order_body.get('event_plan_id')})
 
         if not event_plan_filter:
             return {'error_message': 'invalid event_plan_id'}
@@ -267,7 +268,8 @@ class OrderViewHelper:
 
         community_data = CoreServiceUtilities.get_community_data(event_plan_instance.community_id)
 
-        community_plan_filter = ModelUtilities.get_model_filter(SubscriptionPlan, {'plan_id': order_body.get('plan_id')})
+        community_plan_filter = ModelUtilities.get_model_filter(SubscriptionPlan,
+                                                                {'plan_id': order_body.get('plan_id')})
 
         if not community_plan_filter:
             return {'error_message': 'invalid plan_id'}
@@ -280,8 +282,14 @@ class OrderViewHelper:
         if community_data.get('error_message'):
             return {'error_message': community_data['error_message']}
 
-        cost = OrderViewHelper.get_cost_for_event_in_community_event_order(event_plan_instance,
-                                                                           order_body.get('user_id'))
+        member_state = CoreServiceUtilities.get_member_state(event_plan_instance.community_id,
+                                                             order_body.get('user_id'))
+
+        if (member_state == MemberState.GUEST) and event_plan_instance.strike_cost:
+            cost = event_plan_instance.strike_cost
+
+        else:
+            cost = event_plan_instance.cost
 
         total_cost = cost + community_plan_instance.cost
 

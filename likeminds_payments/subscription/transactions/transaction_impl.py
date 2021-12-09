@@ -98,10 +98,10 @@ class TransactionImpl(TransactionManager):
     def _fetch_transaction_data_for_community_subscription(order_notes, payment_instance, refund_instance):
 
         transaction_data = {
-            "plan_id": order_notes['plan_id'],
+            "plan_id": order_notes.get('plan_id'),
             "payment_id": payment_instance['id'],
-            "community_name": order_notes['community_name'],
-            "plan_name": order_notes['name'],
+            "community_name": order_notes.get('community_name'),
+            "plan_name": order_notes.get('name', ''),
             "plan_cost": payment_instance['amount'],
             "renew": False,
             "amount": payment_instance['amount'],
@@ -114,7 +114,7 @@ class TransactionImpl(TransactionManager):
             "error_description": "",
             "refund_amount": 0,
             "user_id": None,
-            "payment_page_url": order_notes['payment_page_url'],
+            "payment_page_url": order_notes.get('payment_page_url'),
             "shared_by": None,
             "grace_period": 0,
             "type": TransactionType.COMMUNITY_SUBSCRIPTION
@@ -129,7 +129,7 @@ class TransactionImpl(TransactionManager):
         if 'amount' in refund_instance:
             transaction_data['refund_amount'] = refund_instance['amount']
 
-        if 'user_id' in order_notes:
+        if 'user_id' in order_notes and transaction_data['renew']:
             transaction_data['user_id'] = order_notes['user_id']
 
         if 'shared_by' in order_notes:

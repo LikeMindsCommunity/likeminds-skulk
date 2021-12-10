@@ -25,4 +25,7 @@ UPDATE_COHORT_API = "{}/api/cohort/update".format(settings.CORE_SERVICE_URL)
 PAYMENT_PAGE_BRANCH_URL = "{}/api/community/fetch_payment_page_url".format(settings.CORE_SERVICE_URL)
 CMS_USER_NAME = 'teamGrowth'
 CMS_PASSWORD = 'TheLMGrowth@1001'
+
+TRIGGER_EVENT_CREATION_MAIL = '{}/api/notifications/send_event_creation_mail'.format(settings.CORE_SERVICE_URL)
+
 ADMIN_EMAIL = 'admin@likeminds.community'

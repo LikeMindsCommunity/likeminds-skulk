@@ -2,7 +2,7 @@ from __future__ import absolute_import, unicode_literals
 from celery import shared_task
 from .constants import EVENT_PAYMENT_LINK
 from ..plans.plan_manager import PlanManager
-from .models import SubscriptionPlan, SubscriptionEventPlan
+from .models import SubscriptionPlan, SubscriptionEventPlan, EventCohortPlan
 from .serializers import PlanSerializer, EventPlanSerializer
 from ..utility.async_tasks import update_event_in_webflow_service
 from ..utility.core_service_utilities import CoreServiceUtilities
@@ -143,6 +143,7 @@ class PlanImpl(PlanManager):
 
         create_info = self._process_event_creation_plan(req_body)
         instance = SubscriptionEventPlan.create_instance(create_info)
+        self._process_event_cohort_plans(cohort_plans=req_body.get('cohort_plan', []), event_plan_instance=instance)
         CoreServiceUtilities.update_event({
             'member_id': member_id,
             'chatroom_id': instance.chatroom_id,
@@ -176,3 +177,33 @@ class PlanImpl(PlanManager):
         update_event_in_webflow_service.delay(event_plan_instance.event_plan_id, member_id)
 
         return {'success': True}
+
+    @staticmethod
+    def _process_event_cohort_plans(cohort_plans: list, event_plan_instance: SubscriptionEventPlan):
+
+        if not event_plan_instance:
+            return
+
+        for cohort_plan in cohort_plans:
+
+            discount_type = cohort_plan.get('discount_type', EventDiscountType.PERCENTAGE)
+            discount = None
+
+            if discount_type == EventDiscountType.PERCENTAGE:
+                discount = cohort_plan.get('discount')
+
+            elif discount_type == EventDiscountType.FLAT:
+                discount = NumberUtilities.convert_to_paisa_or_none(cohort_plan.get('discount'))
+
+            event_cohort_plan_context = {
+                'cohort_id': cohort_plan.get('cohort_id'),
+                'cost': NumberUtilities.convert_to_paisa_or_none(cohort_plan.get('cost')),
+                'strike_cost': NumberUtilities.convert_to_paisa_or_none(cohort_plan.get('strike_cost')),
+                'cost_usd': NumberUtilities.convert_to_paisa_or_none(cohort_plan.get('cost_usd')),
+                'strike_cost_usd': NumberUtilities.convert_to_paisa_or_none(cohort_plan.get('strike_cost_usd')),
+                'discount_type': discount_type,
+                'discount': discount,
+                'event_plan': event_plan_instance
+            }
+
+            EventCohortPlan.create_instance(event_cohort_plan_context)

@@ -2,6 +2,9 @@ from celery.app import shared_task
 from .constants import *
 from ..utility.api_utilities import ApiUtilities
 from ..utility.number_utilities import NumberUtilities
+from ..external_services.logging.logging_wrapper import LoggingWrapper
+
+error_logger = LoggingWrapper.get_instance()
 
 
 class CoreServiceUtilities:
@@ -614,6 +617,13 @@ class CoreServiceUtilities:
             'event_cost': NumberUtilities.convert_to_rupee_or_none(event_cost)
         }
 
-        response = ApiUtilities.generate_post_request(url=TRIGGER_EVENT_CREATION_MAIL, data=payload)
+        try:
+            response = ApiUtilities.generate_post_request(url=TRIGGER_EVENT_CREATION_MAIL, data=payload)
 
-        print(response)
+            if 'success' not in response:
+                error_logger.error("got error in response while sending post request to /api/notifications/send_event_creation_mail \
+                                | response = %s") % str(response)
+
+        except Exception as e:
+            error_logger.error("Exception occurred while sending post request to /api/notifications/send_event_creation_mail \
+                                | exception = %s") % e.args

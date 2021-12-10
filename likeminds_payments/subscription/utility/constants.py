@@ -27,3 +27,5 @@ CMS_USER_NAME = 'teamGrowth'
 CMS_PASSWORD = 'TheLMGrowth@1001'
 
 TRIGGER_EVENT_CREATION_MAIL = '{}api/notifications/send_event_creation_mail'.format(settings.CORE_SERVICE_URL)
+
+ADMIN_EMAIL = 'admin@likeminds.community'

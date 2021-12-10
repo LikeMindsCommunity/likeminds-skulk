@@ -204,6 +204,9 @@ class KycImpl(KYCManager):
                     response = razorpay_X_manager.create_contact(contact_details)
 
                     if 'error_message' in response:
+                        updated_kyc_instance.status = KYCState.PENDING_APPROVAL
+                        updated_kyc_instance.save()
+
                         return ResponseUtilities.get_impl_error_context(
                             'KYC updated but status activation failed due to {}'.format(response['error_message']),
                             status_codes.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -233,6 +236,9 @@ class KycImpl(KYCManager):
                 response = razorpay_X_manager.create_fund_account(account_details)
 
                 if 'error_message' in response:
+                    updated_kyc_instance.status = KYCState.PENDING_APPROVAL
+                    updated_kyc_instance.save()
+
                     return ResponseUtilities.get_impl_error_context(
                         'KYC updated but status activation failed due to {}'.format(response['error_message']),
                         status_codes.HTTP_500_INTERNAL_SERVER_ERROR)

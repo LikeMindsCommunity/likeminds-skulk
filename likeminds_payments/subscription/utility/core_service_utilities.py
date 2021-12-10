@@ -604,3 +604,20 @@ class CoreServiceUtilities:
         response = ApiUtilities.generate_get_request(url=url, headers=headers)
 
         return response
+
+    @staticmethod
+    def fetch_member_cohorts(community_id, user_id):
+
+        headers = {
+            'x-member-id': '{}'.format(user_id)
+        }
+
+        query_params = {
+            'community_id': community_id
+        }
+
+        url = FETCH_MEMBER_COHORTS_API
+
+        response = ApiUtilities.generate_get_request(url=url, query_params=query_params, headers=headers)
+
+        return response

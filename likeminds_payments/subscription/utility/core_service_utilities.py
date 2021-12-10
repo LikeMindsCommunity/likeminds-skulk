@@ -606,7 +606,6 @@ class CoreServiceUtilities:
 
         return response
 
-    @shared_task
     @staticmethod
     def trigger_event_creation_mail_in_core_service(chatroom_id, event_cost):
 

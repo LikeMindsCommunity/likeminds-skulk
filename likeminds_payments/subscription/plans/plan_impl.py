@@ -104,10 +104,10 @@ class PlanImpl(PlanManager):
         return PlanSerializer(plans)
 
     @staticmethod
-    def _serialize_event_plan_list(filters):
+    def _serialize_event_plan_list(filters, user_id=None):
 
         event_filter = ModelUtilities.get_model_filter(SubscriptionEventPlan, filters).order_by('created_at')
-        event_plans = [EventPlanSerializer(plan_instance) for plan_instance in event_filter]
+        event_plans = [EventPlanSerializer(plan_instance, user_id) for plan_instance in event_filter]
 
         return event_plans
 
@@ -156,9 +156,9 @@ class PlanImpl(PlanManager):
 
         return {'success': True}
 
-    def fetch_event_plan(self, filters=None) -> dict:
+    def fetch_event_plan(self, filters=None, user_id=None) -> dict:
 
-        event_plans = self._serialize_event_plan_list(filters)
+        event_plans = self._serialize_event_plan_list(filters, user_id)
 
         return {'event_plans': event_plans}
 

@@ -1,9 +1,14 @@
+from .models import EventCohortPlan
+from ..external_services.logging.logging_wrapper import LoggingWrapper
+from ..utility.model_utilities import ModelUtilities
 from ..utility.number_utilities import NumberUtilities
 from ..utility.plan_utilities import PlanUtilities
 from ..utility.states import EventDiscountType
 from ..utility.core_service_utilities import CoreServiceUtilities
 from .constants import *
 from ..subscriptions.constants import *
+
+error_logger = LoggingWrapper.get_instance()
 
 
 def PlanSerializer(plans) -> list:
@@ -67,13 +72,12 @@ def PlanSerializer(plans) -> list:
     return output
 
 
-def EventPlanSerializer(plan_instance) -> dict:
-
+def EventPlanSerializer(plan_instance, user_id=None) -> dict:
     plan_context = {
         'event_plan_id': plan_instance.event_plan_id,
         'chatroom_id': plan_instance.chatroom_id,
         'community_id': plan_instance.community_id,
-        'cost': NumberUtilities.convert_to_rupee_or_none(plan_instance.cost),
+        'cost': NumberUtilities.convert_to_rupee_or_none(get_event_plan_cost(plan_instance, user_id)),
         'strike_cost': NumberUtilities.convert_to_rupee_or_none(plan_instance.strike_cost),
         'cost_usd': NumberUtilities.convert_to_rupee_or_none(plan_instance.cost_usd),
         'strike_cost_usd': NumberUtilities.convert_to_rupee_or_none(plan_instance.strike_cost_usd),
@@ -85,3 +89,40 @@ def EventPlanSerializer(plan_instance) -> dict:
         plan_context['discount'] = NumberUtilities.convert_to_rupee_or_none(plan_instance.discount)
 
     return plan_context
+
+
+def get_event_plan_cost(event_plan_instance, user_id):
+
+    if not user_id:
+        return event_plan_instance.cost
+
+    filters = {'event_plan_id': event_plan_instance.id}
+    event_cohort_ids = list(ModelUtilities.get_model_filter(model=EventCohortPlan,
+                                                            filter_dict=filters).values_list('cohort_id', flat=True))
+
+    if not event_cohort_ids:
+        return event_plan_instance.cost
+
+    response = CoreServiceUtilities.fetch_member_cohorts(event_plan_instance.community_id, user_id)
+
+    if 'error_message' in response:
+        error_logger.error(f'Community ID:{event_plan_instance.community_id}, User ID:{user_id}, Response:{response}')
+        return event_plan_instance.cost
+
+    all_member_cohorts = response.get('member_cohorts')
+    member_cohorts = set()
+
+    if all_member_cohorts.get(user_id):
+        member_cohorts = [obj.get('id') for obj in all_member_cohorts.get(user_id)]
+
+    matching_cohorts = set(member_cohorts) & set(event_cohort_ids)
+
+    filter_dict = {'event_plan_id': event_plan_instance.id,
+                   'cohort_id__in': list(matching_cohorts)}
+
+    member_event_plan_cohorts = ModelUtilities.get_model_filter(EventCohortPlan, filter_dict).order_by('cost')
+
+    if not member_event_plan_cohorts:
+        return event_plan_instance.cost
+
+    return member_event_plan_cohorts[0].cost

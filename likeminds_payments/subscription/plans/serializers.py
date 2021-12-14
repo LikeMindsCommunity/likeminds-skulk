@@ -93,14 +93,11 @@ def EventPlanSerializer(plan_instance, user_id=None) -> dict:
 
 def get_event_plan_cost(event_plan_instance, user_id):
 
-    if not user_id:
-        return event_plan_instance.cost
-
     filters = {'event_plan_id': event_plan_instance.id}
     event_cohort_ids = list(ModelUtilities.get_model_filter(model=EventCohortPlan,
                                                             filter_dict=filters).values_list('cohort_id', flat=True))
 
-    if not event_cohort_ids:
+    if not user_id or not event_cohort_ids:
         return event_plan_instance.cost
 
     response = CoreServiceUtilities.fetch_member_cohorts(event_plan_instance.community_id, user_id)
@@ -109,17 +106,14 @@ def get_event_plan_cost(event_plan_instance, user_id):
         error_logger.error(f'Community ID:{event_plan_instance.community_id}, User ID:{user_id}, Response:{response}')
         return event_plan_instance.cost
 
-    all_member_cohorts = response.get('member_cohorts')
+    member_cohort_dict = response.get('member_cohorts')
     member_cohorts = set()
 
-    if all_member_cohorts.get(user_id):
-        member_cohorts = [obj.get('id') for obj in all_member_cohorts.get(user_id)]
+    if member_cohort_dict.get(user_id):
+        member_cohorts = [obj.get('id') for obj in member_cohort_dict.get(user_id)]
 
     matching_cohorts = set(member_cohorts) & set(event_cohort_ids)
-
-    filter_dict = {'event_plan_id': event_plan_instance.id,
-                   'cohort_id__in': list(matching_cohorts)}
-
+    filter_dict = {'event_plan_id': event_plan_instance.id, 'cohort_id__in': list(matching_cohorts)}
     member_event_plan_cohorts = ModelUtilities.get_model_filter(EventCohortPlan, filter_dict).order_by('cost')
 
     if not member_event_plan_cohorts:

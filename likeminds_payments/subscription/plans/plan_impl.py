@@ -1,6 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 from celery import shared_task
 from .constants import EVENT_PAYMENT_LINK
+from ..external_services.logging.logging_wrapper import LoggingWrapper
 from ..plans.plan_manager import PlanManager
 from .models import SubscriptionPlan, SubscriptionEventPlan, EventCohortPlan
 from .serializers import PlanSerializer, EventPlanSerializer, EventCohortPlanSerializer
@@ -12,6 +13,8 @@ from ..utility.number_utilities import NumberUtilities
 from ..utility.plan_utilities import PlanUtilities
 from ..utility.states import EventDiscountType
 from django.conf import settings
+
+error_logger = LoggingWrapper.get_instance()
 
 
 class PlanImpl(PlanManager):
@@ -203,10 +206,14 @@ class PlanImpl(PlanManager):
                 'strike_cost_usd': NumberUtilities.convert_to_paisa_or_none(cohort_plan.get('strike_cost_usd')),
                 'discount_type': discount_type,
                 'discount': discount,
-                'event_plan': event_plan_instance
+                'event_plan': event_plan_instance.id
             }
 
             event_cohort_plan_serializer = EventCohortPlanSerializer(data=event_cohort_plan_context)
 
             if event_cohort_plan_serializer.is_valid():
                 event_cohort_plan_serializer.save()
+
+            else:
+                error_logger.error(f' Event Plan Serializer:{event_cohort_plan_serializer.errors},'
+                                   f' cohort plan data:{event_cohort_plan_context}')

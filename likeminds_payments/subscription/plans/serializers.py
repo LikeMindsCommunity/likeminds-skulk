@@ -14,6 +14,7 @@ error_logger = LoggingWrapper.get_instance()
 
 
 class EventCohortPlanSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = EventCohortPlan
         fields = '__all__'

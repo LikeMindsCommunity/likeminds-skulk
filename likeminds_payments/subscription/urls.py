@@ -50,5 +50,7 @@ urlpatterns = [
     path('create_payment_page_order', CreatePaymentPageOrderView.as_view(), name='create_payment_page_order'),
     path('search', SearchView.as_view(), name='search'),
     path('search_history', SearchHistoryView.as_view(), name='search_history'),
-    path('kyc/', include('subscription.kyc.urls'))
+    path('kyc/', include('subscription.kyc.urls')),
+    path('transaction/', include('subscription.transactions.urls')),
+    path('settlement/', include('subscription.settlements.urls'))
 ]

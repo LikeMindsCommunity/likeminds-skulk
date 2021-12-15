@@ -20,13 +20,14 @@ class CommunityKYC(models.Model):
     account_number = models.CharField(max_length=32, default=None, null=True)
     bank_name = models.CharField(max_length=128, default='')
     status = models.IntegerField(default=0)
+    currency = models.CharField(max_length=8, default='INR')
     contact_id = models.CharField(max_length=64, default=None, null=True)
     account_id = models.CharField(max_length=64, default=None, null=True)
     created_at = models.BigIntegerField(default=0)
     updated_at = models.BigIntegerField(default=0)
 
     def __str__(self):
-        return self.pk
+        return str(self.pk)
 
     def save(self, *args, **kwargs):
 

@@ -6,11 +6,10 @@ from django.utils.decorators import method_decorator
 
 from ..mixins import TransactionMixin
 from ..plans.plan_view_helper import PlanViewHelper
-from ..transactions.models import Transaction
 from ..utility.request_utilities import RequestUtilities
+from ..utility.response_utilities import ResponseUtilities
 from .subscription_impl import SubscriptionImpl
 from .subscription_view_helper import SubscriptionViewHelper
-from ..utility.states import TransactionType
 
 
 class CreateSubscriptionView(TransactionMixin, APIView):
@@ -363,5 +362,74 @@ class MembersReportView(APIView):
 
         return JsonResponse(
             {'success': True, 'message': 'A mail will be sent to you with the details'},
+            status=status_codes.HTTP_200_OK
+        )
+
+
+class FetchCommunityRenewalsView(APIView):
+
+    @staticmethod
+    def get(request, *args, **kwargs):
+
+        query_params = SubscriptionViewHelper.get_community_renewals_filter_params(request)
+        member_id = RequestUtilities.get_parameter_from_headers(request, 'HTTP_X_MEMBER_ID')
+
+        if 'error_message' in query_params:
+            return JsonResponse(
+                {'success': False, 'error_message': query_params['error_message']},
+                status=status_codes.HTTP_400_BAD_REQUEST
+            )
+
+        if not member_id:
+            return JsonResponse(
+                {'success': False, 'error_message': 'send x-member-id in headers'},
+                status=status_codes.HTTP_400_BAD_REQUEST
+            )
+
+        subscription_manager = SubscriptionImpl(member_id=member_id, community_id=query_params['community_id'])
+        response_data = subscription_manager.fetch_community_renewals()
+
+        if 'error_message' in response_data:
+            context = ResponseUtilities.get_view_impl_error_context(response_data['error_message'],
+                                                                    response_data['status'])
+            return JsonResponse(context['data'], status=context['status'])
+
+        return JsonResponse(
+            {'success': True, 'subscriptions': response_data['subscriptions']},
+            status=status_codes.HTTP_200_OK
+        )
+
+
+class FetchSubscriptionMetaView(APIView):
+
+    @staticmethod
+    def get(request, *args, **kwargs):
+
+        query_params = SubscriptionViewHelper.get_subscription_meta_filter_params(request)
+        member_id = RequestUtilities.get_parameter_from_headers(request, 'HTTP_X_MEMBER_ID')
+
+        if 'error_message' in query_params:
+            return JsonResponse(
+                {'success': False, 'error_message': query_params['error_message']},
+                status=status_codes.HTTP_400_BAD_REQUEST
+            )
+
+        if not member_id:
+            return JsonResponse(
+                {'success': False, 'error_message': 'send x-member-id in headers'},
+                status=status_codes.HTTP_400_BAD_REQUEST
+            )
+
+        subscription_manager = SubscriptionImpl(member_id=member_id, community_id=query_params['community_id'])
+        response_data = subscription_manager.fetch_subscription_meta()
+
+        if 'error_message' in response_data:
+            context = ResponseUtilities.get_view_impl_error_context(response_data['error_message'],
+                                                                    response_data['status'])
+            return JsonResponse(context['data'], status=context['status'])
+
+        return JsonResponse(
+            {'success': True, 'total_members': response_data['total_members'],
+             'new_members': response_data['new_members']},
             status=status_codes.HTTP_200_OK
         )

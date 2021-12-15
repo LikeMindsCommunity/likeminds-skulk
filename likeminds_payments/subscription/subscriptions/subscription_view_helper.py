@@ -1,6 +1,7 @@
 from .constants import *
 from ..utility.time_utilities import TimeUtilities
 from ..utility.number_utilities import NumberUtilities
+from ..utility.response_utilities import ResponseUtilities
 import json
 
 
@@ -249,3 +250,27 @@ class SubscriptionViewHelper:
             return {'error_message': 'send community_id'}
 
         return request_body
+
+    @staticmethod
+    def get_community_renewals_filter_params(request):
+
+        query_params = {
+            'community_id': request.GET.get('community_id', None),
+        }
+
+        if not query_params['community_id']:
+            return ResponseUtilities.get_inner_error_context('send community_id in query params')
+
+        return query_params
+
+    @staticmethod
+    def get_subscription_meta_filter_params(request):
+
+        query_params = {
+            'community_id': request.GET.get('community_id', None),
+        }
+
+        if not query_params['community_id']:
+            return ResponseUtilities.get_inner_error_context('send community_id in query params')
+
+        return query_params

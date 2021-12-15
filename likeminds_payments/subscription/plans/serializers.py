@@ -1,3 +1,5 @@
+from rest_framework import serializers
+
 from .models import EventCohortPlan
 from ..external_services.logging.logging_wrapper import LoggingWrapper
 from ..utility.model_utilities import ModelUtilities
@@ -9,6 +11,12 @@ from .constants import *
 from ..subscriptions.constants import *
 
 error_logger = LoggingWrapper.get_instance()
+
+
+class EventCohortPlanSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EventCohortPlan
+        fields = '__all__'
 
 
 def PlanSerializer(plans) -> list:
@@ -92,7 +100,6 @@ def EventPlanSerializer(plan_instance, user_id=None) -> dict:
 
 
 def get_event_plan_cost(event_plan_instance, user_id):
-
     filters = {'event_plan_id': event_plan_instance.id}
     event_cohort_ids = list(ModelUtilities.get_model_filter(model=EventCohortPlan,
                                                             filter_dict=filters).values_list('cohort_id', flat=True))

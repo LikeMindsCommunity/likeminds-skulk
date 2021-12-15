@@ -3,7 +3,7 @@ from celery import shared_task
 from .constants import EVENT_PAYMENT_LINK
 from ..plans.plan_manager import PlanManager
 from .models import SubscriptionPlan, SubscriptionEventPlan, EventCohortPlan
-from .serializers import PlanSerializer, EventPlanSerializer
+from .serializers import PlanSerializer, EventPlanSerializer, EventCohortPlanSerializer
 from ..utility.async_tasks import update_event_in_webflow_service
 from ..utility.core_service_utilities import CoreServiceUtilities
 from ..utility.model_utilities import ModelUtilities
@@ -206,4 +206,7 @@ class PlanImpl(PlanManager):
                 'event_plan': event_plan_instance
             }
 
-            EventCohortPlan.create_instance(event_cohort_plan_context)
+            event_cohort_plan_serializer = EventCohortPlanSerializer(data=event_cohort_plan_context)
+
+            if event_cohort_plan_serializer.is_valid():
+                event_cohort_plan_serializer.save()

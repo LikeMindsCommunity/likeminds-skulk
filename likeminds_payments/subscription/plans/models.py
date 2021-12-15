@@ -125,21 +125,6 @@ class EventCohortPlan(models.Model):
     created_at = models.BigIntegerField(default=0)
     updated_at = models.BigIntegerField(default=0)
 
-    @staticmethod
-    def create_instance(create_info):
-        instance = EventCohortPlan()
-        instance.event_plan = create_info.get('event_plan')
-        instance.cohort_id = create_info.get('cohort_id')
-        instance.cost = create_info.get('cost')
-        instance.strike_cost = create_info.get('strike_cost')
-        instance.cost_usd = create_info.get('cost_usd')
-        instance.strike_cost_usd = create_info.get('strike_cost_usd')
-        instance.discount_type = create_info.get('discount_type')
-        instance.discount = create_info.get('discount')
-        instance.save()
-
-        return instance
-
     def save(self, *args, **kwargs):
         current_time = TimeUtilities.current_time_in_milliseconds()
 

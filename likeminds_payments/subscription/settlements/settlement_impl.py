@@ -290,4 +290,4 @@ class SettlementImpl(SettlementManager):
 
         paginated_settlements = ModelUtilities.paginate_queryset(settlements, page, SETTLEMENTS_PAGE_SIZE)
 
-        return {'settlements': SettlementSerializer(paginated_settlements, many=True).data}
+        return {'settlements': SettlementSerializer(paginated_settlements, many=True).data, 'count': len(settlements)}

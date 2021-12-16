@@ -110,6 +110,6 @@ class FetchSettlementView(APIView):
             return JsonResponse(context['data'], status=context['status'])
 
         return JsonResponse(
-            {'success': True, 'settlements': response_data['settlements']},
+            {'success': True, 'settlements': response_data['settlements'], 'total_count': response_data['count']},
             status=status_codes.HTTP_200_OK
         )

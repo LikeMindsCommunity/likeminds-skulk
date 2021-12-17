@@ -438,7 +438,14 @@ def create_or_update_sample_plan_category():
                 sample_plan_category_instance.save()
 
         else:
-            SamplePlanCategorySerializers.update_instance(sample_plan_category_filter[0], sample_plan_category)
+            sample_plan_category_serializer = SamplePlanCategorySerializers(sample_plan_category_filter[0],
+                                                                            data=sample_plan_category)
+
+            if not sample_plan_category_serializer.is_valid():
+                print("Not Valid", str(sample_plan_category_serializer.errors))
+
+            else:
+                sample_plan_category_serializer.save()
 
 
 def create_or_update_sample_plans():
@@ -461,7 +468,13 @@ def create_or_update_sample_plans():
                 sample_pan_instance.save()
 
         else:
-            SamplePlanSerializers.update_instance(sample_plan_filter[0], sample_plan)
+            sample_plan_serializer = SamplePlanSerializers(sample_plan_filter[0], data=sample_plan)
+
+            if not sample_plan_serializer.is_valid():
+                print("Not valid", str(sample_plan_serializer.errors))
+
+            else:
+                sample_plan_serializer.save()
 
 
 started = time.time()

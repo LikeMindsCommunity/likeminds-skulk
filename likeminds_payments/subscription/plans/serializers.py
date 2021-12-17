@@ -115,14 +115,6 @@ class SamplePlanCategorySerializers(serializers.ModelSerializer):
 
         return data
 
-    @staticmethod
-    def update_instance(instance, create_info):
-        instance.name = create_info.get('name') if create_info.get('name') else instance.name
-        instance.image_url = create_info.get('image_url') if create_info.get('image_url') else instance.image_url
-        instance.save()
-
-        return instance
-
 
 class SamplePlanSerializers(serializers.ModelSerializer):
     class Meta:
@@ -147,21 +139,3 @@ class SamplePlanSerializers(serializers.ModelSerializer):
                 del data[field.field_name]
 
         return data
-
-    @staticmethod
-    def update_instance(instance, create_info):
-        instance.name = create_info.get('name') if create_info.get('name') else instance.name
-        instance.description = create_info.get('description') if create_info.get(
-            'description') else instance.description
-        instance.duration_name = create_info.get('duration_name') if create_info.get(
-            'duration_name') else instance.duration_name
-        instance.duration_in_months = create_info.get('duration_in_months') if create_info.get('duration_in_months') \
-            else instance.duration_in_months
-        instance.cost = create_info.get('cost') if create_info.get('cost') else instance.cost
-        instance.strike_cost = create_info.get('strike_cost') if create_info.get(
-            'strike_cost') else instance.strike_cost
-        instance.category = create_info.get('category_instance') if create_info.get('category_instance') else \
-            instance.category
-        instance.save()
-
-        return instance

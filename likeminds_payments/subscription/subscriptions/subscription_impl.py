@@ -24,6 +24,7 @@ from ..utility.async_tasks import (payment_success_membership_join_communication
                                    cash_payment_renewal_communication,
                                    payment_page_member_payment_success_email,
                                    payment_page_cm_payment_success_email)
+from ..utility.response_utilities import ResponseUtilities
 from ..external_services.razorpay.razorpay_wrapper import RazorpayWrapper
 from ..external_services.logging.logging_wrapper import LoggingWrapper
 from ..plans.constants import *
@@ -739,7 +740,8 @@ class SubscriptionImpl(SubscriptionManager):
                         community_data = CoreServiceUtilities.get_community_data(self.get_community_id())
 
                         if (has_permission_check['has_permission'] is False) and community_data['community'].get('is_paid'):
-                            return {'error_message': 'Link invalid'}
+                            return ResponseUtilities.get_impl_error_context(error_message='Link invalid',
+                                                                            status_code=status_codes.HTTP_406_NOT_ACCEPTABLE)
 
                         generate_free_subscription = self._generate_free_subscription(self.get_member_id(),
                                                                                       self.get_community_id())

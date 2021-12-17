@@ -115,16 +115,6 @@ class PlanViewHelper:
         try:
             plan_instance = SubscriptionPlan.create_instance(plan_body)
 
-            # # Make community paid
-            # community_update = CoreServiceUtilities.edit_community(plan_body.get('community_id'), user_id)
-            #
-            # if 'error_message' in community_update:
-            #     return {'error_message': community_update['error_message']}
-            #
-            # # Send first plan creation mail
-            # PlanViewHelper.send_email_for_first_plan_creation.delay(community_id=plan_body.get('community_id'),
-            #                                                         user_id=user_id)
-
         except:
             return {'error_message': 'error_while creating new plan'}
 

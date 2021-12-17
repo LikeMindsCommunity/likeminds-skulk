@@ -206,7 +206,7 @@ class OrderViewHelper:
         if (member_state == MemberState.GUEST) and plan_instance.strike_cost:
             amount = plan_instance.strike_cost
 
-        elif (subscription_object.get('membership_state') == STATUS_EXPIRED) and subscription_object and plan_instance.strike_cost:
+        elif subscription_object and (subscription_object.get('membership_state') == STATUS_EXPIRED) and plan_instance.strike_cost:
             amount = plan_instance.strike_cost
 
         else:

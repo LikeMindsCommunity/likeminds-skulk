@@ -49,5 +49,7 @@ urlpatterns = [
     path('payment_page/fetch', FetchPaymentPageView.as_view(), name='fetch_payment_page'),
     path('payment_page/fetch_contact_us', FetchContactUsView.as_view(), name='fetch_contact_us'),
     path('create_payment_page_order', CreatePaymentPageOrderView.as_view(), name='create_payment_page_order'),
-    path('kyc/', include('subscription.kyc.urls'))
+    path('kyc/', include('subscription.kyc.urls')),
+    path('transaction/', include('subscription.transactions.urls')),
+    path('settlement/', include('subscription.settlements.urls'))
 ]

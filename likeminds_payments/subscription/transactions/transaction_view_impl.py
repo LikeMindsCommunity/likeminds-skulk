@@ -57,6 +57,7 @@ class FetchTransactionsView(APIView):
     def post(request, *args, **kwargs):
 
         request_body = RequestUtilities.load_request_body(request)
+        query_params = TransactionViewHelper.get_transactions_query_params(request)
         member_id = RequestUtilities.get_parameter_from_headers(request, 'HTTP_X_MEMBER_ID')
 
         validated_request_body = TransactionViewHelper.get_transactions_body_validator(request_body, member_id)
@@ -78,8 +79,11 @@ class FetchTransactionsView(APIView):
 
         transaction_manager = TransactionImpl(user_id=validated_request_body['user_id'],
                                               community_id=validated_request_body['community_id'])
-        response_data = transaction_manager.fetch_transactions(page=validated_request_body['page'],
-                                                               payment_page_id=validated_request_body['payment_page_id'])
+        response_data = transaction_manager.fetch_transactions(
+            page=validated_request_body['page'],
+            payment_page_id=validated_request_body['payment_page_id'],
+            filters=query_params,
+            settlement_id=validated_request_body['settlement_id'])
 
         if 'error_message' in response_data:
             return JsonResponse(
@@ -88,7 +92,10 @@ class FetchTransactionsView(APIView):
             )
 
         return JsonResponse(
-            {'success': True, 'transactions': response_data['transactions']},
+            {'success': True,
+             'transactions': response_data['transactions'],
+             'captured_count': response_data['captured_count'],
+             'refunded_count': response_data['refunded_count']},
             status=status_codes.HTTP_200_OK
         )
 
@@ -232,3 +239,44 @@ class DownloadAllTransactionView(TransactionMixin, APIView):
             return JsonResponse(response, status=response.get('status_code'))
 
         return JsonResponse(response)
+
+
+class FetchSettlementAmountView(TransactionMixin, APIView):
+
+    @method_decorator(csrf_exempt)
+    def dispatch(self, request, *args, **kwargs):
+        return super(FetchSettlementAmountView, self).dispatch(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+
+        member_id = RequestUtilities.get_parameter_from_headers(request, 'HTTP_X_MEMBER_ID')
+
+        request_body = RequestUtilities.fetch_request_query_params(request)
+        validate_request = TransactionViewHelper.fetch_settlement_amount_body_validator(request_body)
+
+        if validate_request.get('error_message'):
+            return JsonResponse({'success': False, 'error_message': validate_request.get('error_message')},
+                                status=status_codes.HTTP_400_BAD_REQUEST)
+
+        instance_data = TransactionViewHelper.fetch_settlement_amount_authenticator(
+            validate_request.get('community_id'), member_id)
+
+        if instance_data.get('error_message'):
+            return JsonResponse(
+                {'success': False, 'error_message': instance_data['error_message']},
+                status=status_codes.HTTP_401_UNAUTHORIZED
+            )
+
+        transaction_manager = TransactionImpl(user_id=member_id, community_id=validate_request.get('community_id'))
+        response_data = transaction_manager.fetch_settlement_amount()
+
+        if 'error_message' in response_data:
+            return JsonResponse(
+                {'success': False, 'error_message': response_data['error_message']},
+                status=response_data['status']
+            )
+
+        return JsonResponse(
+            {'success': True, 'data': response_data['settlement_data']},
+            status=status_codes.HTTP_200_OK
+        )

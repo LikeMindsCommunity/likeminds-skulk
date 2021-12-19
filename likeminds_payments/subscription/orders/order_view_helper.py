@@ -203,7 +203,9 @@ class OrderViewHelper:
         # If any EventCohortPlan exists, fetch member's cohorts and check if any cohort_id matches with user's cohorts
         if event_cohort_ids:
             member_cohorts = OrderViewHelper.fetch_member_cohorts_for_create_event_order(
-                community_id=community_data['community']['id'], user_id=order_body.get('user_id'))
+                community_id=community_data['community']['id'],
+                user_id=order_body.get('user_id')
+            )
 
         matching_cohorts = set(member_cohorts) & set(event_cohort_ids)
 
@@ -318,7 +320,9 @@ class OrderViewHelper:
         # If any EventCohortPlan exists, fetch member's cohorts and check if any cohort_id matches with user's cohorts
         if event_cohort_ids:
             member_cohorts = OrderViewHelper.fetch_member_cohorts_for_create_event_order(
-                community_id=community_data['community']['id'], user_id=order_body.get('user_id'))
+                community_id=community_data['community']['id'],
+                user_id=order_body.get('user_id')
+            )
 
         matching_cohorts = set(member_cohorts) & set(event_cohort_ids)
 

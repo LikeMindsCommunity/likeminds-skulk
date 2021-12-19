@@ -489,10 +489,10 @@ class OrderViewHelper:
 
         member_cohort_dict = response.get('member_cohorts')
 
-        if not member_cohort_dict or not member_cohort_dict.get(user_id):
+        if not member_cohort_dict or not member_cohort_dict.get(str(user_id)):
             return []
 
-        member_cohorts = [obj.get('id') for obj in member_cohort_dict.get(user_id)]
+        member_cohorts = [obj.get('id') for obj in member_cohort_dict.get(str(user_id))]
 
         return member_cohorts
 

@@ -26,6 +26,7 @@ from ..utility.async_tasks import (payment_success_membership_join_communication
                                    payment_page_cm_payment_success_email)
 from ..utility.response_utilities import ResponseUtilities
 from ..utility.model_utilities import ModelUtilities
+from ..utility.authentication_utilities import AuthenticationUtilities
 from ..external_services.razorpay.razorpay_wrapper import RazorpayWrapper
 from ..external_services.logging.logging_wrapper import LoggingWrapper
 from ..plans.constants import *
@@ -1419,15 +1420,11 @@ class SubscriptionImpl(SubscriptionManager):
             return ResponseUtilities.get_impl_error_context("send x-member-id in headers",
                                                             status_codes.HTTP_400_BAD_REQUEST)
 
-        has_permission_check = CoreServiceUtilities.has_permission(self.get_community_id(), self.get_member_id())
+        authentication_check = AuthenticationUtilities.has_permission(self.get_member_id(), self.get_community_id())
 
-        if 'error_message' in has_permission_check:
-            return ResponseUtilities.get_impl_error_context(has_permission_check['error_message'],
-                                                            status_codes.HTTP_502_BAD_GATEWAY)
-
-        if 'has_permission' in has_permission_check and has_permission_check['has_permission'] is False:
-            return ResponseUtilities.get_impl_error_context('You are not the Owner/CM of the community',
-                                                            status_codes.HTTP_401_UNAUTHORIZED)
+        if 'error_message' in authentication_check:
+            return ResponseUtilities.get_impl_error_context(authentication_check['error_message'],
+                                                            authentication_check['status'])
 
         current_time = TimeUtilities.current_time_in_milliseconds()
 
@@ -1443,15 +1440,11 @@ class SubscriptionImpl(SubscriptionManager):
             return ResponseUtilities.get_impl_error_context("send x-member-id in headers",
                                                             status_codes.HTTP_400_BAD_REQUEST)
 
-        has_permission_check = CoreServiceUtilities.has_permission(self.get_community_id(), self.get_member_id())
+        authentication_check = AuthenticationUtilities.has_permission(self.get_member_id(), self.get_community_id())
 
-        if 'error_message' in has_permission_check:
-            return ResponseUtilities.get_impl_error_context(has_permission_check['error_message'],
-                                                            status_codes.HTTP_502_BAD_GATEWAY)
-
-        if 'has_permission' in has_permission_check and has_permission_check['has_permission'] is False:
-            return ResponseUtilities.get_impl_error_context('You are not the Owner/CM of the community',
-                                                            status_codes.HTTP_401_UNAUTHORIZED)
+        if 'error_message' in authentication_check:
+            return ResponseUtilities.get_impl_error_context(authentication_check['error_message'],
+                                                            authentication_check['status'])
 
         current_time = TimeUtilities.current_time_in_milliseconds()
         new_members_join_days = TimeUtilities.subtract_days_in_epoch_time(current_time, NEW_MEMBER_JOIN_DAYS)

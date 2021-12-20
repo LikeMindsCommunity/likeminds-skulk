@@ -274,3 +274,14 @@ class SubscriptionViewHelper:
             return ResponseUtilities.get_inner_error_context('send community_id in query params')
 
         return query_params
+
+    @staticmethod
+    def query_params_and_member_id_validator(query_params, member_id) -> dict:
+
+        if 'error_message' in query_params:
+            return ResponseUtilities.get_inner_error_context(query_params['error_message'])
+
+        if not member_id:
+            return ResponseUtilities.get_inner_error_context('send x-member-id in headers')
+
+        return {'success': True}

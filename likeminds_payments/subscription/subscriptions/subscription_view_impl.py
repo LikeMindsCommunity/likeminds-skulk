@@ -373,18 +373,12 @@ class FetchCommunityRenewalsView(APIView):
 
         query_params = SubscriptionViewHelper.get_community_renewals_filter_params(request)
         member_id = RequestUtilities.get_parameter_from_headers(request, 'HTTP_X_MEMBER_ID')
+        validator = SubscriptionViewHelper.query_params_and_member_id_validator(query_params, member_id)
 
-        if 'error_message' in query_params:
-            return JsonResponse(
-                {'success': False, 'error_message': query_params['error_message']},
-                status=status_codes.HTTP_400_BAD_REQUEST
-            )
-
-        if not member_id:
-            return JsonResponse(
-                {'success': False, 'error_message': 'send x-member-id in headers'},
-                status=status_codes.HTTP_400_BAD_REQUEST
-            )
+        if 'error_message' in validator:
+            context = ResponseUtilities.get_view_impl_error_context(validator['error_message'],
+                                                                    status_codes.HTTP_400_BAD_REQUEST)
+            return JsonResponse(context['data'], status=context['status'])
 
         subscription_manager = SubscriptionImpl(member_id=member_id, community_id=query_params['community_id'])
         response_data = subscription_manager.fetch_community_renewals()
@@ -407,18 +401,12 @@ class FetchSubscriptionMetaView(APIView):
 
         query_params = SubscriptionViewHelper.get_subscription_meta_filter_params(request)
         member_id = RequestUtilities.get_parameter_from_headers(request, 'HTTP_X_MEMBER_ID')
+        validator = SubscriptionViewHelper.query_params_and_member_id_validator(query_params, member_id)
 
-        if 'error_message' in query_params:
-            return JsonResponse(
-                {'success': False, 'error_message': query_params['error_message']},
-                status=status_codes.HTTP_400_BAD_REQUEST
-            )
-
-        if not member_id:
-            return JsonResponse(
-                {'success': False, 'error_message': 'send x-member-id in headers'},
-                status=status_codes.HTTP_400_BAD_REQUEST
-            )
+        if 'error_message' in validator:
+            context = ResponseUtilities.get_view_impl_error_context(validator['error_message'],
+                                                                    status_codes.HTTP_400_BAD_REQUEST)
+            return JsonResponse(context['data'], status=context['status'])
 
         subscription_manager = SubscriptionImpl(member_id=member_id, community_id=query_params['community_id'])
         response_data = subscription_manager.fetch_subscription_meta()

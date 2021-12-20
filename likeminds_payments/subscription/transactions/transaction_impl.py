@@ -823,7 +823,8 @@ class TransactionImpl(TransactionManager):
         total_revenue_amount = total_revenue_details.get('revenue') if total_revenue_details.get('revenue') else 0
 
         current_date = TimeUtilities.get_current_date()
-        date_epoch = TimeUtilities.convert_date_to_epoch(1, current_date.get('month'), current_date.get('year'))
+        date_epoch = TimeUtilities.convert_date_to_epoch(DAY_OF_MONTH_FOR_REVENUE_CALCULATION,
+                                                         current_date.get('month'), current_date.get('year'))
 
         revenue_current_month = revenue_transactions.filter(status=PAYMENTS_STATUS_FILTER['CAPTURED'],
                                                             created_at__gte=date_epoch

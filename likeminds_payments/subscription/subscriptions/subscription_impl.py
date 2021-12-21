@@ -25,8 +25,10 @@ from ..utility.async_tasks import (payment_success_membership_join_communication
                                    payment_page_member_payment_success_email,
                                    payment_page_cm_payment_success_email)
 from ..utility.response_utilities import ResponseUtilities
+
 from ..utility.model_utilities import ModelUtilities
 from ..utility.authentication_utilities import AuthenticationUtilities
+
 from ..external_services.razorpay.razorpay_wrapper import RazorpayWrapper
 from ..external_services.logging.logging_wrapper import LoggingWrapper
 from ..plans.constants import *
@@ -738,8 +740,12 @@ class SubscriptionImpl(SubscriptionManager):
                         return {'error_message': has_permission_check['error_message']}
 
                     if 'has_permission' in has_permission_check:
-                        if has_permission_check['has_permission'] is False:
-                            return {'error_message': 'shared_by user is not the Owner/CM of the community'}
+
+                        community_data = CoreServiceUtilities.get_community_data(self.get_community_id())
+
+                        if (has_permission_check['has_permission'] is False) and community_data['community'].get('is_paid'):
+                            return ResponseUtilities.get_impl_error_context(error_message='Link invalid',
+                                                                            status_code=status_codes.HTTP_406_NOT_ACCEPTABLE)
 
                         generate_free_subscription = self._generate_free_subscription(self.get_member_id(),
                                                                                       self.get_community_id())

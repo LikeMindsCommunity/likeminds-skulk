@@ -43,8 +43,8 @@ class SettlementViewHelper:
 
         query_params = {
             'community_id': request.GET.get('community_id', None),
-            'start_epoch': request.GET.get('start_epoch_epoch', None),
-            'end_epoch': request.GET.get('end_epoch', None),
+            'created_at__gte': request.GET.get('start_epoch', None),
+            'created_at__lte': request.GET.get('end_epoch', None),
             'status': request.GET.get('status', None)
         }
 

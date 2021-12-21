@@ -6,6 +6,7 @@ from django.utils.decorators import method_decorator
 
 from ..utility.request_utilities import RequestUtilities
 from ..utility.response_utilities import ResponseUtilities
+from ..utility.number_utilities import NumberUtilities
 from .settlement_impl import SettlementImpl
 from .settlement_view_helper import SettlementViewHelper
 
@@ -92,7 +93,7 @@ class FetchSettlementView(APIView):
         x_username = RequestUtilities.get_parameter_from_headers(request, 'HTTP_X_USERNAME')
         x_password = RequestUtilities.get_parameter_from_headers(request, 'HTTP_X_PASSWORD')
         member_id = RequestUtilities.get_parameter_from_headers(request, 'HTTP_X_MEMBER_ID')
-        page = request.GET.get('page', 1)
+        page = NumberUtilities.get_integer_from_string(request.GET.get('page', 1))
 
         if 'error_message' in query_params:
             context = ResponseUtilities.get_view_impl_error_context(query_params['error_message'],
@@ -109,6 +110,6 @@ class FetchSettlementView(APIView):
             return JsonResponse(context['data'], status=context['status'])
 
         return JsonResponse(
-            {'success': True, 'settlements': response_data['settlements']},
+            {'success': True, 'settlements': response_data['settlements'], 'total_count': response_data['count']},
             status=status_codes.HTTP_200_OK
         )

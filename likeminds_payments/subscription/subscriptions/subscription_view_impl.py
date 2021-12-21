@@ -368,8 +368,7 @@ class MembersReportView(APIView):
 
 class FetchCommunityRenewalsView(APIView):
 
-    @staticmethod
-    def get(request, *args, **kwargs):
+    def get(self, request):
 
         query_params = SubscriptionViewHelper.get_community_renewals_filter_params(request)
         member_id = RequestUtilities.get_parameter_from_headers(request, 'HTTP_X_MEMBER_ID')
@@ -396,8 +395,7 @@ class FetchCommunityRenewalsView(APIView):
 
 class FetchSubscriptionMetaView(APIView):
 
-    @staticmethod
-    def get(request, *args, **kwargs):
+    def get(self, request):
 
         query_params = SubscriptionViewHelper.get_subscription_meta_filter_params(request)
         member_id = RequestUtilities.get_parameter_from_headers(request, 'HTTP_X_MEMBER_ID')

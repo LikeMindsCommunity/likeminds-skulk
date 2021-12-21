@@ -13,7 +13,9 @@ class SubscriptionManager(metaclass=abc.ABCMeta):
                 (hasattr(subclass, 'external_migration') and callable(subclass.external_migration)) and
                 (hasattr(subclass, 'external_renew_migrate') and callable(subclass.external_renew_migrate)) and
                 (hasattr(subclass, 'payment_page_add_cash') and callable(subclass.payment_page_add_cash)) and
-                (hasattr(subclass, 'members_report') and callable(subclass.members_report)) or
+                (hasattr(subclass, 'members_report') and callable(subclass.members_report)) and
+                (hasattr(subclass, 'fetch_community_renewals') and callable(subclass.fetch_community_renewals)) and
+                (hasattr(subclass, 'fetch_subscription_meta') and callable(subclass.fetch_subscription_meta)) or
                 NotImplemented)
 
     @abc.abstractmethod
@@ -78,3 +80,18 @@ class SubscriptionManager(metaclass=abc.ABCMeta):
         """
         sends member details of a community to the cm
         """
+        NotImplementedError
+
+    @abc.abstractmethod
+    def fetch_community_renewals(self) -> dict:
+        """
+        sends upcoming renewals in a community
+        """
+        NotImplementedError
+
+    @abc.abstractmethod
+    def fetch_subscription_meta(self) -> dict:
+        """
+        fetch subscription meta for a community
+        """
+        NotImplementedError

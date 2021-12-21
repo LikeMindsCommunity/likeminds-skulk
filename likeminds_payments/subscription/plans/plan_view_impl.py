@@ -8,7 +8,9 @@ from .serializers import PlanSerializer
 from ..mixins import TransactionMixin
 from ..utility.json_utilities import JsonUtilities
 from ..utility.request_utilities import RequestUtilities
+from ..utility.response_utilities import ResponseUtilities
 from ..plans.plan_impl import PlanImpl
+from ..plans.constants import *
 from ..plans.plan_view_helper import PlanViewHelper
 
 
@@ -31,6 +33,12 @@ class CreatePlanView(TransactionMixin, APIView):
                 {'success': False, 'error_message': validated_request_body['error_message']},
                 status=status_codes.HTTP_400_BAD_REQUEST
             )
+
+        if validated_request_body.get('plan_id'):
+            analytics_event_name = EDIT_PLAN_ANALYTICS_EVENT_NAME
+
+        else:
+            analytics_event_name = CREATE_PLAN_ANALYTICS_EVENT_NAME
 
         instance_data = PlanViewHelper.create_plan_instance_helper(validated_request_body, user_id)
 
@@ -215,5 +223,42 @@ class UpdateEventPlanView(APIView):
         except Exception as e:
 
             return JsonResponse({'error_message': e.args}, status=status_codes.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return JsonResponse(response_data)
+
+
+class FetchSamplePlanCategoryView(TransactionMixin, APIView):
+
+    def get(self, request, *args, **kwargs):
+
+        plan_manager = PlanImpl()
+
+        response_data = plan_manager.fetch_sample_plan_category()
+
+        if response_data.get('error_message'):
+            context = ResponseUtilities.get_view_impl_error_context(response_data.get('error_message'),
+                                                                    response_data.get('status'))
+            return JsonResponse(context['data'], status=context['status'])
+
+        return JsonResponse(response_data)
+
+
+class FetchSamplePlanView(TransactionMixin, APIView):
+
+    def get(self, request, *args, **kwargs):
+
+        category_id = request.GET.get('category_id')
+
+        if not category_id:
+            return JsonResponse(**ResponseUtilities.get_view_impl_error_context('Invalid category_id',
+                                                                                status_codes.HTTP_400_BAD_REQUEST))
+
+        plan_manager = PlanImpl()
+
+        response_data = plan_manager.fetch_sample_plans(category_id=category_id)
+
+        if response_data.get('error_message'):
+            return JsonResponse(**ResponseUtilities.get_view_impl_error_context(response_data.get('error_message'),
+                                                                                status_codes.HTTP_400_BAD_REQUEST))
 
         return JsonResponse(response_data)

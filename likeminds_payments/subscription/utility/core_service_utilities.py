@@ -610,6 +610,22 @@ class CoreServiceUtilities:
         return response
 
     @staticmethod
+    def get_cm_onboarding_community_feed_url(community_id, user_id=None):
+
+        headers = {}
+
+        if user_id:
+            headers = {
+                'x-member-id': '{}'.format(user_id)
+            }
+
+        url = COMMUNITY_FEED_CM_ONBOARDING_BRANCH_URL + "?community_id={}".format(community_id)
+
+        response = ApiUtilities.generate_get_request(url=url, headers=headers)
+
+        return response
+
+    @staticmethod
     def trigger_event_creation_mail_in_core_service(chatroom_id, event_cost):
 
         payload = {

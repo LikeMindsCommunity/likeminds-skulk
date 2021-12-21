@@ -976,7 +976,44 @@ class SubscriptionImpl(SubscriptionManager):
 
             return {'success': True}
 
-        return {'error_message': 'subscription already exists'}
+        else:
+
+            current_time = TimeUtilities.current_time_in_milliseconds()
+
+            subscription_instance.plan_id = None
+            subscription_instance.valid_till = TimeUtilities.add_days_in_epoch_time(
+                date_subscribed, DAYS_FOR_FREE_USERS)
+            subscription_instance.type = "free"
+            subscription_instance.renewal_due = TimeUtilities.subtract_days_in_epoch_time(
+                subscription_instance.valid_till, NOTIFY_PERIOD)
+            subscription_instance.transaction = None
+
+            if subscription_instance.is_removed and subscription_instance.valid_till >= current_time:
+                CoreServiceUtilities.renew_member(StringUtilities.get_string_from_integer(community_id),
+                                                  StringUtilities.get_string_from_integer(user_id))
+
+            subscription_instance.is_removed = False
+            subscription_instance.save()
+
+            SubscriptionImpl._remove_member_notifications(subscription_instance.user_id,
+                                                          subscription_instance.community_id)
+
+            subscription_history_data = {
+                "start_date": date_subscribed,
+                "end_date": subscription_instance.valid_till,
+                "description": FREE_DESCRIPTION,
+                "transaction": None,
+                "type": "free",
+                "user_id": user_id,
+                "community_id": community_id
+            }
+
+            subscription_history_instance = SubscriptionHistory.create_instance(subscription_history_data)
+
+            if not subscription_history_instance:
+                return {'error_message': 'error creating subscription history'}
+
+            return {'success': True}
 
     def convert_to_paid(self, exempt_user_ids: list = None) -> dict:
 

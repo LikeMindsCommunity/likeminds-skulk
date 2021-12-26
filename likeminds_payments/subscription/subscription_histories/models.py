@@ -15,7 +15,7 @@ class SubscriptionHistory(models.Model):
     updated_at = models.BigIntegerField(default=0)
 
     def __str__(self):
-        return self.pk
+        return str(self.pk)
 
     @staticmethod
     def get_latest_subscription_history_or_None(user_id, community_id):

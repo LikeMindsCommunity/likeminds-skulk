@@ -14,6 +14,8 @@ urlpatterns = [
     path('create_plan', CreatePlanView.as_view(), name="create-plan"),
     path('fetch_plan', FetchPlanView.as_view(), name="fetch-plan"),
     path('delete_plan', DeletePlanView.as_view(), name="delete-plan"),
+    path('fetch_sample_plan_category', FetchSamplePlanCategoryView.as_view(), name="fetch-sample-plan-category"),
+    path('fetch_sample_plan', FetchSamplePlanView.as_view(), name="fetch-sample-plan"),
     path('fetch_country_code', FetchCountryCodeView.as_view(), name="fetch-country-code"),
     path('create_order', CreateOrderView.as_view(), name="create-order"),
     path('verify_order', VerifyOrderView.as_view(), name="verify-order"),
@@ -49,6 +51,8 @@ urlpatterns = [
     path('payment_page/fetch_contact_us', FetchContactUsView.as_view(), name='fetch_contact_us'),
     path('create_payment_page_order', CreatePaymentPageOrderView.as_view(), name='create_payment_page_order'),
     path('search', SearchView.as_view(), name='search'),
+    path('fetch_community_renewals', FetchCommunityRenewalsView.as_view(), name='fetch_community_renewals'),
+    path('fetch_subscription_meta', FetchSubscriptionMetaView.as_view(), name='fetch_subscription_meta'),
     path('kyc/', include('subscription.kyc.urls')),
     path('transaction/', include('subscription.transactions.urls')),
     path('settlement/', include('subscription.settlements.urls'))

@@ -4,6 +4,9 @@ from elasticsearch import Elasticsearch
 from .constants import SearchIndexes
 from django_elasticsearch_dsl.registries import registry
 
+from ..plans.models import SubscriptionPlan
+from ..utility.model_utilities import ModelUtilities
+
 client = Elasticsearch()
 
 
@@ -61,9 +64,12 @@ class ElasticSearchSync:
         @description: Updates a subscription plan after removal of any user
         """
 
-        query_dict = ElasticSearchQueryHelper.get_plan_with_plan_id(plan_id=plan_id)
-        ElasticSearchSync.bulk_update_documents(index=SearchIndexes.SUBSCRIPTION_PLAN,
-                                                query_dict=query_dict)
+        instances = ModelUtilities.get_model_filter(SubscriptionPlan, {'plan_id': plan_id})
+
+        if not instances:
+            return
+
+        ElasticSearchSync.update_document(instance_list=instances)
 
 
 class ElasticSearchQueryHelper:

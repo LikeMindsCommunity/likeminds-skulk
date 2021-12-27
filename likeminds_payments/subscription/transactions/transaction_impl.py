@@ -502,7 +502,8 @@ class TransactionImpl(TransactionManager):
     def _serialize_transactions(transactions):
         return TransactionSerializer(transactions)
 
-    def fetch_transactions(self, page, payment_page_id=None, filters=None, settlement_id=None) -> dict:
+    def fetch_transactions(self, page, payment_page_id=None, filters=None, settlement_id=None,
+                           transaction_type=None) -> dict:
 
         if settlement_id:
             filters['settlement_id'] = settlement_id
@@ -511,12 +512,26 @@ class TransactionImpl(TransactionManager):
             filters['plan_id'] = payment_page_id
 
         else:
-            filters['user_id'] = self.get_user_id()
+            if not transaction_type and self.get_user_id():
+                filters['user_id'] = self.get_user_id()
 
-            valid_plans = ModelUtilities.get_model_filter(SubscriptionPlan, {'community_id': self.get_community_id()})
-            valid_plan_ids = [plan.plan_id for plan in valid_plans]
+            elif transaction_type and transaction_type == 'unidentified':
+                filters['user_id'] = None
 
-            filters['plan_id__in'] = valid_plan_ids
+            elif transaction_type and transaction_type == 'all':
+                pass
+
+            valid_subscription_plan_ids = list(ModelUtilities.get_model_filter(
+                SubscriptionPlan, {'community_id': self.get_community_id()}).values_list('plan_id', flat=True))
+
+            valid_event_plan_ids = list(ModelUtilities.get_model_filter(
+                SubscriptionEventPlan, {'community_id': self.get_community_id()}).values_list('event_plan_id',
+                                                                                              flat=True))
+
+            valid_payment_page_ids = list(ModelUtilities.get_model_filter(
+                PaymentPageMeta, {'community_id': self.get_community_id()}).values_list('payment_page_id', flat=True))
+
+            filters['plan_id__in'] = valid_subscription_plan_ids + valid_event_plan_ids + valid_payment_page_ids
 
         transactions = TransactionHelper.fetch_payment_transactions(filters)
 

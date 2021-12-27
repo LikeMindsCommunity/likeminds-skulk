@@ -102,7 +102,10 @@ class FetchKycView(APIView):
                                                                     response_data['status'])
             return JsonResponse(context['data'], status=context['status'])
 
-        return JsonResponse({'success': True, 'kyc': response_data['kyc']}, status=response_data['status'])
+        return JsonResponse({'success': True,
+                             'kyc': response_data['kyc'],
+                             'show_kyc_banner': response_data['show_kyc_banner']},
+                            status=response_data['status'])
 
 
 class FetchAllKycView(APIView):

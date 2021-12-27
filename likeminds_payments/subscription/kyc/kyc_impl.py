@@ -12,6 +12,8 @@ from subscription.utility.response_utilities import ResponseUtilities
 from subscription.utility.core_service_utilities import CoreServiceUtilities
 from subscription.external_services.razorpay.razorpayX_wrapper import RazorpayXWrapper
 from subscription.kyc.models import CommunityKYC
+from subscription.plans.models import SubscriptionPlan, SubscriptionEventPlan
+from subscription.payment_page.models import PaymentPageMeta
 
 
 class KycImpl(KYCManager):
@@ -143,11 +145,23 @@ class KycImpl(KYCManager):
 
         kyc_instances = ModelUtilities.get_model_filter(CommunityKYC, {'community_id': self.get_community_id()})
 
-        if len(kyc_instances) == 0:
-            return ResponseUtilities.get_impl_error_context('No kyc record found for given community_id',
-                                                            status_codes.HTTP_404_NOT_FOUND)
+        data = {'kyc': {},
+                'status': status_codes.HTTP_200_OK,
+                'show_kyc_banner': False}
 
-        return {'kyc': KycSerializer(kyc_instances[0]).data, 'status': status_codes.HTTP_200_OK}
+        if len(kyc_instances) == 0:
+
+            if (ModelUtilities.is_model_filter_exists(SubscriptionPlan, {'community_id': self.get_community_id(),
+                                                                         'is_deleted': False}) |
+                ModelUtilities.is_model_filter_exists(SubscriptionEventPlan, {'community_id': self.get_community_id()}) |
+                ModelUtilities.is_model_filter_exists(PaymentPageMeta, {'community_id': self.get_community_id(),
+                                                                        'is_active': True})):
+                data['show_kyc_banner'] = True
+
+        else:
+            data['kyc'] = KycSerializer(kyc_instances[0]).data
+
+        return data
 
     def fetch_all_kyc(self, page: int = 1) -> dict:
 
@@ -204,6 +218,9 @@ class KycImpl(KYCManager):
                     response = razorpay_X_manager.create_contact(contact_details)
 
                     if 'error_message' in response:
+                        updated_kyc_instance.status = KYCState.PENDING_APPROVAL
+                        updated_kyc_instance.save()
+
                         return ResponseUtilities.get_impl_error_context(
                             'KYC updated but status activation failed due to {}'.format(response['error_message']),
                             status_codes.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -233,6 +250,9 @@ class KycImpl(KYCManager):
                 response = razorpay_X_manager.create_fund_account(account_details)
 
                 if 'error_message' in response:
+                    updated_kyc_instance.status = KYCState.PENDING_APPROVAL
+                    updated_kyc_instance.save()
+
                     return ResponseUtilities.get_impl_error_context(
                         'KYC updated but status activation failed due to {}'.format(response['error_message']),
                         status_codes.HTTP_500_INTERNAL_SERVER_ERROR)

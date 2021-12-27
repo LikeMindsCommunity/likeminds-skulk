@@ -1,6 +1,10 @@
+from celery.app import shared_task
 from .constants import *
 from ..utility.api_utilities import ApiUtilities
 from ..utility.number_utilities import NumberUtilities
+from ..external_services.logging.logging_wrapper import LoggingWrapper
+
+error_logger = LoggingWrapper.get_instance()
 
 
 class CoreServiceUtilities:
@@ -604,3 +608,38 @@ class CoreServiceUtilities:
         response = ApiUtilities.generate_get_request(url=url, headers=headers)
 
         return response
+
+    @staticmethod
+    def get_cm_onboarding_community_feed_url(community_id, user_id=None):
+
+        headers = {}
+
+        if user_id:
+            headers = {
+                'x-member-id': '{}'.format(user_id)
+            }
+
+        url = COMMUNITY_FEED_CM_ONBOARDING_BRANCH_URL + "?community_id={}".format(community_id)
+
+        response = ApiUtilities.generate_get_request(url=url, headers=headers)
+
+        return response
+
+    @staticmethod
+    def trigger_event_creation_mail_in_core_service(chatroom_id, event_cost):
+
+        payload = {
+            'chatroom_id': chatroom_id,
+            'event_cost': NumberUtilities.convert_to_rupee_or_none(event_cost)
+        }
+
+        try:
+            response = ApiUtilities.generate_post_request(url=TRIGGER_EVENT_CREATION_MAIL, data=payload)
+
+            if 'success' not in response:
+                error_logger.error("got error in response while sending post request to /api/notifications/send_event_creation_mail \
+                                | response = %s") % str(response)
+
+        except Exception as e:
+            error_logger.error("Exception occurred while sending post request to /api/notifications/send_event_creation_mail \
+                                | exception = %s") % e.args

@@ -9,6 +9,11 @@ class TransactionType:
     PAYMENT_PAGE = 2
 
 
+class TransactionRefundState:
+    NOT_HANDLED = 0
+    HANDLED = 1
+
+
 class DocType:
     AADHAR = 0
     DRIVING_LICENCE = 1
@@ -21,6 +26,14 @@ class KYCState:
     PENDING_APPROVAL = 0
     APPROVED = 1
     INACTIVE = 2
+
+
+class SettlementStatus:
+    QUEUED = 0
+    INITIATED = 1
+    PROCESSED = 2
+    REVERSED = 3
+    FAILED = 4
 
 
 class MemberState:
@@ -48,3 +61,13 @@ cohort_types = CohortTypes()
 
 cohort_type_list = [cohort_types.NORMAL, cohort_types.SUBSCRIPTION_PLAN,
                     cohort_types.SUBSCRIPTION_EXPIRED_PLAN, cohort_types.ALL_MEMBER]
+
+
+class SamplePlanTypes:
+    MONTHLY = 'monthly'
+    LIFETIME = 'lifetime'
+    WEEKLY = 'weekly'
+    DAYS = 'days'
+
+
+sample_plan_types = SamplePlanTypes()

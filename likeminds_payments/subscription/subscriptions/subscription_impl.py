@@ -341,7 +341,8 @@ class SubscriptionImpl(SubscriptionManager):
                 return {'error_message': community_data['error_message'], 'status_code': community_data['status_code']}
 
             transaction = SubscriptionImpl._generate_first_transaction(transaction_instance, plan_instance, user_id)
-            ElasticSearchSync.update_subscription_plan(plan_id=plan_instance.plan_id)
+            # ElasticSearchSync.update_subscription_plan(plan_id=plan_instance.plan_id)
+            ElasticSearchSync.update_document(instance_list=[plan_instance])
 
             community_dict = community_data.get('community')
 
@@ -359,7 +360,8 @@ class SubscriptionImpl(SubscriptionManager):
         if transaction_instance.renew:
 
             transaction = SubscriptionImpl._generate_renewal_transaction(transaction_instance, plan_instance, user_id)
-            ElasticSearchSync.update_subscription_plan(plan_id=plan_instance.plan_id)
+            # ElasticSearchSync.update_subscription_plan(plan_id=plan_instance.plan_id)
+            ElasticSearchSync.update_document(instance_list=[plan_instance])
 
             cohort_response = PlanViewHelper.add_member_to_subscription_cohort(
                 plan_id=transaction_instance.plan_id,

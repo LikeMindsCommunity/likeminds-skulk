@@ -25,6 +25,11 @@ from ..utility.async_tasks import (payment_success_membership_join_communication
                                    cash_payment_renewal_communication,
                                    payment_page_member_payment_success_email,
                                    payment_page_cm_payment_success_email)
+from ..utility.response_utilities import ResponseUtilities
+
+from ..utility.model_utilities import ModelUtilities
+from ..utility.authentication_utilities import AuthenticationUtilities
+
 from ..external_services.razorpay.razorpay_wrapper import RazorpayWrapper
 from ..external_services.logging.logging_wrapper import LoggingWrapper
 from ..plans.constants import *
@@ -738,8 +743,12 @@ class SubscriptionImpl(SubscriptionManager):
                         return {'error_message': has_permission_check['error_message']}
 
                     if 'has_permission' in has_permission_check:
-                        if has_permission_check['has_permission'] is False:
-                            return {'error_message': 'shared_by user is not the Owner/CM of the community'}
+
+                        community_data = CoreServiceUtilities.get_community_data(self.get_community_id())
+
+                        if (has_permission_check['has_permission'] is False) and community_data['community'].get('is_paid'):
+                            return ResponseUtilities.get_impl_error_context(error_message='Link invalid',
+                                                                            status_code=status_codes.HTTP_406_NOT_ACCEPTABLE)
 
                         generate_free_subscription = self._generate_free_subscription(self.get_member_id(),
                                                                                       self.get_community_id())
@@ -976,7 +985,44 @@ class SubscriptionImpl(SubscriptionManager):
 
             return {'success': True}
 
-        return {'error_message': 'subscription already exists'}
+        else:
+
+            current_time = TimeUtilities.current_time_in_milliseconds()
+
+            subscription_instance.plan_id = None
+            subscription_instance.valid_till = TimeUtilities.add_days_in_epoch_time(
+                date_subscribed, DAYS_FOR_FREE_USERS)
+            subscription_instance.type = "free"
+            subscription_instance.renewal_due = TimeUtilities.subtract_days_in_epoch_time(
+                subscription_instance.valid_till, NOTIFY_PERIOD)
+            subscription_instance.transaction = None
+
+            if subscription_instance.is_removed and subscription_instance.valid_till >= current_time:
+                CoreServiceUtilities.renew_member(StringUtilities.get_string_from_integer(community_id),
+                                                  StringUtilities.get_string_from_integer(user_id))
+
+            subscription_instance.is_removed = False
+            subscription_instance.save()
+
+            SubscriptionImpl._remove_member_notifications(subscription_instance.user_id,
+                                                          subscription_instance.community_id)
+
+            subscription_history_data = {
+                "start_date": date_subscribed,
+                "end_date": subscription_instance.valid_till,
+                "description": FREE_DESCRIPTION,
+                "transaction": None,
+                "type": "free",
+                "user_id": user_id,
+                "community_id": community_id
+            }
+
+            subscription_history_instance = SubscriptionHistory.create_instance(subscription_history_data)
+
+            if not subscription_history_instance:
+                return {'error_message': 'error creating subscription history'}
+
+            return {'success': True}
 
     def convert_to_paid(self, exempt_user_ids: list = None) -> dict:
 
@@ -1413,3 +1459,46 @@ class SubscriptionImpl(SubscriptionManager):
             return {'success': True}
 
         return {'error_message': 'something went wrong', 'status': status_codes.HTTP_400_BAD_REQUEST}
+
+    def fetch_community_renewals(self) -> dict:
+
+        if not self.get_member_id():
+            return ResponseUtilities.get_impl_error_context("send x-member-id in headers",
+                                                            status_codes.HTTP_400_BAD_REQUEST)
+
+        authentication_check = AuthenticationUtilities.has_permission(self.get_member_id(), self.get_community_id())
+
+        if 'error_message' in authentication_check:
+            return ResponseUtilities.get_impl_error_context(authentication_check['error_message'],
+                                                            authentication_check['status'])
+
+        current_time = TimeUtilities.current_time_in_milliseconds()
+
+        subscriptions = ModelUtilities.get_model_filter(Subscription, {'community_id': self.get_community_id(),
+                                                                       'renewal_due__lte': current_time,
+                                                                       'valid_till__gt': current_time})
+
+        return {'subscriptions': self._serialize_subscriptions(subscriptions)}
+
+    def fetch_subscription_meta(self) -> dict:
+
+        if not self.get_member_id():
+            return ResponseUtilities.get_impl_error_context("send x-member-id in headers",
+                                                            status_codes.HTTP_400_BAD_REQUEST)
+
+        authentication_check = AuthenticationUtilities.has_permission(self.get_member_id(), self.get_community_id())
+
+        if 'error_message' in authentication_check:
+            return ResponseUtilities.get_impl_error_context(authentication_check['error_message'],
+                                                            authentication_check['status'])
+
+        current_time = TimeUtilities.current_time_in_milliseconds()
+        new_members_join_days = TimeUtilities.subtract_days_in_epoch_time(current_time, NEW_MEMBER_JOIN_DAYS)
+
+        data = {
+            'total_members': len(ModelUtilities.get_model_filter(Subscription, {'community_id': self.get_community_id()})),
+            'new_members': len(ModelUtilities.get_model_filter(Subscription, {'community_id': self.get_community_id(),
+                                                                              'created_at__gt': new_members_join_days}))
+        }
+
+        return data

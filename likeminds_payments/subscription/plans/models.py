@@ -19,6 +19,7 @@ class SubscriptionPlan(models.Model):
     description = models.TextField(default='')
     referral_free_days = models.IntegerField(default=0)
     image = models.CharField(max_length=256)
+    description_icon_type = models.IntegerField(null=True)
     created_at = models.BigIntegerField(default=0)
     updated_at = models.BigIntegerField(default=0)
 
@@ -50,6 +51,7 @@ class SubscriptionPlan(models.Model):
         instance.description = plan_body['description']
         instance.referral_free_days = plan_body['referral_free_days']
         instance.image = plan_body['image']
+        instance.description_icon_type = plan_body['description_icon_type']
         instance.save()
 
         return instance
@@ -111,3 +113,44 @@ class SubscriptionEventPlan(models.Model):
         self.updated_at = current_time
 
         super(SubscriptionEventPlan, self).save(*args, **kwargs)
+
+
+class SamplePlanCategory(models.Model):
+    id = models.IntegerField(primary_key=True)
+    name = models.CharField(max_length=255)
+    image_url = models.TextField()
+    created_at = models.BigIntegerField(default=0)
+    updated_at = models.BigIntegerField(default=0)
+
+    def save(self, *args, **kwargs):
+        current_time = TimeUtilities.current_time_in_milliseconds()
+
+        if self.created_at == 0:
+            self.created_at = current_time
+
+        self.updated_at = current_time
+
+        super(SamplePlanCategory, self).save(*args, **kwargs)
+
+
+class SamplePlan(models.Model):
+    id = models.IntegerField(primary_key=True)
+    category = models.ForeignKey(SamplePlanCategory, on_delete=models.CASCADE)
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    duration_name = models.CharField(default="", max_length=255)
+    duration_in_months = models.IntegerField(default=0)
+    cost = models.IntegerField(default=0)
+    strike_cost = models.IntegerField(default=0)
+    created_at = models.BigIntegerField(default=0)
+    updated_at = models.BigIntegerField(default=0)
+
+    def save(self, *args, **kwargs):
+        current_time = TimeUtilities.current_time_in_milliseconds()
+
+        if self.created_at == 0:
+            self.created_at = current_time
+
+        self.updated_at = current_time
+
+        super(SamplePlan, self).save(*args, **kwargs)

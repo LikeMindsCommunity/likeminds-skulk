@@ -69,6 +69,7 @@ class TransactionViewHelper:
             'community_id': request_body.get('community_id', None),
             'user_id': request_body.get('user_id', None),
             'page': 1,
+            'type': request_body.get('type', None),
             'payment_page_id': request_body.get('payment_page_id', None),
             'settlement_id': request_body.get('settlement_id', None)
         }
@@ -80,8 +81,8 @@ class TransactionViewHelper:
             body['page'] = NumberUtilities.get_integer_from_string(request_body['page'])
 
         if 'payment_page_id' in request_body and request_body.get('payment_page_id'):
-            payment_page_filter = ModelUtilities.get_model_filter(PaymentPageMeta,
-                                                                  {'payment_page_id': request_body.get('payment_page_id')})
+            payment_page_filter = ModelUtilities.get_model_filter(
+                PaymentPageMeta, {'payment_page_id': request_body.get('payment_page_id')})
 
             if not payment_page_filter:
                 return {'error_message': 'Invalid payment_page_id'}
@@ -126,7 +127,7 @@ class TransactionViewHelper:
         if transaction_instance.method in [MIGRATION, MANUAL_PAYMENT_PAGE]:
             return {'special_case': True}
 
-        if transaction_instance.status != PAYMENTS_STATUS_MAPPER['CAPTURED']:
+        if transaction_instance.status != PAYMENTS_STATUS_FILTER['CAPTURED']:
             return {'error_message': 'transaction was never captured'}
 
         if getattr(transaction_instance, 'type') and (transaction_instance.type == TransactionType.PAYMENT_PAGE):

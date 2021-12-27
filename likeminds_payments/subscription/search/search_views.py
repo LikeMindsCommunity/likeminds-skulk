@@ -80,3 +80,4 @@ class SearchHistoryView(APIView):
         }
 
         return JsonResponse(response, status=status_codes.HTTP_200_OK)
+

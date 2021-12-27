@@ -69,6 +69,7 @@ class TransactionViewHelper:
             'community_id': request_body.get('community_id', None),
             'user_id': request_body.get('user_id', None),
             'page': 1,
+            'type': request_body.get('type', None),
             'payment_page_id': request_body.get('payment_page_id', None),
             'settlement_id': request_body.get('settlement_id', None)
         }

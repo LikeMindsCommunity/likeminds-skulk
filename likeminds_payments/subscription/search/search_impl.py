@@ -1,6 +1,5 @@
 from typing import Union
 
-
 from subscription.search.constants import SUBSCRIPTION_PLAN_SUB_TITLE_FIELD, SUBSCRIPTION_PLAN_MEMBER_SINCE_FIELD, \
     SUBSCRIPTION_PLAN_FIELDS_DICTIONARY_MAPPING, SearchIndices
 
@@ -8,9 +7,7 @@ from subscription.search.search_manager import SearchManager
 from elasticsearch_dsl import Search
 
 from subscription.utility.number_utilities import NumberUtilities
-
 from subscription.utility.time_utilities import TimeUtilities
-
 
 
 class SearchImpl(SearchManager):

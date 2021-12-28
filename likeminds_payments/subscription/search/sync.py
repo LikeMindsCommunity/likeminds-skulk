@@ -1,7 +1,6 @@
 from elasticsearch_dsl import Search, UpdateByQuery
 from elasticsearch import Elasticsearch
 
-
 from .constants import SearchIndices
 
 from django_elasticsearch_dsl.registries import registry
@@ -15,7 +14,6 @@ client = Elasticsearch()
 class ElasticSearchSync:
 
     @staticmethod
-
     def bulk_update_documents(index: SearchIndices, query_dict: dict):
         """
         @param index: enum SearchIndices
@@ -23,8 +21,8 @@ class ElasticSearchSync:
         @return: None
         @description: bulk updates all documents with matching condition
         """
-        s = UpdateByQuery(index=index.value).update_from_dict(query_dict)
-        s.execute()
+        search_query = UpdateByQuery(index=index.value).update_from_dict(query_dict)
+        search_query.execute()
 
     @staticmethod
     def delete_documents(index: SearchIndices, query_dict: dict):
@@ -34,8 +32,8 @@ class ElasticSearchSync:
         @return: None
         @description: delete documents from elastic search permanently
         """
-        s = Search(index=index.value).update_from_dict(query_dict)
-        s.delete()
+        search_query = Search(index=index.value).update_from_dict(query_dict)
+        search_query.delete()
 
     @staticmethod
     def update_document(instance_list: list):

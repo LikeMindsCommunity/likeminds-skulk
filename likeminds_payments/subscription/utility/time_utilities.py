@@ -120,6 +120,7 @@ class TimeUtilities:
 
         return time.strftime('%b %Y', time.gmtime(epoch))
 
+
     @staticmethod
     def get_current_date():
 
@@ -138,3 +139,4 @@ class TimeUtilities:
         """converts date to epoch in milliseconds"""
 
         return datetime.datetime(year, month, day).timestamp()*1000
+

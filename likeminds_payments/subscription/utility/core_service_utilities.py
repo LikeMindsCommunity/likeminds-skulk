@@ -133,7 +133,6 @@ class CoreServiceUtilities:
             'community_id': community_id,
             'member_id': member_id
         }
-        print(community_id, member_id)
 
         response = ApiUtilities.generate_post_request(url=url, data=data)
 

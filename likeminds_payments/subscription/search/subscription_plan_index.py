@@ -11,6 +11,7 @@ from subscription.subscriptions.models import Subscription
 from subscription.utility.model_utilities import ModelUtilities
 from subscription.utility.time_utilities import TimeUtilities
 
+
 INDEX = Index(settings.ELASTICSEARCH_INDEX_NAMES[__name__])
 
 # See Elasticsearch Indices API reference for available settings
@@ -59,6 +60,7 @@ class SubscriptionPlanDocument(Document):
         'member_since': StringField()
     })
 
+
     class Django(object):
         """Inner nested class Django."""
         model = SubscriptionPlan  # The model associate with this Document
@@ -79,6 +81,7 @@ class SubscriptionPlanDocument(Document):
 
     @staticmethod
     def prepare_active_user_context(instance):
+
         filter_dict = {
             'plan_id': instance.plan_id,
             'is_removed': False
@@ -95,3 +98,4 @@ class SubscriptionPlanDocument(Document):
             active_user_context.append(user_dict)
 
         return active_user_context
+

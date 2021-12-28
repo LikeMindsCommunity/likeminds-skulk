@@ -4,28 +4,32 @@ import pandas as pd
 from celery import shared_task
 from .transaction_manager import TransactionManager
 from django.conf import settings
+from django.db.models import Sum, Count, Min
 from django.template.loader import get_template
 import time
 from rest_framework import status as status_codes
 from ..external_services.razorpay.razorpay_wrapper import RazorpayWrapper
 from ..external_services.segment.segment_impl import SegmentImpl
-from ..utility.core_service_utilities import CoreServiceUtilities
 from ..utility.number_utilities import NumberUtilities
-from ..utility.states import TransactionType
+from ..utility.states import TransactionType, SettlementStatus, TransactionRefundState
 from ..utility.time_utilities import TimeUtilities
 from ..utility.model_utilities import ModelUtilities
 from ..utility.core_service_utilities import CoreServiceUtilities
+from subscription.utility.response_utilities import ResponseUtilities
 from ..utility.async_tasks import (payment_page_member_payment_success_email, payment_page_member_payment_failed_email,
                                    payment_page_cm_payment_success_email, send_email_from_core_service,
                                    payment_success_membership_join_communication)
 from ..utility.csv_utilities import CsvUtilities
 from .constants import *
 from .models import Transaction
+from subscription.settlements.models import Settlement
 from ..plans.models import SubscriptionPlan, SubscriptionEventPlan
 from ..subscriptions.models import Subscription
 from ..payment_page.models import PaymentPageMeta
 from ..payment_page.payment_page_view_helper import PaymentPageViewHelper
 from ..subscription_histories.models import SubscriptionHistory
+from subscription.plans.models import SubscriptionEventPlan
+from subscription.subscriptions.constants import LIFETIME_VALID_TILL
 from ..member_acquisition.models import MemberAcquisition
 from ..subscriptions.subscription_view_impl import SubscriptionImpl
 from .serializers import TransactionSerializer
@@ -94,10 +98,10 @@ class TransactionImpl(TransactionManager):
     def _fetch_transaction_data_for_community_subscription(order_notes, payment_instance, refund_instance):
 
         transaction_data = {
-            "plan_id": order_notes['plan_id'],
+            "plan_id": order_notes.get('plan_id'),
             "payment_id": payment_instance['id'],
-            "community_name": order_notes['community_name'],
-            "plan_name": order_notes['name'],
+            "community_name": order_notes.get('community_name'),
+            "plan_name": order_notes.get('name', ''),
             "plan_cost": payment_instance['amount'],
             "renew": False,
             "amount": payment_instance['amount'],
@@ -110,7 +114,7 @@ class TransactionImpl(TransactionManager):
             "error_description": "",
             "refund_amount": 0,
             "user_id": None,
-            "payment_page_url": order_notes['payment_page_url'],
+            "payment_page_url": order_notes.get('payment_page_url'),
             "shared_by": None,
             "grace_period": 0,
             "type": TransactionType.COMMUNITY_SUBSCRIPTION
@@ -125,7 +129,7 @@ class TransactionImpl(TransactionManager):
         if 'amount' in refund_instance:
             transaction_data['refund_amount'] = refund_instance['amount']
 
-        if 'user_id' in order_notes:
+        if 'user_id' in order_notes and transaction_data['renew']:
             transaction_data['user_id'] = order_notes['user_id']
 
         if 'shared_by' in order_notes:
@@ -352,7 +356,7 @@ class TransactionImpl(TransactionManager):
 
         community_data = CoreServiceUtilities.get_community_data(transaction_instance.type_id)
 
-        if 'community' in community_data:
+        if 'community' in community_data and transaction_instance.user_id:
             analytics_data = {
                 'community_id': transaction_instance.type_id,
                 'community_name': community_data['community'].get('name'),
@@ -498,36 +502,53 @@ class TransactionImpl(TransactionManager):
     def _serialize_transactions(transactions):
         return TransactionSerializer(transactions)
 
-    @staticmethod
-    def _fetch_transactions(user_id: str, community_id: str):
-        output = []
+    def fetch_transactions(self, page, payment_page_id=None, filters=None, settlement_id=None,
+                           transaction_type=None) -> dict:
 
-        transactions = ModelUtilities.get_model_filter(Transaction, {'user_id': user_id}).order_by('created_at')
+        if settlement_id:
+            filters['settlement_id'] = settlement_id
 
-        for transaction in transactions:
-            plan = SubscriptionPlan.get_plan_or_None(transaction.plan_id)
-
-            if plan is not None and plan.community_id == community_id:
-                output.append(transaction)
-
-        return output
-
-    def fetch_transactions(self, page, payment_page_id=None) -> dict:
-
-        transactions = []
-
-        if payment_page_id:
-            transactions = TransactionHelper.fetch_payment_transactions(payment_page_id)
+        elif payment_page_id:
+            filters['plan_id'] = payment_page_id
 
         else:
-            transactions = self._fetch_transactions(self.get_user_id(), self.get_community_id())
+            if not transaction_type and self.get_user_id():
+                filters['user_id'] = self.get_user_id()
+
+            elif transaction_type and transaction_type == 'unidentified':
+                filters['user_id'] = None
+
+            elif transaction_type and transaction_type == 'all':
+                pass
+
+            valid_subscription_plan_ids = list(ModelUtilities.get_model_filter(
+                SubscriptionPlan, {'community_id': self.get_community_id()}).values_list('plan_id', flat=True))
+
+            valid_event_plan_ids = list(ModelUtilities.get_model_filter(
+                SubscriptionEventPlan, {'community_id': self.get_community_id()}).values_list('event_plan_id',
+                                                                                              flat=True))
+
+            valid_payment_page_ids = list(ModelUtilities.get_model_filter(
+                PaymentPageMeta, {'community_id': self.get_community_id()}).values_list('payment_page_id', flat=True))
+
+            filters['plan_id__in'] = valid_subscription_plan_ids + valid_event_plan_ids + valid_payment_page_ids
+
+        transactions = TransactionHelper.fetch_payment_transactions(filters)
 
         if len(transactions) == 0:
-            return {'error_message': 'no transaction exist for this user in this community'}
+            return {'error_message': 'no transaction exist for given data in this community'}
 
-        paginated_transactions = ModelUtilities.paginate_queryset(transactions, page, PAGE_SIZE)
+        paginated_transactions = ModelUtilities.paginate_queryset(transactions, page, TRANSACTIONS_PAGE_SIZE)
 
-        return {'transactions': self._serialize_transactions(paginated_transactions)}
+        captured_transactions = [transaction for transaction in transactions if
+                                 transaction.status == PAYMENTS_STATUS_FILTER['CAPTURED']]
+
+        refunded_transactions = [transaction for transaction in transactions if
+                                 transaction.status == PAYMENTS_STATUS_FILTER['REFUNDED']]
+
+        return {'transactions': self._serialize_transactions(paginated_transactions),
+                'captured_count': len(captured_transactions),
+                'refunded_count': len(refunded_transactions)}
 
     def refund_transaction(self) -> dict:
 
@@ -667,6 +688,194 @@ class TransactionImpl(TransactionManager):
 
         return send_email_response
 
+    @staticmethod
+    def get_settlement_amount_data(community_id):
+
+        community_data = CoreServiceUtilities.get_community_data(community_id)
+
+        if 'error_message' in community_data:
+            return ResponseUtilities.get_impl_error_context(community_data['error_message'],
+                                                            status_codes.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        community_details = community_data.get('community')
+        fee_membership = community_details.get('fee_membership')
+        fee_event = community_details.get('fee_event')
+        fee_payment_pages = community_details.get('fee_payment_pages')
+
+        valid_settlement_states = [SettlementStatus.FAILED, SettlementStatus.REVERSED]
+        valid_settlements = ModelUtilities.get_model_filter(Settlement, {'community_id': community_id,
+                                                                         'status__in': valid_settlement_states})
+
+        valid_settlement_ids = [settlement.settlement_id for settlement in valid_settlements]
+
+        subscription_and_payment_pages_transactions = (
+                ModelUtilities.get_model_filter(Transaction, {'settlement_id__in': valid_settlement_ids,
+                                                              'type_id': community_id,
+                                                              'type__in': [TransactionType.PAYMENT_PAGE,
+                                                                           TransactionType.COMMUNITY_SUBSCRIPTION],
+                                                              'status': PAYMENTS_STATUS_FILTER['CAPTURED']
+                                                              }) |
+                ModelUtilities.get_model_filter(Transaction, {'settlement_id__isnull': True,
+                                                              'type_id': community_id,
+                                                              'type__in': [TransactionType.PAYMENT_PAGE,
+                                                                           TransactionType.COMMUNITY_SUBSCRIPTION],
+                                                              'status': PAYMENTS_STATUS_FILTER['CAPTURED']
+                                                              })
+        ).values('type').annotate(revenue=Sum('amount'), count=Count('type'), start_date=Min('created_at'))
+
+        subscription_and_payment_pages_refund_transactions = (
+            ModelUtilities.get_model_filter(Transaction, {'settlement_id__isnull': False,
+                                                          'status': PAYMENTS_STATUS_FILTER['REFUNDED'],
+                                                          'refund_handled': TransactionRefundState.NOT_HANDLED,
+                                                          'type_id': community_id,
+                                                          'type__in': [TransactionType.PAYMENT_PAGE,
+                                                                       TransactionType.COMMUNITY_SUBSCRIPTION]
+                                                          })
+        ).values('type').annotate(revenue=Sum('amount'), count=Count('type'))
+
+        valid_event_plans = ModelUtilities.get_model_filter(SubscriptionEventPlan, {'community_id': community_id})
+
+        valid_event_plan_ids = [plan.event_plan_id for plan in valid_event_plans]
+
+        event_transactions = (
+            ModelUtilities.get_model_filter(Transaction, {'settlement_id__in': valid_settlement_ids,
+                                                          'plan_id__in': valid_event_plan_ids,
+                                                          'type': TransactionType.EVENT,
+                                                          'status': PAYMENTS_STATUS_FILTER['CAPTURED']
+                                                          }) |
+            ModelUtilities.get_model_filter(Transaction, {'settlement_id__isnull': True,
+                                                          'plan_id__in': valid_event_plan_ids,
+                                                          'type': TransactionType.EVENT,
+                                                          'status': PAYMENTS_STATUS_FILTER['CAPTURED']
+                                                          })
+        ).values('type').annotate(revenue=Sum('amount'), count=Count('type'), start_date=Min('created_at'))
+
+        event_refund_transactions = (
+            ModelUtilities.get_model_filter(Transaction, {'settlement_id__isnull': False,
+                                                          'status': PAYMENTS_STATUS_FILTER['REFUNDED'],
+                                                          'refund_handled': TransactionRefundState.NOT_HANDLED,
+                                                          'type': TransactionType.EVENT,
+                                                          'plan_id__in': valid_event_plan_ids})
+        ).values('type').annotate(revenue=Sum('amount'), count=Count('type'))
+
+        membership_data = subscription_and_payment_pages_transactions.filter(
+            type=TransactionType.COMMUNITY_SUBSCRIPTION)
+        membership_refund_data = subscription_and_payment_pages_refund_transactions.filter(
+            type=TransactionType.COMMUNITY_SUBSCRIPTION)
+        payment_pages_data = subscription_and_payment_pages_transactions.filter(
+            type=TransactionType.PAYMENT_PAGE)
+        payment_pages_refund_data = subscription_and_payment_pages_refund_transactions.filter(
+            type=TransactionType.PAYMENT_PAGE
+        )
+        event_data = event_transactions
+        event_refund_data = event_refund_transactions
+
+        revenue_membership = membership_data[0]['revenue'] if len(membership_data) else 0
+        revenue_event = event_data[0]['revenue'] if len(event_data) else 0
+        revenue_payment_pages = payment_pages_data[0]['revenue'] if len(payment_pages_data) else 0
+
+        revenue_membership_refund = membership_refund_data[0]['revenue'] if len(membership_refund_data) else 0
+        revenue_event_refund = event_refund_data[0]['revenue'] if len(event_refund_data) else 0
+        revenue_payment_pages_refund = payment_pages_refund_data[0]['revenue'] if len(payment_pages_refund_data) else 0
+
+        final_revenue_membership = revenue_membership - revenue_membership_refund
+        final_revenue_event = revenue_event - revenue_event_refund
+        final_revenue_payment_pages = revenue_payment_pages - revenue_payment_pages_refund
+
+        revenue = final_revenue_membership + final_revenue_event + final_revenue_payment_pages
+
+        count_membership = membership_data[0]['count'] if len(membership_data) else 0
+        count_event = event_data[0]['count'] if len(event_data) else 0
+        count_payment_pages = payment_pages_data[0]['count'] if len(payment_pages_data) else 0
+
+        count = count_membership + count_event + count_payment_pages
+
+        paid_amount = sum([(1-(fee_membership/100))*final_revenue_membership,
+                           (1-(fee_event/100))*final_revenue_event,
+                           (1-(fee_payment_pages/100))*final_revenue_payment_pages])
+
+        fee_amount = revenue - paid_amount
+        fee_amount_percent = (fee_amount/revenue)*100 if revenue > 0 else (fee_membership+fee_event+fee_payment_pages)/3
+
+        data = {
+            'revenue': revenue,
+            'paid_amount': round(paid_amount),
+            'fee_percentage': round(fee_amount_percent, 1),
+            'fee_amount': round(fee_amount),
+            'revenue_count': count,
+            'start_epoch': min(membership_data[0]['start_date'] if len(membership_data) else LIFETIME_VALID_TILL,
+                               event_data[0]['start_date'] if len(event_data) else LIFETIME_VALID_TILL,
+                               payment_pages_data[0]['start_date'] if len(payment_pages_data) else LIFETIME_VALID_TILL)
+        }
+
+        return data
+
+    @staticmethod
+    def get_revenue_data(community_id):
+
+        valid_event_plans = ModelUtilities.get_model_filter(SubscriptionEventPlan, {'community_id': community_id})
+
+        valid_event_plan_ids = [plan.event_plan_id for plan in valid_event_plans]
+
+        revenue_transactions = (
+                ModelUtilities.get_model_filter(Transaction, {'type_id': community_id,
+                                                              'type__in': [TransactionType.PAYMENT_PAGE,
+                                                                           TransactionType.COMMUNITY_SUBSCRIPTION],
+                                                              'status__in': [PAYMENTS_STATUS_FILTER['CAPTURED'],
+                                                                             PAYMENTS_STATUS_FILTER['REFUNDED']]
+                                                              }) |
+                ModelUtilities.get_model_filter(Transaction, {'plan_id__in': valid_event_plan_ids,
+                                                              'type': TransactionType.EVENT,
+                                                              'status__in': [PAYMENTS_STATUS_FILTER['CAPTURED'],
+                                                                             PAYMENTS_STATUS_FILTER['REFUNDED']]
+                                                              })
+        )
+
+        total_revenue_details = revenue_transactions.filter(
+            status=PAYMENTS_STATUS_FILTER['CAPTURED']
+        ).aggregate(revenue=Sum('amount'))
+
+        total_revenue_amount = total_revenue_details.get('revenue') if total_revenue_details.get('revenue') else 0
+
+        current_date = TimeUtilities.get_current_date()
+        date_epoch = TimeUtilities.convert_date_to_epoch(DAY_OF_MONTH_FOR_REVENUE_CALCULATION,
+                                                         current_date.get('month'), current_date.get('year'))
+
+        revenue_current_month = revenue_transactions.filter(status=PAYMENTS_STATUS_FILTER['CAPTURED'],
+                                                            created_at__gte=date_epoch
+                                                            ).aggregate(revenue=Sum('amount'))
+        refund_current_month = revenue_transactions.filter(status=PAYMENTS_STATUS_FILTER['REFUNDED'],
+                                                           refund_handled=TransactionRefundState.NOT_HANDLED,
+                                                           settlement_id__isnull=False
+                                                           ).aggregate(revenue=Sum('amount'))
+
+        current_month_revenue = revenue_current_month.get('revenue') if revenue_current_month.get('revenue') else 0
+        current_month_refund = refund_current_month.get('revenue') if refund_current_month.get('revenue') else 0
+
+        data = {
+            'total_revenue': total_revenue_amount,
+            'revenue_current_month': current_month_revenue - current_month_refund
+        }
+
+        return data
+
+    def fetch_settlement_amount(self) -> dict:
+
+        settlement_data = self.get_settlement_amount_data(self.get_community_id())
+        revenue_data = self.get_revenue_data(self.get_community_id())
+
+        output_data = {
+            'revenue': settlement_data.get('revenue'),
+            'paid_amount': settlement_data.get('paid_amount'),
+            'fee_percentage': settlement_data.get('fee_percentage'),
+            'fee_amount': settlement_data.get('fee_amount'),
+            'revenue_count': settlement_data.get('revenue_count'),
+            'total_revenue': revenue_data.get('total_revenue'),
+            'revenue_current_month': revenue_data.get('revenue_current_month')
+        }
+
+        return {'settlement_data': output_data}
+
 
 class TransactionHelper:
 
@@ -736,8 +945,7 @@ class TransactionHelper:
         SegmentImpl.track_event(user_id, event_name, event_metadata)
 
     @staticmethod
-    def fetch_payment_transactions(payment_page_id):
-        transactions = ModelUtilities.get_model_filter(Transaction,
-                                                       {'plan_id': payment_page_id}).order_by('created_at')
+    def fetch_payment_transactions(filters):
+        transactions = ModelUtilities.get_model_filter(Transaction, filters).order_by('created_at')
 
         return transactions

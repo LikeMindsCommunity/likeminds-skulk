@@ -1,8 +1,10 @@
 import enum
 
 
-class SearchIndexes(enum.Enum):
+
+class SearchIndices(enum.Enum):
     SUBSCRIPTION_PLAN = "subscription_plan"
+    SUBSCRIPTION_HISTORY = "subscription_history"
 
 
 SUBSCRIPTION_PLAN_SUB_TITLE_FIELD = "plan_sub_title"

@@ -1,5 +1,6 @@
 import math
 import time
+import datetime
 
 
 class TimeUtilities:
@@ -118,3 +119,24 @@ class TimeUtilities:
             epoch = TimeUtilities.convert_milliseconds_to_sec(epoch)
 
         return time.strftime('%b %Y', time.gmtime(epoch))
+
+
+    @staticmethod
+    def get_current_date():
+
+        now = datetime.datetime.now()
+
+        date = {
+            'day': now.day,
+            'month': now.month,
+            'year': now.year
+        }
+
+        return date
+
+    @staticmethod
+    def convert_date_to_epoch(day: int, month: int, year: int):
+        """converts date to epoch in milliseconds"""
+
+        return datetime.datetime(year, month, day).timestamp()*1000
+

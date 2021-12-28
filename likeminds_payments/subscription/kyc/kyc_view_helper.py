@@ -30,9 +30,6 @@ class KycViewHelper:
         if 'doc_pan_number' not in request_body or not request_body['doc_pan_number']:
             return {'error_message': 'send doc_pan_number in body'}
 
-        if 'gstn' not in request_body or not request_body['gstn']:
-            return {'error_message': 'send gstn in body'}
-
         if 'bank_user_name' not in request_body or not request_body['bank_user_name']:
             return {'error_message': 'send bank_user_name in body'}
 

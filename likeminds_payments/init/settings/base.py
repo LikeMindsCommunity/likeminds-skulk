@@ -56,7 +56,9 @@ CORS_ORIGIN_ALLOW_ALL = True
 
 CORS_ALLOW_HEADERS = list(default_headers) + [
     'x-member-id',
-    'x-platform-code'
+    'x-platform-code',
+    'x-username',
+    'x-password'
 ]
 
 LOGGING = {
@@ -204,4 +206,5 @@ ELASTICSEARCH_DSL = {
 # Name of the Elasticsearch index
 ELASTICSEARCH_INDEX_NAMES = {
     'subscription.search.subscription_plan_index': 'subscription_plan',
+    'subscription.search.subscription_history_index': 'subscription_history'
 }

@@ -81,7 +81,7 @@ class SearchImpl(SearchManager):
 
         return search_response
 
-    def _get_plan_search_ngram_query_dict(self):
+    def _get_plan_search_ngram_query_dict(self, index=SearchIndices.SUBSCRIPTION_PLAN):
         """
         @return: dict
         """
@@ -106,6 +106,7 @@ class SearchImpl(SearchManager):
                     ],
                     "filter": [
                         {"term": {"community_id": f"{self.get_community_id()}"}},
+                        {"term": {"_index": index.value}}
                     ]
                 }
             }

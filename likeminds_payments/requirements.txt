@@ -17,6 +17,9 @@ Django==3.2.1
 django-cors-headers==3.7.0
 django-crontab==0.7.1
 django-rest-framework==0.1.0
+django-elasticsearch-dsl==7.2.0
+django-elasticsearch-dsl-drf==0.22.1
+elasticsearch-dsl==7.3.0
 djangorestframework==3.12.4
 et-xmlfile==1.1.0
 facebook-business==11.0.0

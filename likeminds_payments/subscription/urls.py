@@ -1,7 +1,9 @@
 from django.urls import path, include
 from .plans.plan_view_impl import *
 from .orders.order_view_impl import *
+
 from .search.search_views import SearchView, SearchHistoryView
+
 from .transactions.transaction_view_impl import *
 from .subscriptions.subscription_view_impl import *
 from .subscription_histories.subscription_history_view_impl import *

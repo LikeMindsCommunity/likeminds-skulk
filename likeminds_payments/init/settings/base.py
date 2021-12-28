@@ -206,5 +206,5 @@ ELASTICSEARCH_DSL = {
 # Name of the Elasticsearch index
 ELASTICSEARCH_INDEX_NAMES = {
     'subscription.search.subscription_plan_index': 'subscription_plan',
-    'subscription.search.subscription_history_index': 'subscription_history',
+    'subscription.search.subscription_history_index': 'subscription_history'
 }

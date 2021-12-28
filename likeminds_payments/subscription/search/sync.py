@@ -1,6 +1,7 @@
 from elasticsearch_dsl import Search, UpdateByQuery
 from elasticsearch import Elasticsearch
 
+
 from .constants import SearchIndices
 
 from django_elasticsearch_dsl.registries import registry
@@ -11,6 +12,7 @@ client = Elasticsearch()
 class ElasticSearchSync:
 
     @staticmethod
+
     def bulk_update_documents(index: SearchIndices, query_dict: dict):
         """
         @param index: enum SearchIndices

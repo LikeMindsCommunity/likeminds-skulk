@@ -4,7 +4,6 @@ import datetime
 
 
 class TimeUtilities:
-
     MILLISECONDS_IN_A_DAY = 86400000
 
     DAYS_IN_A_WEEK = 7
@@ -114,6 +113,15 @@ class TimeUtilities:
         return time.strftime('%I:%M %p', time.localtime(epoch_time))
 
     @staticmethod
+    def convert_epoch_to_month_year_format(epoch: int) -> str:
+
+        if TimeUtilities.is_epoch_in_milliseconds(epoch):
+            epoch = TimeUtilities.convert_milliseconds_to_sec(epoch)
+
+        return time.strftime('%b %Y', time.gmtime(epoch))
+
+
+    @staticmethod
     def get_current_date():
 
         now = datetime.datetime.now()
@@ -131,3 +139,4 @@ class TimeUtilities:
         """converts date to epoch in milliseconds"""
 
         return datetime.datetime(year, month, day).timestamp()*1000
+

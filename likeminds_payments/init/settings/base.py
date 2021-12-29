@@ -39,7 +39,9 @@ INSTALLED_APPS = [
     'rest_framework',
     'subscription',
     'corsheaders',
-    'django_crontab'
+    'django_crontab',
+    'django_elasticsearch_dsl',
+    'django_elasticsearch_dsl_drf'
 ]
 
 SENDGRID_API_KEY = os.getenv('SENDGRID_API_KEY')
@@ -192,4 +194,17 @@ CRONTAB_COMMAND_SUFFIX = '2>&1'
 WEBFLOW_KEYS = {
     'collection_id': os.getenv('WEBFLOW_COLLECTION_ID'),
     'api_key': os.getenv('WEBFLOW_API_KEY')
+}
+
+ELASTICSEARCH_DSL = {
+    'default': {
+        'hosts': os.getenv('ELASTIC_SEARCH_HOST'),
+        'timeout': 60,
+    },
+}
+
+# Name of the Elasticsearch index
+ELASTICSEARCH_INDEX_NAMES = {
+    'subscription.search.subscription_plan_index': 'subscription_plan',
+    'subscription.search.subscription_history_index': 'subscription_history'
 }

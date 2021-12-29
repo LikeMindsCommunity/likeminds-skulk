@@ -1,3 +1,4 @@
+from ..external_services.logging.logging_wrapper import LoggingWrapper
 from ..plans.models import SubscriptionPlan, SubscriptionEventPlan, EventCohortPlan
 from ..payment_page.models import PaymentPageMeta
 from ..payment_page.constants import PAYMENT_PAGE_AMOUNT_TYPE_FIXED
@@ -13,6 +14,8 @@ from ..utility.url_utilities import UrlUtilities
 from ..external_services.razorpay.razorpay_wrapper import RazorpayWrapper
 from .constants import *
 from ..utility.states import MemberState, EventDiscountType
+
+error_logger = LoggingWrapper.get_instance()
 
 
 class OrderViewHelper:
@@ -227,7 +230,8 @@ class OrderViewHelper:
             member_event_plan_cohorts = ModelUtilities.get_model_filter(EventCohortPlan, filter_dict).order_by('cost')
             amount = member_event_plan_cohorts[0].cost
 
-        elif subscription_object and (subscription_object.get('membership_state') == STATUS_EXPIRED) and plan_instance.strike_cost:
+        elif subscription_object and (
+                subscription_object.get('membership_state') == STATUS_EXPIRED) and plan_instance.strike_cost:
             amount = plan_instance.strike_cost
 
         else:
@@ -484,7 +488,7 @@ class OrderViewHelper:
         response = CoreServiceUtilities.fetch_member_cohorts(community_id, user_id)
 
         if 'error_message' in response:
-            print(f'Community ID:{community_id}, User ID:{user_id}, Response:{response}')
+            error_logger.error(f'Community ID:{community_id}, User ID:{user_id}, Response:{response}')
             return []
 
         member_cohort_dict = response.get('member_cohorts')
@@ -495,4 +499,3 @@ class OrderViewHelper:
         member_cohorts = [obj.get('id') for obj in member_cohort_dict.get(str(user_id))]
 
         return member_cohorts
-

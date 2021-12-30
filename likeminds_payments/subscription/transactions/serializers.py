@@ -28,7 +28,8 @@ def TransactionSerializer(transactions) -> list:
             'type_id': transaction.type_id,
             'created_at': transaction.created_at,
             'payment_name': transaction.payment_name,
-            'settlement_id': transaction.settlement_id
+            'settlement_id': transaction.settlement_id,
+            'refund_handled': transaction.refund_handled
         }
 
         output.append(transaction_object)

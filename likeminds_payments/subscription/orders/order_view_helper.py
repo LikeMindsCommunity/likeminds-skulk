@@ -196,21 +196,9 @@ class OrderViewHelper:
         member_state = CoreServiceUtilities.get_member_state(community_data['community']['id'],
                                                              order_body.get('user_id'))
 
-        # Fetch EventCohortPlan related to this Plan
-        filters = {'event_plan_id': plan_instance.id}
-        event_cohort_ids = list(ModelUtilities.get_model_filter(model=EventCohortPlan,
-                                                                filter_dict=filters).values_list('cohort_id',
-                                                                                                 flat=True))
-        member_cohorts = []
-
-        # If any EventCohortPlan exists, fetch member's cohorts and check if any cohort_id matches with user's cohorts
-        if event_cohort_ids:
-            member_cohorts = OrderViewHelper.fetch_member_cohorts_for_create_event_order(
-                community_id=community_data['community']['id'],
-                user_id=order_body.get('user_id')
-            )
-
-        matching_cohorts = set(member_cohorts) & set(event_cohort_ids)
+        matching_cohorts = OrderViewHelper.get_member_event_cohorts(event_plan_instance=event_plan_instance,
+                                                                    community_id=community_data['community']['id'],
+                                                                    user_id=order_body.get('user_id'))
 
         subscription = Subscription.get_subscription_or_None(user_id=order_body.get('user_id'),
                                                              community_id=community_data['community']['id'])
@@ -315,30 +303,12 @@ class OrderViewHelper:
         if community_data.get('error_message'):
             return {'error_message': community_data['error_message']}
 
-        filters = {'event_plan_id': event_plan_instance.id}
-        event_cohort_ids = list(ModelUtilities.get_model_filter(model=EventCohortPlan,
-                                                                filter_dict=filters).values_list('cohort_id',
-                                                                                                 flat=True))
-        member_cohorts = []
+        matching_cohorts = OrderViewHelper.get_member_event_cohorts(event_plan_instance=event_plan_instance,
+                                                                    community_id=community_data['community']['id'],
+                                                                    user_id=order_body.get('user_id'))
 
-        # If any EventCohortPlan exists, fetch member's cohorts and check if any cohort_id matches with user's cohorts
-        if event_cohort_ids:
-            member_cohorts = OrderViewHelper.fetch_member_cohorts_for_create_event_order(
-                community_id=community_data['community']['id'],
-                user_id=order_body.get('user_id')
-            )
-
-        matching_cohorts = set(member_cohorts) & set(event_cohort_ids)
-
-        event_cost = event_plan_instance.cost
-
-        # If he is a part of cohort, fetch minimum cost from related EventCohortPlan instances
-        if matching_cohorts:
-            filter_dict = {'event_plan_id': event_plan_instance.id, 'cohort_id__in': list(matching_cohorts)}
-            member_event_plan_cohorts = ModelUtilities.get_model_filter(EventCohortPlan, filter_dict).order_by('cost')
-
-            if member_event_plan_cohorts:
-                event_cost = member_event_plan_cohorts[0].cost
+        event_cost = OrderViewHelper.fetch_event_cost(event_plan_instance=event_plan_instance,
+                                                      matching_cohorts=matching_cohorts)
 
         total_cost = event_cost + community_plan_instance.cost
 
@@ -499,3 +469,41 @@ class OrderViewHelper:
         member_cohorts = [obj.get('id') for obj in member_cohort_dict.get(str(user_id))]
 
         return member_cohorts
+
+    @staticmethod
+    def get_member_event_cohorts(event_plan_instance: SubscriptionEventPlan, community_id, user_id):
+        matching_cohorts = set()
+
+        if not event_plan_instance:
+            return matching_cohorts
+
+        if not user_id or not community_id:
+            return matching_cohorts
+
+        filters = {'event_plan_id': event_plan_instance.id}
+        event_cohort_ids = list(ModelUtilities.get_model_filter(model=EventCohortPlan,
+                                                                filter_dict=filters).values_list('cohort_id',
+                                                                                                 flat=True))
+        member_cohorts = []
+
+        # If any EventCohortPlan exists, fetch member's cohorts and check if any cohort_id matches with user's cohorts
+        if event_cohort_ids:
+            member_cohorts = OrderViewHelper.fetch_member_cohorts_for_create_event_order(community_id=community_id,
+                                                                                         user_id=user_id)
+
+        matching_cohorts = set(member_cohorts) & set(event_cohort_ids)
+
+        return matching_cohorts
+
+    @staticmethod
+    def fetch_event_cost(event_plan_instance: SubscriptionEventPlan, matching_cohorts):
+        if not matching_cohorts:
+            return event_plan_instance.cost
+
+        filter_dict = {'event_plan_id': event_plan_instance.id, 'cohort_id__in': list(matching_cohorts)}
+        member_event_plan_cohorts = ModelUtilities.get_model_filter(EventCohortPlan, filter_dict).order_by('cost')
+
+        if not member_event_plan_cohorts:
+            return event_plan_instance.cost
+
+        return member_event_plan_cohorts[0].cost

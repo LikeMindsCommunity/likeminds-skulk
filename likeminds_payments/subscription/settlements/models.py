@@ -10,6 +10,9 @@ class Settlement(models.Model):
     amount = models.IntegerField()
     currency = models.CharField(max_length=3, default='INR')
     status = models.IntegerField()
+    fee_amount = models.IntegerField(null=True, default=None)
+    fee_percentage = models.IntegerField(null=True, default=None)
+    revenue = models.IntegerField(null=True, default=None)
     created_at = models.BigIntegerField(default=0)
     updated_at = models.BigIntegerField(default=0)
 

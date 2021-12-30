@@ -509,6 +509,7 @@ class OrderViewHelper:
         @param matching_cohorts: Set of Member Cohorts which are added in current Event Plan
         @return: Event cost for that user.
         """
+
         if not matching_cohorts:
             return event_plan_instance.cost
 

@@ -1,6 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 from celery import shared_task
 from .constants import EVENT_PAYMENT_LINK
+from .plan_view_helper import PlanViewHelper
 from ..external_services.logging.logging_wrapper import LoggingWrapper
 from ..plans.plan_manager import PlanManager
 from .models import SubscriptionPlan, SubscriptionEventPlan, EventCohortPlan
@@ -190,26 +191,10 @@ class PlanImpl(PlanManager):
             return
 
         for cohort_plan in cohort_plans:
-
-            discount_type = cohort_plan.get('discount_type', EventDiscountType.PERCENTAGE)
-            discount = None
-
-            if discount_type == EventDiscountType.PERCENTAGE:
-                discount = cohort_plan.get('discount')
-
-            elif discount_type == EventDiscountType.FLAT:
-                discount = NumberUtilities.convert_to_paisa_or_none(cohort_plan.get('discount'))
-
-            event_cohort_plan_context = {
-                'cohort_id': cohort_plan.get('cohort_id'),
-                'cost': NumberUtilities.convert_to_paisa_or_none(cohort_plan.get('cost')),
-                'strike_cost': NumberUtilities.convert_to_paisa_or_none(cohort_plan.get('strike_cost')),
-                'cost_usd': NumberUtilities.convert_to_paisa_or_none(cohort_plan.get('cost_usd')),
-                'strike_cost_usd': NumberUtilities.convert_to_paisa_or_none(cohort_plan.get('strike_cost_usd')),
-                'discount_type': discount_type,
-                'discount': discount,
-                'event_plan': event_plan_instance.id
-            }
+            event_cohort_plan_context = PlanViewHelper.create_event_cohort_plan_context(
+                event_plan_instance=event_plan_instance,
+                cohort_plan=cohort_plan
+            )
 
             event_cohort_plan_serializer = EventCohortPlanSerializer(data=event_cohort_plan_context)
 

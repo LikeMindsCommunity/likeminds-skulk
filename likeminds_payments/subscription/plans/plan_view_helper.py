@@ -4,7 +4,7 @@ from ..subscriptions.constants import SUBSCRIPTION_COHORT_NAME, SUBSCRIPTION_EXP
 from ..utility.core_service_utilities import CoreServiceUtilities
 from ..utility.number_utilities import NumberUtilities
 from ..utility.response_utilities import ResponseUtilities
-from ..utility.states import cohort_types
+from ..utility.states import cohort_types, EventDiscountType
 from ..utility.json_utilities import JsonUtilities
 
 
@@ -369,7 +369,36 @@ class PlanViewHelper:
         response = CoreServiceUtilities.update_cohort(cohort_info)
 
         if response.get('error_message'):
-            return {'error_message': response['error_message'],  'status_code': response['status_code']}
+            return {'error_message': response['error_message'], 'status_code': response['status_code']}
 
         return {}
 
+    @staticmethod
+    def calculate_event_cohort_plan_discount(cohort_plan):
+        discount_type = cohort_plan.get('discount_type', EventDiscountType.PERCENTAGE)
+        discount = None
+
+        if discount_type == EventDiscountType.PERCENTAGE:
+            discount = cohort_plan.get('discount')
+
+        elif discount_type == EventDiscountType.FLAT:
+            discount = NumberUtilities.convert_to_paisa_or_none(cohort_plan.get('discount'))
+
+        return discount
+
+    @staticmethod
+    def create_event_cohort_plan_context(event_plan_instance, cohort_plan):
+        discount = PlanViewHelper.calculate_event_cohort_plan_discount(cohort_plan)
+
+        event_cohort_plan_context = {
+            'cohort_id': cohort_plan.get('cohort_id'),
+            'cost': NumberUtilities.convert_to_paisa_or_none(cohort_plan.get('cost')),
+            'strike_cost': NumberUtilities.convert_to_paisa_or_none(cohort_plan.get('strike_cost')),
+            'cost_usd': NumberUtilities.convert_to_paisa_or_none(cohort_plan.get('cost_usd')),
+            'strike_cost_usd': NumberUtilities.convert_to_paisa_or_none(cohort_plan.get('strike_cost_usd')),
+            'discount_type': cohort_plan.get('discount_type'),
+            'discount': discount,
+            'event_plan': event_plan_instance.id
+        }
+
+        return event_cohort_plan_context

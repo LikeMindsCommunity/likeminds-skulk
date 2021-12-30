@@ -483,3 +483,33 @@ class PlanViewHelper:
             return event_plan_instance.cost
 
         return member_event_plan_cohorts[0].cost
+
+    @staticmethod
+    def fetch_cohort_plan_cost_and_discount_context(event_plan_instance: SubscriptionEventPlan, matching_cohorts):
+        """
+        @param event_plan_instance: SubscriptionEventPlan instance
+        @param matching_cohorts: Set of Member Cohorts which are added in current Event Plan
+        @return: Event cost context for that user.
+        """
+
+        pricing_context = {
+            'cost': NumberUtilities.convert_to_rupee_or_none(event_plan_instance.cost),
+            'discount': event_plan_instance.discount,
+            'discount_type': event_plan_instance.discount_type,
+        }
+
+        # Return Context for that user.
+        if not matching_cohorts:
+            return pricing_context
+
+        filter_dict = {'event_plan_id': event_plan_instance.id, 'cohort_id__in': list(matching_cohorts)}
+        member_event_plan_cohorts = ModelUtilities.get_model_filter(EventCohortPlan, filter_dict).order_by('cost')
+
+        if not member_event_plan_cohorts:
+            return pricing_context
+
+        pricing_context['cost'] = NumberUtilities.convert_to_rupee_or_none(member_event_plan_cohorts[0].cost)
+        pricing_context['discount'] = member_event_plan_cohorts[0].discount
+        pricing_context['discount_type'] = member_event_plan_cohorts[0].discount_type
+
+        return pricing_context

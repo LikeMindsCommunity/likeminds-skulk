@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from .models import EventCohortPlan
+from .plan_view_helper import PlanViewHelper
 from ..external_services.logging.logging_wrapper import LoggingWrapper
 from ..utility.model_utilities import ModelUtilities
 from ..utility.number_utilities import NumberUtilities
@@ -14,7 +15,6 @@ error_logger = LoggingWrapper.get_instance()
 
 
 class EventCohortPlanSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = EventCohortPlan
         fields = '__all__'
@@ -86,13 +86,16 @@ def EventPlanSerializer(plan_instance, user_id=None) -> dict:
         'event_plan_id': plan_instance.event_plan_id,
         'chatroom_id': plan_instance.chatroom_id,
         'community_id': plan_instance.community_id,
-        'cost': NumberUtilities.convert_to_rupee_or_none(get_event_plan_cost(plan_instance, user_id)),
+        'cost': NumberUtilities.convert_to_rupee_or_none(plan_instance.cost),
         'strike_cost': NumberUtilities.convert_to_rupee_or_none(plan_instance.strike_cost),
         'cost_usd': NumberUtilities.convert_to_rupee_or_none(plan_instance.cost_usd),
         'strike_cost_usd': NumberUtilities.convert_to_rupee_or_none(plan_instance.strike_cost_usd),
         'discount_type': plan_instance.discount_type,
         'discount': plan_instance.discount
     }
+
+    pricing_context = get_event_plan_cost(plan_instance, user_id)
+    plan_context.update(pricing_context)
 
     if plan_context['discount_type'] == EventDiscountType.FLAT:
         plan_context['discount'] = NumberUtilities.convert_to_rupee_or_none(plan_instance.discount)
@@ -101,30 +104,10 @@ def EventPlanSerializer(plan_instance, user_id=None) -> dict:
 
 
 def get_event_plan_cost(event_plan_instance, user_id):
-    filters = {'event_plan_id': event_plan_instance.id}
-    event_cohort_ids = list(ModelUtilities.get_model_filter(model=EventCohortPlan,
-                                                            filter_dict=filters).values_list('cohort_id', flat=True))
+    matching_cohorts = PlanViewHelper.get_member_event_cohorts(event_plan_instance=event_plan_instance,
+                                                               community_id=event_plan_instance.community_id,
+                                                               user_id=user_id)
 
-    if not user_id or not event_cohort_ids:
-        return event_plan_instance.cost
+    pricing_context = PlanViewHelper.fetch_cohort_plan_cost_and_discount_context(event_plan_instance, matching_cohorts)
 
-    response = CoreServiceUtilities.fetch_member_cohorts(event_plan_instance.community_id, user_id)
-
-    if 'error_message' in response:
-        error_logger.error(f'Community ID:{event_plan_instance.community_id}, User ID:{user_id}, Response:{response}')
-        return event_plan_instance.cost
-
-    member_cohort_dict = response.get('member_cohorts')
-    member_cohorts = set()
-
-    if member_cohort_dict.get(user_id):
-        member_cohorts = [obj.get('id') for obj in member_cohort_dict.get(user_id)]
-
-    matching_cohorts = set(member_cohorts) & set(event_cohort_ids)
-    filter_dict = {'event_plan_id': event_plan_instance.id, 'cohort_id__in': list(matching_cohorts)}
-    member_event_plan_cohorts = ModelUtilities.get_model_filter(EventCohortPlan, filter_dict).order_by('cost')
-
-    if not member_event_plan_cohorts:
-        return event_plan_instance.cost
-
-    return member_event_plan_cohorts[0].cost
+    return pricing_context

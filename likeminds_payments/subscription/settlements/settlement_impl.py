@@ -106,7 +106,10 @@ class SettlementImpl(SettlementManager):
             'notes': {
                 'start_epoch': settlement_data.get('start_epoch'),
                 'end_epoch': current_time,
-                'community_id': self.get_community_id()
+                'community_id': self.get_community_id(),
+                'fee_amount': settlement_data.get('fee_amount'),
+                'fee_percentage': settlement_data.get('fee_percentage'),
+                'revenue': settlement_data.get('revenue')
             }
         }
 
@@ -157,6 +160,9 @@ class SettlementImpl(SettlementManager):
             'start_epoch': settlement_body['notes'].get('start_epoch'),
             'end_epoch': settlement_body['notes'].get('end_epoch'),
             'amount': settlement_body.get('amount'),
+            'fee_amount': settlement_body['notes'].get('fee_amount'),
+            'fee_percentage': settlement_body['notes'].get('fee_percentage'),
+            'revenue': settlement_body['notes'].get('revenue'),
             'currency': settlement_body.get('currency'),
             'status': PAYOUT_STATUS_MAP[settlement_body.get('status')]
         }

@@ -472,6 +472,13 @@ class OrderViewHelper:
 
     @staticmethod
     def get_member_event_cohorts(event_plan_instance: SubscriptionEventPlan, community_id, user_id):
+        """
+        @param event_plan_instance: SubscriptionEventPlan instance
+        @param community_id: Community ID
+        @param user_id: User ID
+        @return: Set of Member Cohorts which are added in current Event Plan
+        """
+
         matching_cohorts = set()
 
         if not event_plan_instance:
@@ -497,6 +504,11 @@ class OrderViewHelper:
 
     @staticmethod
     def fetch_event_cost(event_plan_instance: SubscriptionEventPlan, matching_cohorts):
+        """
+        @param event_plan_instance: SubscriptionEventPlan instance
+        @param matching_cohorts: Set of Member Cohorts which are added in current Event Plan
+        @return: Event cost for that user.
+        """
         if not matching_cohorts:
             return event_plan_instance.cost
 

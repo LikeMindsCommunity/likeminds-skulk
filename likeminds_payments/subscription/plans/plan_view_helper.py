@@ -1,11 +1,15 @@
 from .constants import *
-from .models import SubscriptionPlan
+from .models import SubscriptionPlan, SubscriptionEventPlan, EventCohortPlan
+from ..external_services.logging.logging_wrapper import LoggingWrapper
 from ..subscriptions.constants import SUBSCRIPTION_COHORT_NAME, SUBSCRIPTION_EXPIRED_COHORT_NAME
 from ..utility.core_service_utilities import CoreServiceUtilities
+from ..utility.model_utilities import ModelUtilities
 from ..utility.number_utilities import NumberUtilities
 from ..utility.response_utilities import ResponseUtilities
 from ..utility.states import cohort_types, EventDiscountType
 from ..utility.json_utilities import JsonUtilities
+
+error_logger = LoggingWrapper.get_instance()
 
 
 class PlanViewHelper:
@@ -402,3 +406,80 @@ class PlanViewHelper:
         }
 
         return event_cohort_plan_context
+
+    @staticmethod
+    def fetch_member_cohorts_for_event_plan(community_id, user_id):
+        """
+        @param community_id: Community ID
+        @param user_id: User ID
+        @return: list of cohort IDs he is part of
+        """
+
+        if not user_id or not community_id:
+            return []
+
+        response = CoreServiceUtilities.fetch_member_cohorts(community_id, user_id)
+
+        if 'error_message' in response:
+            error_logger.error(f'Community ID:{community_id}, User ID:{user_id}, Response:{response}')
+            return []
+
+        member_cohort_dict = response.get('member_cohorts')
+
+        if not member_cohort_dict or not member_cohort_dict.get(str(user_id)):
+            return []
+
+        member_cohorts = [obj.get('id') for obj in member_cohort_dict.get(str(user_id))]
+
+        return member_cohorts
+
+    @staticmethod
+    def get_member_event_cohorts(event_plan_instance: SubscriptionEventPlan, community_id, user_id):
+        """
+        @param event_plan_instance: SubscriptionEventPlan instance
+        @param community_id: Community ID
+        @param user_id: User ID
+        @return: Set of Member Cohorts which are added in current Event Plan
+        """
+
+        matching_cohorts = set()
+
+        if not event_plan_instance:
+            return matching_cohorts
+
+        if not user_id or not community_id:
+            return matching_cohorts
+
+        filters = {'event_plan_id': event_plan_instance.id}
+        event_cohort_ids = list(ModelUtilities.get_model_filter(model=EventCohortPlan,
+                                                                filter_dict=filters).values_list('cohort_id',
+                                                                                                 flat=True))
+        member_cohorts = []
+
+        # If any EventCohortPlan exists, fetch member's cohorts and check if any cohort_id matches with user's cohorts
+        if event_cohort_ids:
+            member_cohorts = PlanViewHelper.fetch_member_cohorts_for_event_plan(community_id=community_id,
+                                                                                user_id=user_id)
+
+        matching_cohorts = set(member_cohorts) & set(event_cohort_ids)
+
+        return matching_cohorts
+
+    @staticmethod
+    def fetch_event_cost(event_plan_instance: SubscriptionEventPlan, matching_cohorts):
+        """
+        @param event_plan_instance: SubscriptionEventPlan instance
+        @param matching_cohorts: Set of Member Cohorts which are added in current Event Plan
+        @return: Event cost for that user.
+        """
+
+        if not matching_cohorts:
+            return event_plan_instance.cost
+
+        filter_dict = {'event_plan_id': event_plan_instance.id, 'cohort_id__in': list(matching_cohorts)}
+        member_event_plan_cohorts = ModelUtilities.get_model_filter(EventCohortPlan, filter_dict).order_by('cost')
+
+        if not member_event_plan_cohorts:
+            return event_plan_instance.cost
+
+        return member_event_plan_cohorts[0].cost

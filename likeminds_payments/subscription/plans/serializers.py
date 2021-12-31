@@ -1,7 +1,6 @@
 from rest_framework import serializers
 
 from .models import EventCohortPlan
-from .plan_helper import PlanHelper
 from ..external_services.logging.logging_wrapper import LoggingWrapper
 from ..utility.number_utilities import NumberUtilities
 from ..utility.plan_utilities import PlanUtilities
@@ -93,4 +92,3 @@ def EventPlanSerializer(plan_instance) -> dict:
     }
 
     return plan_context
-

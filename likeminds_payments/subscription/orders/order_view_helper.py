@@ -2,7 +2,7 @@ from ..external_services.logging.logging_wrapper import LoggingWrapper
 from ..plans.models import SubscriptionPlan, SubscriptionEventPlan, EventCohortPlan
 from ..payment_page.models import PaymentPageMeta
 from ..payment_page.constants import PAYMENT_PAGE_AMOUNT_TYPE_FIXED
-from ..plans.plan_view_helper import PlanViewHelper
+from ..plans.plan_helper import PlanHelper
 from ..subscriptions.constants import STATUS_EXPIRED
 from ..subscriptions.models import Subscription
 from ..subscriptions.serializers import SubscriptionSerializer
@@ -195,9 +195,9 @@ class OrderViewHelper:
         member_state = CoreServiceUtilities.get_member_state(community_data['community']['id'],
                                                              order_body.get('user_id'))
 
-        matching_cohorts = PlanViewHelper.get_member_event_cohorts(event_plan_instance=plan_instance,
-                                                                   community_id=community_data['community']['id'],
-                                                                   user_id=order_body.get('user_id'))
+        matching_cohorts = PlanHelper.get_member_event_cohorts(event_plan_instance=plan_instance,
+                                                               community_id=community_data['community']['id'],
+                                                               user_id=order_body.get('user_id'))
 
         subscription = Subscription.get_subscription_or_None(user_id=order_body.get('user_id'),
                                                              community_id=community_data['community']['id'])
@@ -302,12 +302,12 @@ class OrderViewHelper:
         if community_data.get('error_message'):
             return {'error_message': community_data['error_message']}
 
-        matching_cohorts = PlanViewHelper.get_member_event_cohorts(event_plan_instance=event_plan_instance,
-                                                                   community_id=community_data['community']['id'],
-                                                                   user_id=order_body.get('user_id'))
+        matching_cohorts = PlanHelper.get_member_event_cohorts(event_plan_instance=event_plan_instance,
+                                                               community_id=community_data['community']['id'],
+                                                               user_id=order_body.get('user_id'))
 
-        event_cost = PlanViewHelper.fetch_event_cost(event_plan_instance=event_plan_instance,
-                                                     matching_cohorts=matching_cohorts)
+        event_cost = PlanHelper.fetch_event_cost(event_plan_instance=event_plan_instance,
+                                                 matching_cohorts=matching_cohorts)
 
         total_cost = event_cost + community_plan_instance.cost
 

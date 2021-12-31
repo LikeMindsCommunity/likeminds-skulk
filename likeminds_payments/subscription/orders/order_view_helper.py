@@ -1,4 +1,3 @@
-from ..external_services.logging.logging_wrapper import LoggingWrapper
 from ..plans.models import SubscriptionPlan, SubscriptionEventPlan, EventCohortPlan
 from ..payment_page.models import PaymentPageMeta
 from ..payment_page.constants import PAYMENT_PAGE_AMOUNT_TYPE_FIXED
@@ -13,8 +12,6 @@ from ..utility.url_utilities import UrlUtilities
 from ..external_services.razorpay.razorpay_wrapper import RazorpayWrapper
 from .constants import *
 from ..utility.states import MemberState, EventDiscountType
-
-error_logger = LoggingWrapper.get_instance()
 
 
 class OrderViewHelper:

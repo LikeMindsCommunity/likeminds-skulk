@@ -150,7 +150,6 @@ class PlanHelper:
     @staticmethod
     def get_event_plan_cost_context_based_on_event_cohort_plan(event_plan_instance: SubscriptionEventPlan, user_id):
         """
-
         @param event_plan_instance: SubscriptionEventPlan instance
         @param user_id: User ID
         @return: Dictionary of Cost, Discount and Discount for that user.

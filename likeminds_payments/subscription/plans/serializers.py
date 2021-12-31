@@ -94,7 +94,7 @@ def EventPlanSerializer(plan_instance, user_id=None) -> dict:
         'discount': plan_instance.discount
     }
 
-    pricing_context = get_event_plan_cost(plan_instance, user_id)
+    pricing_context = get_event_plan_cost_context(plan_instance, user_id)
     plan_context.update(pricing_context)
 
     if plan_context['discount_type'] == EventDiscountType.FLAT:
@@ -103,7 +103,7 @@ def EventPlanSerializer(plan_instance, user_id=None) -> dict:
     return plan_context
 
 
-def get_event_plan_cost(event_plan_instance, user_id):
+def get_event_plan_cost_context(event_plan_instance, user_id):
     matching_cohorts = PlanViewHelper.get_member_event_cohorts(event_plan_instance=event_plan_instance,
                                                                community_id=event_plan_instance.community_id,
                                                                user_id=user_id)

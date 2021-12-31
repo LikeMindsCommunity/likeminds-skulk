@@ -1,14 +1,11 @@
 from .constants import *
 from .models import SubscriptionPlan
-from ..external_services.logging.logging_wrapper import LoggingWrapper
 from ..subscriptions.constants import SUBSCRIPTION_COHORT_NAME, SUBSCRIPTION_EXPIRED_COHORT_NAME
 from ..utility.core_service_utilities import CoreServiceUtilities
 from ..utility.number_utilities import NumberUtilities
 from ..utility.response_utilities import ResponseUtilities
 from ..utility.states import cohort_types
 from ..utility.json_utilities import JsonUtilities
-
-error_logger = LoggingWrapper.get_instance()
 
 
 class PlanViewHelper:
@@ -375,4 +372,3 @@ class PlanViewHelper:
             return {'error_message': response['error_message'], 'status_code': response['status_code']}
 
         return {}
-

@@ -149,6 +149,12 @@ class PlanHelper:
 
     @staticmethod
     def get_event_plan_cost_context_based_on_event_cohort_plan(event_plan_instance: SubscriptionEventPlan, user_id):
+        """
+
+        @param event_plan_instance: SubscriptionEventPlan instance
+        @param user_id: User ID
+        @return: Dictionary of Cost, Discount and Discount for that user.
+        """
         matching_cohorts = PlanHelper.get_member_event_cohorts(event_plan_instance=event_plan_instance,
                                                                community_id=event_plan_instance.community_id,
                                                                user_id=user_id)

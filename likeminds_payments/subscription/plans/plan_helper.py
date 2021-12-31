@@ -146,3 +146,14 @@ class PlanHelper:
         pricing_context['discount_type'] = member_event_plan_cohorts[0].discount_type
 
         return pricing_context
+
+    @staticmethod
+    def get_event_plan_cost_context_based_on_event_cohort_plan(event_plan_instance: SubscriptionEventPlan, user_id):
+        matching_cohorts = PlanHelper.get_member_event_cohorts(event_plan_instance=event_plan_instance,
+                                                               community_id=event_plan_instance.community_id,
+                                                               user_id=user_id)
+
+        pricing_context = PlanHelper.fetch_cohort_plan_cost_and_discount_context(event_plan_instance,
+                                                                                 matching_cohorts)
+
+        return pricing_context

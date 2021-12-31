@@ -1,10 +1,9 @@
 from __future__ import absolute_import, unicode_literals
-from celery import shared_task
 from .constants import EVENT_PAYMENT_LINK
-from .plan_view_helper import PlanViewHelper
+from .plan_helper import PlanHelper
 from ..external_services.logging.logging_wrapper import LoggingWrapper
 from ..plans.plan_manager import PlanManager
-from .models import SubscriptionPlan, SubscriptionEventPlan, EventCohortPlan
+from .models import SubscriptionPlan, SubscriptionEventPlan
 from .serializers import PlanSerializer, EventPlanSerializer, EventCohortPlanSerializer
 from ..utility.async_tasks import update_event_in_webflow_service
 from ..utility.core_service_utilities import CoreServiceUtilities
@@ -111,7 +110,23 @@ class PlanImpl(PlanManager):
     def _serialize_event_plan_list(filters, user_id=None):
 
         event_filter = ModelUtilities.get_model_filter(SubscriptionEventPlan, filters).order_by('created_at')
-        event_plans = [EventPlanSerializer(plan_instance, user_id) for plan_instance in event_filter]
+
+        event_plans = []
+
+        for event_plan_instance in event_filter:
+            event_serializer = EventPlanSerializer(event_plan_instance)
+
+            pricing_context = PlanHelper.get_event_plan_cost_context_based_on_event_cohort_plan(
+                event_plan_instance=event_plan_instance,
+                user_id=user_id
+            )
+
+            event_serializer.update(pricing_context)
+
+            if event_serializer['discount_type'] == EventDiscountType.FLAT:
+                event_serializer['discount'] = NumberUtilities.convert_to_rupee_or_none(event_plan_instance.discount)
+
+            event_plans.append(event_serializer)
 
         return event_plans
 
@@ -191,7 +206,7 @@ class PlanImpl(PlanManager):
             return
 
         for cohort_plan in cohort_plans:
-            event_cohort_plan_context = PlanViewHelper.create_event_cohort_plan_context(
+            event_cohort_plan_context = PlanHelper.create_event_cohort_plan_context(
                 event_plan_instance=event_plan_instance,
                 cohort_plan=cohort_plan
             )

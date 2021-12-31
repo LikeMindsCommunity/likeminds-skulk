@@ -1,12 +1,10 @@
 from rest_framework import serializers
 
 from .models import EventCohortPlan
-from .plan_view_helper import PlanViewHelper
+from .plan_helper import PlanHelper
 from ..external_services.logging.logging_wrapper import LoggingWrapper
-from ..utility.model_utilities import ModelUtilities
 from ..utility.number_utilities import NumberUtilities
 from ..utility.plan_utilities import PlanUtilities
-from ..utility.states import EventDiscountType
 from ..utility.core_service_utilities import CoreServiceUtilities
 from .constants import *
 from ..subscriptions.constants import *
@@ -81,7 +79,7 @@ def PlanSerializer(plans) -> list:
     return output
 
 
-def EventPlanSerializer(plan_instance, user_id=None) -> dict:
+def EventPlanSerializer(plan_instance) -> dict:
     plan_context = {
         'event_plan_id': plan_instance.event_plan_id,
         'chatroom_id': plan_instance.chatroom_id,
@@ -94,20 +92,14 @@ def EventPlanSerializer(plan_instance, user_id=None) -> dict:
         'discount': plan_instance.discount
     }
 
-    pricing_context = get_event_plan_cost_context(plan_instance, user_id)
-    plan_context.update(pricing_context)
-
-    if plan_context['discount_type'] == EventDiscountType.FLAT:
-        plan_context['discount'] = NumberUtilities.convert_to_rupee_or_none(plan_instance.discount)
-
     return plan_context
 
 
 def get_event_plan_cost_context(event_plan_instance, user_id):
-    matching_cohorts = PlanViewHelper.get_member_event_cohorts(event_plan_instance=event_plan_instance,
-                                                               community_id=event_plan_instance.community_id,
-                                                               user_id=user_id)
+    matching_cohorts = PlanHelper.get_member_event_cohorts(event_plan_instance=event_plan_instance,
+                                                           community_id=event_plan_instance.community_id,
+                                                           user_id=user_id)
 
-    pricing_context = PlanViewHelper.fetch_cohort_plan_cost_and_discount_context(event_plan_instance, matching_cohorts)
+    pricing_context = PlanHelper.fetch_cohort_plan_cost_and_discount_context(event_plan_instance, matching_cohorts)
 
     return pricing_context

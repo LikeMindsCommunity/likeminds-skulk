@@ -94,12 +94,3 @@ def EventPlanSerializer(plan_instance) -> dict:
 
     return plan_context
 
-
-def get_event_plan_cost_context(event_plan_instance, user_id):
-    matching_cohorts = PlanHelper.get_member_event_cohorts(event_plan_instance=event_plan_instance,
-                                                           community_id=event_plan_instance.community_id,
-                                                           user_id=user_id)
-
-    pricing_context = PlanHelper.fetch_cohort_plan_cost_and_discount_context(event_plan_instance, matching_cohorts)
-
-    return pricing_context

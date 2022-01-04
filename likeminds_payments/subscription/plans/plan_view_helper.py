@@ -379,9 +379,10 @@ class PlanViewHelper:
         response = CoreServiceUtilities.update_cohort(cohort_info)
 
         if response.get('error_message'):
-            return {'error_message': response['error_message'],  'status_code': response['status_code']}
+            return {'error_message': response['error_message'], 'status_code': response['status_code']}
 
         return {}
+
 
     @staticmethod
     def parameter_validation_for_first_plan_creation_email(user_data, community_data, user_id):
@@ -464,3 +465,4 @@ class PlanViewHelper:
         }
 
         analytics.track(user_id, event_name, plan_event_metadata)
+

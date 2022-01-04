@@ -1,14 +1,13 @@
-from ..plans.models import SubscriptionPlan, SubscriptionEventPlan
+from ..plans.models import SubscriptionPlan, SubscriptionEventPlan, EventCohortPlan
 from ..payment_page.models import PaymentPageMeta
 from ..payment_page.constants import PAYMENT_PAGE_AMOUNT_TYPE_FIXED
+from ..plans.plan_helper import PlanHelper
 from ..subscriptions.constants import STATUS_EXPIRED
 from ..subscriptions.models import Subscription
 from ..subscriptions.serializers import SubscriptionSerializer
-from ..subscriptions.subscription_impl import SubscriptionImpl
 from ..utility.core_service_utilities import CoreServiceUtilities
 from ..utility.model_utilities import ModelUtilities
 from ..utility.number_utilities import NumberUtilities
-from ..utility.request_utilities import RequestUtilities
 from ..utility.url_utilities import UrlUtilities
 from ..external_services.razorpay.razorpay_wrapper import RazorpayWrapper
 from .constants import *
@@ -193,6 +192,10 @@ class OrderViewHelper:
         member_state = CoreServiceUtilities.get_member_state(community_data['community']['id'],
                                                              order_body.get('user_id'))
 
+        matching_cohorts = PlanHelper.get_member_event_cohorts(event_plan_instance=plan_instance,
+                                                               community_id=community_data['community']['id'],
+                                                               user_id=order_body.get('user_id'))
+
         subscription = Subscription.get_subscription_or_None(user_id=order_body.get('user_id'),
                                                              community_id=community_data['community']['id'])
         subscription_object = None
@@ -206,7 +209,13 @@ class OrderViewHelper:
         if (member_state == MemberState.GUEST) and plan_instance.strike_cost:
             amount = plan_instance.strike_cost
 
-        elif subscription_object and (subscription_object.get('membership_state') == STATUS_EXPIRED) and plan_instance.strike_cost:
+        elif matching_cohorts:
+            filter_dict = {'event_plan_id': plan_instance.id, 'cohort_id__in': list(matching_cohorts)}
+            member_event_plan_cohorts = ModelUtilities.get_model_filter(EventCohortPlan, filter_dict).order_by('cost')
+            amount = member_event_plan_cohorts[0].cost
+
+        elif subscription_object and (
+                subscription_object.get('membership_state') == STATUS_EXPIRED) and plan_instance.strike_cost:
             amount = plan_instance.strike_cost
 
         else:
@@ -290,7 +299,14 @@ class OrderViewHelper:
         if community_data.get('error_message'):
             return {'error_message': community_data['error_message']}
 
-        total_cost = event_plan_instance.cost + community_plan_instance.cost
+        matching_cohorts = PlanHelper.get_member_event_cohorts(event_plan_instance=event_plan_instance,
+                                                               community_id=community_data['community']['id'],
+                                                               user_id=order_body.get('user_id'))
+
+        event_cost = PlanHelper.fetch_event_cost(event_plan_instance=event_plan_instance,
+                                                 matching_cohorts=matching_cohorts)
+
+        total_cost = event_cost + community_plan_instance.cost
 
         order_data = OrderViewHelper._create_community_event_order_object_data(event_plan_instance,
                                                                                community_plan_instance,

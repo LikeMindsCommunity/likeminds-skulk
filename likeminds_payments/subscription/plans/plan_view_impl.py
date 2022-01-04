@@ -181,6 +181,7 @@ class FetchEventPlanView(TransactionMixin, APIView):
     def get(self, request, *args, **kwargs):
 
         query_params = PlanViewHelper.get_event_plan_params(request)
+        member_id = RequestUtilities.get_parameter_from_headers(request, 'HTTP_X_MEMBER_ID')
 
         if 'error_message' in query_params:
             return JsonResponse(
@@ -189,7 +190,7 @@ class FetchEventPlanView(TransactionMixin, APIView):
             )
 
         plan_manager = PlanImpl()
-        response_data = plan_manager.fetch_event_plan(filters=query_params)
+        response_data = plan_manager.fetch_event_plan(filters=query_params, user_id=member_id)
 
         if 'error_message' in response_data:
             return JsonResponse(

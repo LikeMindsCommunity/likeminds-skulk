@@ -1,9 +1,10 @@
 from __future__ import absolute_import, unicode_literals
-from celery import shared_task
 from .constants import EVENT_PAYMENT_LINK
+from .plan_helper import PlanHelper
+from ..external_services.logging.logging_wrapper import LoggingWrapper
 from ..plans.plan_manager import PlanManager
 from .models import SubscriptionPlan, SubscriptionEventPlan, SamplePlanCategory, SamplePlan
-from .serializers import PlanSerializer, EventPlanSerializer, SamplePlanCategorySerializers, SamplePlanSerializers
+from .serializers import PlanSerializer, EventPlanSerializer, SamplePlanCategorySerializers, SamplePlanSerializers, EventCohortPlanSerializer
 from ..utility.async_tasks import update_event_in_webflow_service
 from ..utility.core_service_utilities import CoreServiceUtilities
 from ..utility.model_utilities import ModelUtilities
@@ -12,6 +13,8 @@ from ..utility.number_utilities import NumberUtilities
 from ..utility.plan_utilities import PlanUtilities
 from ..utility.states import EventDiscountType
 from django.conf import settings
+
+error_logger = LoggingWrapper.get_instance()
 
 
 class PlanImpl(PlanManager):
@@ -104,10 +107,26 @@ class PlanImpl(PlanManager):
         return PlanSerializer(plans)
 
     @staticmethod
-    def _serialize_event_plan_list(filters):
+    def _serialize_event_plan_list(filters, user_id=None):
 
         event_filter = ModelUtilities.get_model_filter(SubscriptionEventPlan, filters).order_by('created_at')
-        event_plans = [EventPlanSerializer(plan_instance) for plan_instance in event_filter]
+
+        event_plans = []
+
+        for event_plan_instance in event_filter:
+            event_serializer = EventPlanSerializer(event_plan_instance)
+
+            pricing_context = PlanHelper.get_event_plan_cost_context_based_on_event_cohort_plan(
+                event_plan_instance=event_plan_instance,
+                user_id=user_id
+            )
+
+            event_serializer.update(pricing_context)
+
+            if event_serializer['discount_type'] == EventDiscountType.FLAT:
+                event_serializer['discount'] = NumberUtilities.convert_to_rupee_or_none(event_plan_instance.discount)
+
+            event_plans.append(event_serializer)
 
         return event_plans
 
@@ -143,6 +162,7 @@ class PlanImpl(PlanManager):
 
         create_info = self._process_event_creation_plan(req_body)
         instance = SubscriptionEventPlan.create_instance(create_info)
+        self._process_event_cohort_plans(cohort_plans=req_body.get('cohort_plan', []), event_plan_instance=instance)
         CoreServiceUtilities.update_event({
             'member_id': member_id,
             'chatroom_id': instance.chatroom_id,
@@ -157,9 +177,9 @@ class PlanImpl(PlanManager):
 
         return {'success': True}
 
-    def fetch_event_plan(self, filters=None) -> dict:
+    def fetch_event_plan(self, filters=None, user_id=None) -> dict:
 
-        event_plans = self._serialize_event_plan_list(filters)
+        event_plans = self._serialize_event_plan_list(filters, user_id)
 
         return {'event_plans': event_plans}
 
@@ -178,6 +198,27 @@ class PlanImpl(PlanManager):
         update_event_in_webflow_service.delay(event_plan_instance.event_plan_id, member_id)
 
         return {'success': True}
+
+    @staticmethod
+    def _process_event_cohort_plans(cohort_plans: list, event_plan_instance: SubscriptionEventPlan):
+
+        if not event_plan_instance:
+            return
+
+        for cohort_plan in cohort_plans:
+            event_cohort_plan_context = PlanHelper.create_event_cohort_plan_context(
+                event_plan_instance=event_plan_instance,
+                cohort_plan=cohort_plan
+            )
+
+            event_cohort_plan_serializer = EventCohortPlanSerializer(data=event_cohort_plan_context)
+
+            if event_cohort_plan_serializer.is_valid():
+                event_cohort_plan_serializer.save()
+
+            else:
+                error_logger.error(f' Event Plan Serializer:{event_cohort_plan_serializer.errors},'
+                                   f' cohort plan data:{event_cohort_plan_context}')
 
     def fetch_sample_plan_category(self) -> dict:
 

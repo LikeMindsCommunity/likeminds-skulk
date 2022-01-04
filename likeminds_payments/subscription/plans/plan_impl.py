@@ -4,7 +4,8 @@ from .plan_helper import PlanHelper
 from ..external_services.logging.logging_wrapper import LoggingWrapper
 from ..plans.plan_manager import PlanManager
 from .models import SubscriptionPlan, SubscriptionEventPlan, SamplePlanCategory, SamplePlan
-from .serializers import PlanSerializer, EventPlanSerializer, SamplePlanCategorySerializers, SamplePlanSerializers, EventCohortPlanSerializer
+from .serializers import PlanSerializer, EventPlanSerializer, SamplePlanCategorySerializers, SamplePlanSerializers, \
+    EventCohortPlanSerializer
 from ..utility.async_tasks import update_event_in_webflow_service
 from ..utility.core_service_utilities import CoreServiceUtilities
 from ..utility.model_utilities import ModelUtilities
@@ -124,7 +125,7 @@ class PlanImpl(PlanManager):
             event_serializer.update(pricing_context)
 
             if event_serializer['discount_type'] == EventDiscountType.FLAT:
-                event_serializer['discount'] = NumberUtilities.convert_to_rupee_or_none(event_plan_instance.discount)
+                event_serializer['discount'] = NumberUtilities.convert_to_rupee_or_none(pricing_context.get('discount'))
 
             event_plans.append(event_serializer)
 

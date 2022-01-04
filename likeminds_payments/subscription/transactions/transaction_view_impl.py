@@ -83,7 +83,8 @@ class FetchTransactionsView(APIView):
             page=validated_request_body['page'],
             payment_page_id=validated_request_body['payment_page_id'],
             filters=query_params,
-            settlement_id=validated_request_body['settlement_id'])
+            settlement_id=validated_request_body['settlement_id'],
+            transaction_type=validated_request_body['type'])
 
         if 'error_message' in response_data:
             return JsonResponse(

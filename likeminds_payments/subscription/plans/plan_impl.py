@@ -3,8 +3,8 @@ from .constants import EVENT_PAYMENT_LINK
 from .plan_helper import PlanHelper
 from ..external_services.logging.logging_wrapper import LoggingWrapper
 from ..plans.plan_manager import PlanManager
-from .models import SubscriptionPlan, SubscriptionEventPlan
-from .serializers import PlanSerializer, EventPlanSerializer, EventCohortPlanSerializer
+from .models import SubscriptionPlan, SubscriptionEventPlan, SamplePlanCategory, SamplePlan
+from .serializers import PlanSerializer, EventPlanSerializer, SamplePlanCategorySerializers, SamplePlanSerializers, EventCohortPlanSerializer
 from ..utility.async_tasks import update_event_in_webflow_service
 from ..utility.core_service_utilities import CoreServiceUtilities
 from ..utility.model_utilities import ModelUtilities
@@ -219,3 +219,29 @@ class PlanImpl(PlanManager):
             else:
                 error_logger.error(f' Event Plan Serializer:{event_cohort_plan_serializer.errors},'
                                    f' cohort plan data:{event_cohort_plan_context}')
+
+    def fetch_sample_plan_category(self) -> dict:
+
+        sample_plan_category_filter = ModelUtilities.get_model_filter(SamplePlanCategory, {})
+
+        sample_plan_category_objects = SamplePlanCategorySerializers(sample_plan_category_filter, many=True).data
+
+        sample_plan_categories = []
+
+        for sample_plan_category in sample_plan_category_objects:
+            sample_plan_categories.append(sample_plan_category)
+
+        return {'success': True, 'sample_plan_categories': sample_plan_categories}
+
+    def fetch_sample_plans(self, category_id) -> dict:
+
+        sample_plan_filter = ModelUtilities.get_model_filter(SamplePlan, {'category': category_id})
+
+        sample_plan_objects = SamplePlanSerializers(sample_plan_filter, many=True).data
+
+        sample_plans = []
+
+        for sample_plan in sample_plan_objects:
+            sample_plans.append(sample_plan)
+
+        return {'success': True, 'sample_plans': sample_plans}

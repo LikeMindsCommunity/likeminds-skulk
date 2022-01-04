@@ -37,3 +37,13 @@ class ResponseUtilities:
             'status': status_code
         }
         return context
+
+    @staticmethod
+    def get_error_context(success, error_message):
+        """
+        function to return error context in form of dict
+        """
+        return {
+            'success': success,
+            'error_message': error_message
+        }

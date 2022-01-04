@@ -58,3 +58,18 @@ PLAN_IMAGES = {
 }
 
 EVENT_PAYMENT_LINK = "%s/event_pay?event_plan_id=%s&chatroom_id=%s&community_id=%s"
+
+FIRST_MEMBERSHIP_PLAN_CM_MAIL_SUBJECT = "Hi {}! You have successfully created a membership plan"
+FIRST_MEMBERSHIP_PLAN_CM_REPLY_EMAIL = "LikeMinds<hi@likeminds.community>"
+FIRST_MEMBERSHIP_PLAN_CM_MAIL_BUTTON_TEXT = "INVITE MEMBERS"
+DEFAULT_CM_ONBOARDING_EMAIL_BUTTON_COLOR = "#00897B"
+
+CREATE_PLAN_ANALYTICS_EVENT_NAME = "Membership plan created (Subscription Service)"
+EDIT_PLAN_ANALYTICS_EVENT_NAME = "Membership plan edited (Subscription Service)"
+DELETE_PLAN_ANALYTICS_EVENT_NAME = "Membership plan deleted (Subscription Service)"
+
+SUBSCRIPTION_PLAN_DAYS_MULTIPLIER = {
+    "days": 1,
+    "weekly": 7,
+    "monthly": 30
+}

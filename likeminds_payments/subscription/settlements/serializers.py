@@ -7,4 +7,4 @@ class SettlementSerializer(serializers.ModelSerializer):
     class Meta:
         model = Settlement
         fields = ('id', 'settlement_id', 'community_id', 'start_epoch', 'end_epoch', 'amount', 'status', 'created_at',
-                  'updated_at')
+                  'updated_at', 'fee_amount', 'fee_percentage', 'revenue')

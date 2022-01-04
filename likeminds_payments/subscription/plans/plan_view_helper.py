@@ -1,8 +1,14 @@
+from celery import shared_task
+from django.template.loader import get_template
+import analytics
+
 from .constants import *
 from .models import SubscriptionPlan
 from ..subscriptions.constants import SUBSCRIPTION_COHORT_NAME, SUBSCRIPTION_EXPIRED_COHORT_NAME
 from ..utility.core_service_utilities import CoreServiceUtilities
 from ..utility.number_utilities import NumberUtilities
+from ..utility.model_utilities import ModelUtilities
+from ..utility.async_tasks import send_email_from_core_service, get_first_verified_email_and_phone
 from ..utility.response_utilities import ResponseUtilities
 from ..utility.states import cohort_types
 from ..utility.json_utilities import JsonUtilities
@@ -65,7 +71,7 @@ class PlanViewHelper:
         return plan_body
 
     @staticmethod
-    def _create_new_plan_instance(plan_body) -> dict:
+    def _create_new_plan_instance(plan_body, user_id=0) -> dict:
 
         if 'cost' in plan_body or plan_body['cost']:
             plan_body['cost'] = NumberUtilities.convert_to_paisa_or_none(plan_body['cost'])
@@ -103,8 +109,12 @@ class PlanViewHelper:
             else:
                 plan_body['image'] = PLAN_IMAGES['default']
 
+        if 'description_icon_type' not in plan_body:
+            plan_body['description_icon_type'] = None
+
         try:
             plan_instance = SubscriptionPlan.create_instance(plan_body)
+
         except:
             return {'error_message': 'error_while creating new plan'}
 
@@ -168,7 +178,7 @@ class PlanViewHelper:
             # if 'error_message' in plan_validator:
             #     return {'error_message': plan_validator['error_message']}
 
-            plan_instance = PlanViewHelper._create_new_plan_instance(plan_body)
+            plan_instance = PlanViewHelper._create_new_plan_instance(plan_body, user_id=user_id)
 
             if 'error_message' in plan_instance:
                 return {'error_message': plan_instance['error_message']}
@@ -372,3 +382,87 @@ class PlanViewHelper:
             return {'error_message': response['error_message'], 'status_code': response['status_code']}
 
         return {}
+
+
+    @staticmethod
+    def parameter_validation_for_first_plan_creation_email(user_data, community_data, user_id):
+
+        if not community_data.get('community'):
+            return
+
+        community_data = community_data.get('community')
+
+        if not user_data.get('user'):
+            return
+
+        verified_email = get_first_verified_email_and_phone(user_id, user_data)
+
+        if not verified_email.get('email'):
+            return
+
+        user_data = user_data.get('user')
+
+        return user_data, community_data, verified_email
+
+    @staticmethod
+    def prepare_email_data_for_first_plan_creation(user_data, community_data, verified_email):
+
+        mail_subject = FIRST_MEMBERSHIP_PLAN_CM_MAIL_SUBJECT.format(user_data.get('name'))
+
+        cm_onboarding_branch_url = CoreServiceUtilities.get_cm_onboarding_community_feed_url(
+            community_data.get('id'))
+
+        mail_template = get_template('cm_onboarding/first_plan_creation_cm_onboarding_email.html').render({
+            "community_logo": community_data.get('image_url'),
+            "community_name": community_data.get('name'),
+            "cm_name": user_data.get('name'),
+            "community_brand_color": community_data.get('brand_color') if community_data.get('brand_color') else
+            DEFAULT_CM_ONBOARDING_EMAIL_BUTTON_COLOR,
+            "button_text": FIRST_MEMBERSHIP_PLAN_CM_MAIL_BUTTON_TEXT,
+            "button_link": cm_onboarding_branch_url.get('feed_url') if cm_onboarding_branch_url.get('feed_url')
+            else ''
+        })
+
+        mail_body = {
+            'subject': mail_subject,
+            'mail_body': mail_template,
+            'mail_recipient_list': [verified_email.get('email')],
+            'reply_to': [FIRST_MEMBERSHIP_PLAN_CM_REPLY_EMAIL]
+        }
+
+        return mail_body
+
+    @staticmethod
+    @shared_task
+    def send_email_for_first_plan_creation(community_id, user_id):
+
+        plan_filter = ModelUtilities.get_model_filter(SubscriptionPlan, {'community_id': community_id})
+
+        if len(plan_filter) == 1:
+            community_data = CoreServiceUtilities.get_community_data(community_id)
+            user_data = CoreServiceUtilities.get_user_details({'member_id': user_id})
+
+            user_data, community_data, verified_email = PlanViewHelper.parameter_validation_for_first_plan_creation_email(
+                user_data, community_data, user_id)
+
+            mail_body = PlanViewHelper.prepare_email_data_for_first_plan_creation(user_data, community_data,
+                                                                                  verified_email)
+
+            send_email_response = send_email_from_core_service(user_id, mail_body)
+
+    @staticmethod
+    def add_event_for_membership_plan(plan_serialized_object, event_name, user_id):
+
+        days_multiplier = SUBSCRIPTION_PLAN_DAYS_MULTIPLIER.get(plan_serialized_object.get('duration_name')) if \
+            plan_serialized_object.get('duration_name') in SUBSCRIPTION_PLAN_DAYS_MULTIPLIER else \
+            SUBSCRIPTION_PLAN_DAYS_MULTIPLIER.get('monthly')
+
+        plan_event_metadata = {
+            'cost': plan_serialized_object.get('cost'),
+            'duration_in_days': plan_serialized_object.get('duration_in_months') * days_multiplier,
+            'plan_name': plan_serialized_object.get('plan_title'),
+            'plan_id': plan_serialized_object.get('plan_id')
+        }
+
+        analytics.track(user_id, event_name, plan_event_metadata)
+

@@ -111,3 +111,26 @@ class SubscriptionEventPlan(models.Model):
         self.updated_at = current_time
 
         super(SubscriptionEventPlan, self).save(*args, **kwargs)
+
+
+class EventCohortPlan(models.Model):
+    event_plan = models.ForeignKey(SubscriptionEventPlan, on_delete=models.CASCADE)
+    cohort_id = models.IntegerField()
+    cost = models.IntegerField(default=0)
+    strike_cost = models.IntegerField(null=True)
+    cost_usd = models.IntegerField(null=True)
+    strike_cost_usd = models.IntegerField(null=True)
+    discount_type = models.IntegerField(null=True)
+    discount = models.IntegerField(null=True)
+    created_at = models.BigIntegerField(default=0)
+    updated_at = models.BigIntegerField(default=0)
+
+    def save(self, *args, **kwargs):
+        current_time = TimeUtilities.current_time_in_milliseconds()
+
+        if self.created_at == 0:
+            self.created_at = current_time
+
+        self.updated_at = current_time
+
+        super(EventCohortPlan, self).save(*args, **kwargs)

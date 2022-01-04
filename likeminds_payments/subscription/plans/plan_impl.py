@@ -127,7 +127,6 @@ class PlanImpl(PlanManager):
             if event_serializer['discount_type'] == EventDiscountType.FLAT:
                 event_serializer['discount'] = NumberUtilities.convert_to_rupee_or_none(pricing_context.get('discount'))
 
-
             event_plans.append(event_serializer)
 
         return event_plans

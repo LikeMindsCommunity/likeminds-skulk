@@ -946,6 +946,6 @@ class TransactionHelper:
 
     @staticmethod
     def fetch_payment_transactions(filters):
-        transactions = ModelUtilities.get_model_filter(Transaction, filters).order_by('created_at')
+        transactions = ModelUtilities.get_model_filter(Transaction, filters).order_by('-created_at')
 
         return transactions

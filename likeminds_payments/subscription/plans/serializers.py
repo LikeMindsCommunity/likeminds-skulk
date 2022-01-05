@@ -1,3 +1,7 @@
+from rest_framework import serializers
+
+from .models import EventCohortPlan
+from ..external_services.logging.logging_wrapper import LoggingWrapper
 from ..utility.number_utilities import NumberUtilities
 from ..utility.plan_utilities import PlanUtilities
 from ..utility.model_utilities import ModelUtilities
@@ -7,6 +11,14 @@ from .constants import *
 from ..subscriptions.constants import *
 from rest_framework import serializers
 from .models import SamplePlanCategory, SamplePlan
+
+error_logger = LoggingWrapper.get_instance()
+
+
+class EventCohortPlanSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EventCohortPlan
+        fields = '__all__'
 
 
 def PlanSerializer(plans) -> list:
@@ -75,7 +87,6 @@ def PlanSerializer(plans) -> list:
 
 
 def EventPlanSerializer(plan_instance) -> dict:
-
     plan_context = {
         'event_plan_id': plan_instance.event_plan_id,
         'chatroom_id': plan_instance.chatroom_id,
@@ -87,9 +98,6 @@ def EventPlanSerializer(plan_instance) -> dict:
         'discount_type': plan_instance.discount_type,
         'discount': plan_instance.discount
     }
-
-    if plan_context['discount_type'] == EventDiscountType.FLAT:
-        plan_context['discount'] = NumberUtilities.convert_to_rupee_or_none(plan_instance.discount)
 
     return plan_context
 

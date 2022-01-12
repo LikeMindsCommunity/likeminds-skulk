@@ -714,13 +714,13 @@ class TransactionImpl(TransactionManager):
                                                               'type__in': [TransactionType.PAYMENT_PAGE,
                                                                            TransactionType.COMMUNITY_SUBSCRIPTION],
                                                               'status': PAYMENTS_STATUS_FILTER['CAPTURED']
-                                                              }) |
+                                                              }).exclude(method__in=CASH_PAYMENT_STATUS) |
                 ModelUtilities.get_model_filter(Transaction, {'settlement_id__isnull': True,
                                                               'type_id': community_id,
                                                               'type__in': [TransactionType.PAYMENT_PAGE,
                                                                            TransactionType.COMMUNITY_SUBSCRIPTION],
                                                               'status': PAYMENTS_STATUS_FILTER['CAPTURED']
-                                                              })
+                                                              }).exclude(method__in=CASH_PAYMENT_STATUS)
         ).values('type').annotate(revenue=Sum('amount'), count=Count('type'), start_date=Min('created_at'))
 
         subscription_and_payment_pages_refund_transactions = (

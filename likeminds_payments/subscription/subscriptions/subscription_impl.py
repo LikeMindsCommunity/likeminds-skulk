@@ -861,23 +861,22 @@ class SubscriptionImpl(SubscriptionManager):
         if subscription_instance is None:
             return {'error_message': 'no subscription exists for this user_id and community_id'}
 
-        if subscription_instance.transaction is None:
-            return {'error_message': 'no active payment associated with this user subscription to be refunded'}
+        if subscription_instance.transaction is not None:
 
-        razorpay_client = RazorpayWrapper.get_instance()
+            razorpay_client = RazorpayWrapper.get_instance()
 
-        try:
-            response = razorpay_client.payment.refund(subscription_instance.transaction.payment_id,
-                                                      subscription_instance.transaction.amount)
-        except razorpay.errors.BadRequestError as e:
-            return {'error_message': e.__str__()}
+            try:
+                razorpay_client.payment.refund(subscription_instance.transaction.payment_id,
+                                               subscription_instance.transaction.amount)
+            except razorpay.errors.BadRequestError as e:
+                return {'error_message': e.__str__()}
 
         try:
             subscription_instance.delete()
         except:
             return {'error_message': 'something went wrong'}
 
-        return response
+        return {'success': True}
 
     def fetch_community_meta(self) -> dict:
 

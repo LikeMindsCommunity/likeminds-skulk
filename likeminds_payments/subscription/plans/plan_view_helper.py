@@ -448,7 +448,7 @@ class PlanViewHelper:
 
         plan_filter = ModelUtilities.get_model_filter(SubscriptionPlan, {'community_id': community_id})
 
-        if len(plan_filter) == 1:
+        if not len(plan_filter):
             community_data = CoreServiceUtilities.get_community_data(community_id)
             user_data = CoreServiceUtilities.get_user_details({'member_id': user_id})
 

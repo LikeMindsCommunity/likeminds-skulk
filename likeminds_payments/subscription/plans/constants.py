@@ -73,3 +73,6 @@ SUBSCRIPTION_PLAN_DAYS_MULTIPLIER = {
     "weekly": 7,
     "monthly": 30
 }
+
+FREE_PLAN_TITLE = "Free Plan"
+FREE_TRIAL_TITLE = "Free Trial"

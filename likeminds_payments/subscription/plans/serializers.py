@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from .models import EventCohortPlan
+from .plan_helper import PlanHelper
 from ..external_services.logging.logging_wrapper import LoggingWrapper
 from ..utility.number_utilities import NumberUtilities
 from ..utility.plan_utilities import PlanUtilities
@@ -58,28 +59,9 @@ def PlanSerializer(plans) -> list:
         if plan.strike_cost_usd is not None:
             plan_object['strike_cost_usd'] = plan.strike_cost_usd // 100
 
-        if plan_object['duration_name'] == LIFETIME_PAYMENT:
-            plan_object['plan_sub_title'] = '{} for {}'.format(
-                plan_object['cost'],
-                SUBSCRIPTION_PLAN_NAMES[plan_object['duration_name']]['subtitle']
-            )
-
-        else:
-            plan_object['plan_sub_title'] = '{} for {} {}'.format(
-                plan_object['cost'],
-                plan_object['duration_in_months'],
-                SUBSCRIPTION_PLAN_NAMES[plan_object['duration_name']]['subtitle'])
-
-        if plan.name:
-            plan_title = plan.name
-
-        elif SUBSCRIPTION_PLAN_NAMES[plan_object['duration_name']]['unique']:
-            plan_title = SUBSCRIPTION_PLAN_NAMES[plan_object['duration_name']]['title']
-
-        else:
-            plan_title = '{} "{}" Plan'.format(plan_object['duration_in_months'],
-                                               SUBSCRIPTION_PLAN_NAMES[plan_object['duration_name']]['title'])
-        plan_object['plan_title'] = plan_title
+        plan_title_context = PlanHelper.get_plan_title_and_subtitle_for_plan(plan_object=plan_object,
+                                                                             plan_instance=plan)
+        plan_object.update(plan_title_context)
 
         output.append(plan_object)
 
@@ -103,7 +85,6 @@ def EventPlanSerializer(plan_instance) -> dict:
 
 
 class SamplePlanCategorySerializers(serializers.ModelSerializer):
-
     class Meta:
         model = SamplePlanCategory
         fields = ('id', 'name', 'image_url')

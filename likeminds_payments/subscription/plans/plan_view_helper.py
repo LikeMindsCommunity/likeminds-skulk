@@ -156,6 +156,9 @@ class PlanViewHelper:
         if 'image' in plan_body and plan_instance.image != plan_body['image']:
             plan_instance.image = plan_body['image']
 
+        if 'is_paid' in plan_body and plan_instance.is_paid != plan_body['is_paid']:
+            plan_instance.is_paid = plan_body['is_paid']
+
         try:
             plan_instance.save()
         except:

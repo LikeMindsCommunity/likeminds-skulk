@@ -54,6 +54,10 @@ class SubscriptionPlan(models.Model):
         instance.image = plan_body['image']
         instance.description_icon_type = plan_body['description_icon_type']
         instance.is_paid = plan_body.get('is_paid', True)
+
+        if instance.is_paid is False:
+            instance.cost = 0
+
         instance.save()
 
         return instance
@@ -138,6 +142,7 @@ class EventCohortPlan(models.Model):
         self.updated_at = current_time
 
         super(EventCohortPlan, self).save(*args, **kwargs)
+
 
 class SamplePlanCategory(models.Model):
     id = models.IntegerField(primary_key=True)

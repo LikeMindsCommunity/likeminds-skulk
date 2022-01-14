@@ -45,6 +45,9 @@ class PlanViewHelper:
             if 'cm_emails' not in plan_body or not plan_body['cm_emails']:
                 return {'error_message': 'send cm_emails'}
 
+            if 'is_paid' not in plan_body:
+                return {'error_message': 'send is_paid'}
+
         else:
 
             if 'community_id' in plan_body:

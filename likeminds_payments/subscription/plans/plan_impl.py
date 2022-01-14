@@ -101,7 +101,7 @@ class PlanImpl(PlanManager):
 
     @staticmethod
     def _fetch_plans(filters: dict):
-        return ModelUtilities.get_model_filter(SubscriptionPlan, filters).order_by('created_at')
+        return ModelUtilities.get_model_filter(SubscriptionPlan, filters).order_by('-cost')
 
     @staticmethod
     def _serialize_plans(plans) -> list:

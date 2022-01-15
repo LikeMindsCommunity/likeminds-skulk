@@ -5,6 +5,7 @@ import analytics
 from .constants import *
 from .models import SubscriptionPlan
 from ..subscriptions.constants import SUBSCRIPTION_COHORT_NAME, SUBSCRIPTION_EXPIRED_COHORT_NAME
+from ..utility.boolean_utilities import BooleanUtilities
 from ..utility.core_service_utilities import CoreServiceUtilities
 from ..utility.number_utilities import NumberUtilities
 from ..utility.model_utilities import ModelUtilities
@@ -218,11 +219,19 @@ class PlanViewHelper:
 
         query_params = {
             'community_id': request.GET.get('community_id'),
-            'plan_id': request.GET.get('plan_id')
+            'plan_id': request.GET.get('plan_id'),
+            'renew': request.GET.get('renew', False),
+            'free': request.GET.get('free', False)
         }
 
         if not query_params['community_id'] and not query_params['plan_id']:
             return ResponseUtilities.get_inner_error_context('send community_id or plan_id in query params')
+
+        if isinstance(query_params['renew'], str):
+            query_params['renew'] = BooleanUtilities.get_boolean_for_string(query_params['renew'])
+
+        if isinstance(query_params['free'], str):
+            query_params['free'] = BooleanUtilities.get_boolean_for_string(query_params['free'])
 
         return query_params
 

@@ -42,7 +42,8 @@ def PlanSerializer(plans) -> list:
             'referral_free_days': plan.referral_free_days,
             'image': plan.image,
             'url': PlanUtilities.generate_plan_url(plan.plan_id),
-            'description_icon_type': plan.description_icon_type
+            'description_icon_type': plan.description_icon_type,
+            'is_paid': plan.is_paid
         }
 
         community_data = CoreServiceUtilities.get_community_data(plan.community_id)

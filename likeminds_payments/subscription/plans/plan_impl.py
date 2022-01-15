@@ -141,17 +141,19 @@ class PlanImpl(PlanManager):
         if plan_id:
             filters['plan_id'] = plan_id
 
+        else:
+            # Adding else part so that free plan can be fetched using plan_id
+            if renew is True:
+                filters['is_paid'] = True
+
+            elif free is True:
+                filters['is_paid'] = False
+
+            else:
+                filters['is_paid'] = True
+
         if self.get_community_id():
             filters['community_id'] = self.get_community_id()
-
-        if renew is True:
-            filters['is_paid'] = True
-
-        elif free is True:
-            filters['is_paid'] = False
-
-        else:
-            filters['is_paid'] = True
 
         plans = self._fetch_plans(filters)
 

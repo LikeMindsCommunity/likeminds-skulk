@@ -232,3 +232,29 @@ class TransactionViewHelper:
             return {'error_message': 'You are not the Owner/CM of the community'}
 
         return {'success': True}
+
+    @staticmethod
+    def create_free_transaction_body_validator(request_body, member_id):
+
+        if not request_body:
+            return {'error_message': "Invalid request body"}
+
+        if not member_id:
+            return {'error_message': "send x-member-id in headers"}
+
+        if 'plan_id' not in request_body:
+            return {'error_message': 'send plan_id in body'}
+
+        if 'shared_by' not in request_body:
+            return {'error_message': 'send shared_by in body'}
+
+        if 'payment_page_url' not in request_body:
+            return {'error_message': 'send payment_page_url in body'}
+
+        if 'payment_email' not in request_body:
+            return {'error_message': 'send payment_email in body'}
+
+        if 'payment_phone' not in request_body:
+            return {'error_message': 'send payment_phone in body'}
+
+        return request_body

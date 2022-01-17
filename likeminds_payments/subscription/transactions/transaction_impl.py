@@ -1,5 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 
+import uuid
+
 import pandas as pd
 from celery import shared_task
 from .transaction_manager import TransactionManager
@@ -11,7 +13,8 @@ from rest_framework import status as status_codes
 from ..external_services.razorpay.razorpay_wrapper import RazorpayWrapper
 from ..external_services.segment.segment_impl import SegmentImpl
 from ..utility.number_utilities import NumberUtilities
-from ..utility.states import TransactionType, SettlementStatus, TransactionRefundState
+from ..utility.states import TransactionType, SettlementStatus, TransactionRefundState, MemberState, \
+    TransactionStatusType
 from ..utility.time_utilities import TimeUtilities
 from ..utility.model_utilities import ModelUtilities
 from ..utility.core_service_utilities import CoreServiceUtilities
@@ -29,7 +32,7 @@ from ..payment_page.models import PaymentPageMeta
 from ..payment_page.payment_page_view_helper import PaymentPageViewHelper
 from ..subscription_histories.models import SubscriptionHistory
 from subscription.plans.models import SubscriptionEventPlan
-from subscription.subscriptions.constants import LIFETIME_VALID_TILL
+from subscription.subscriptions.constants import LIFETIME_VALID_TILL, MIGRATION, MANUAL_PAYMENT_PAGE, LIFETIME_PAYMENT
 from ..member_acquisition.models import MemberAcquisition
 from ..subscriptions.subscription_view_impl import SubscriptionImpl
 from .serializers import TransactionSerializer
@@ -876,6 +879,74 @@ class TransactionImpl(TransactionManager):
 
         return {'settlement_data': output_data}
 
+    def create_free_transaction(self):
+        transaction_body = self.get_transaction_body()
+        plan_id = transaction_body.get('plan_id')
+        shared_by = transaction_body.get('shared_by')
+        plan_filter = ModelUtilities.get_model_filter(SubscriptionPlan, {'plan_id': plan_id})
+
+        if not plan_filter:
+            return {'error_message': "Invalid parameter: plan_id"}
+
+        plan_instance = plan_filter[0]
+        shared_by_member_state = CoreServiceUtilities.get_member_state(community_id=plan_instance.community_id,
+                                                                       member_id=shared_by)
+
+        if isinstance(shared_by_member_state, dict) and 'error_message' in shared_by_member_state:
+            return {'error_message': shared_by_member_state['error_message']}
+
+        if shared_by_member_state != MemberState.ADMIN:
+            return {'error_message': "Only CM can invite for free trial/lifetime plan!"}
+
+        transaction_exists = TransactionHelper.check_if_free_transaction_exists(plan_instance.community_id,
+                                                                                transaction_body.get(
+                                                                                    self.get_user_id()))
+        if transaction_exists:
+            return {'error_message': "Free trial can be subscribed only once!"}
+
+        transaction_data = TransactionHelper.create_transaction_object(plan_id=plan_id,
+                                                                       amount=plan_instance.cost,
+                                                                       email=transaction_body.get('payment_email'),
+                                                                       phone=transaction_body.get('payment_phone'),
+                                                                       type_id=TransactionType.COMMUNITY_SUBSCRIPTION,
+                                                                       community_id=plan_instance.community_id,
+                                                                       payment_page_url=transaction_body.get(
+                                                                           'payment_page_url'),
+                                                                       shared_by=transaction_body.get('shared_by'),
+                                                                       free_transaction=True)
+        transaction_instance = Transaction.create_instance(transaction_data)
+
+        if not transaction_instance:
+            return {'error_message': 'error while creating transaction'}
+
+        if transaction_data['renew'] and transaction_data['user_id'] is not None:
+
+            subscription_manager = SubscriptionImpl(payment_id=transaction_data['payment_id'],
+                                                    member_id=transaction_data['user_id'])
+
+            create_subscription = subscription_manager.create_subscription()
+
+            if 'error_message' in create_subscription:
+                return {'error_message': create_subscription['error_message']}
+
+            plan_instance = SubscriptionPlan.get_plan_or_None(transaction_instance.plan_id)
+
+            response = CoreServiceUtilities.renew_member(plan_instance.community_id,
+                                                         transaction_data['user_id'])
+
+            if 'error_message' in response:
+                return {'error_message': response['error_message']}
+
+        if not transaction_data['renew'] and transaction_data['user_id'] is None:
+            acquisition_data = self._create_member_acquisition_data(transaction_instance, transaction_data)
+
+            MemberAcquisition.create_instance(acquisition_data)
+
+            # send join community communication
+            payment_success_membership_join_communication.delay(transaction_instance.id)
+
+        return {'success': True, 'transaction_id': transaction_instance.id}
+
 
 class TransactionHelper:
 
@@ -949,3 +1020,85 @@ class TransactionHelper:
         transactions = ModelUtilities.get_model_filter(Transaction, filters).order_by('-created_at')
 
         return transactions
+
+    @staticmethod
+    def get_payment_id_and_method_for_transaction(transaction_type_id):
+
+        unique_id = uuid.uuid4()
+        payment_id = 'mig_{}'.format(unique_id)
+        method = MIGRATION
+
+        if transaction_type_id == TransactionType.PAYMENT_PAGE:
+            payment_id = 'ppc_{}'.format(unique_id)
+            method = MANUAL_PAYMENT_PAGE
+
+        return payment_id, method
+
+    @staticmethod
+    def create_transaction_object(plan_id, amount, email, phone, type_id, community_id, payment_name: str = '',
+                                  renew: bool = False, user_id: int = None, payment_page_url: str = '',
+                                  shared_by: int = None, free_transaction: bool = False):
+
+        payment_id, method = TransactionHelper.get_payment_id_and_method_for_transaction(type_id)
+        plan_instance = SubscriptionPlan.get_plan_or_None(plan_id)
+
+        if plan_instance is None:
+
+            if type_id != TransactionType.PAYMENT_PAGE:
+                return {'error_message': 'invalid plan_id', 'status': status_codes.HTTP_400_BAD_REQUEST}
+
+            plan_name, plan_cost = "", amount
+
+        else:
+            plan_name, plan_cost = plan_instance.name, plan_instance.cost
+
+        community_data = CoreServiceUtilities.get_community_data(community_id)
+
+        if 'error_message' in community_data:
+            return {'error_message': community_data['error_message'],
+                    'status': status_codes.HTTP_500_INTERNAL_SERVER_ERROR}
+
+        transaction_data = {
+            "buddy_emails": plan_instance.buddy_emails,
+            "cm_emails": plan_instance.cm_emails,
+            "community_name": community_data['community']['name'],
+            "payment_page_url": payment_page_url,
+            "plan_id": plan_id,
+            "grace_period": 0,
+            "shared_by": shared_by,
+            "type": type_id,
+            "payment_id": payment_id,
+            "plan_name": plan_name,
+            "plan_cost": plan_cost,
+            "payment_email": email,
+            "payment_phone": phone,
+            "currency": "INR",
+            "is_international": False,
+            "method": method,
+            "status": TransactionStatusType.CAPTURED,
+            "renew": renew,
+            "amount": amount,
+            "error_description": "",
+            "refund_amount": 0,
+            "user_id": user_id,
+            "type_id": community_id,
+            "payment_name": payment_name
+        }
+
+        if free_transaction:
+            transaction_data['grace_period'] = community_data['community']['grace_period']
+
+        return transaction_data
+
+    @staticmethod
+    def check_if_free_transaction_exists(community_id, user_id):
+
+        free_trial_plans = ModelUtilities.get_model_filter(SubscriptionPlan,
+                                                           {'community_id': community_id, 'is_paid': False})
+
+        plan_ids = list(free_trial_plans.exclude(duration_name=LIFETIME_PAYMENT).values_list('plan_id', flat=True))
+
+        existing_free_transaction = ModelUtilities.is_model_filter_exists(Transaction,
+                                                                          {'plan_id__in': plan_ids,
+                                                                           'user_id': user_id})
+        return existing_free_transaction

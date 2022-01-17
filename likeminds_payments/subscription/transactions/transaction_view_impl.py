@@ -8,6 +8,7 @@ from ..mixins import TransactionMixin
 from ..utility.request_utilities import RequestUtilities
 from .transaction_impl import TransactionImpl
 from .transaction_view_helper import TransactionViewHelper
+from ..utility.response_utilities import ResponseUtilities
 
 
 class CreateTransactionView(TransactionMixin, APIView):
@@ -279,5 +280,38 @@ class FetchSettlementAmountView(TransactionMixin, APIView):
 
         return JsonResponse(
             {'success': True, 'data': response_data['settlement_data']},
+            status=status_codes.HTTP_200_OK
+        )
+
+
+class CreateFreeTransactionView(APIView):
+
+    @method_decorator(csrf_exempt)
+    def dispatch(self, request, *args, **kwargs):
+        return super(CreateFreeTransactionView, self).dispatch(request, *args, **kwargs)
+
+    @staticmethod
+    def post(request):
+        request_body = RequestUtilities.load_request_body(request)
+        member_id = RequestUtilities.get_parameter_from_headers(request, 'HTTP_X_MEMBER_ID')
+
+        validated_request_body = TransactionViewHelper.create_free_transaction_body_validator(request_body, member_id)
+
+        if 'error_message' in validated_request_body:
+            return JsonResponse(
+                ResponseUtilities.get_error_context(False, validated_request_body['error_message']),
+                status=status_codes.HTTP_400_BAD_REQUEST
+            )
+        transaction_manager = TransactionImpl(user_id=member_id, transaction_body=validated_request_body)
+        response_data = transaction_manager.create_free_transaction()
+
+        if 'error_message' in response_data:
+            return JsonResponse(
+                {'success': False, 'error_message': response_data['error_message']},
+                status=status_codes.HTTP_200_OK
+            )
+
+        return JsonResponse(
+            {'success': True},
             status=status_codes.HTTP_200_OK
         )

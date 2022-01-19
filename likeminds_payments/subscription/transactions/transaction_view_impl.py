@@ -295,7 +295,7 @@ class CreateFreeTransactionView(APIView):
         request_body = RequestUtilities.load_request_body(request)
         member_id = RequestUtilities.get_parameter_from_headers(request, 'HTTP_X_MEMBER_ID')
 
-        validated_request_body = TransactionViewHelper.create_free_transaction_body_validator(request_body, member_id)
+        validated_request_body = TransactionViewHelper.create_free_transaction_body_validator(request_body)
 
         if 'error_message' in validated_request_body:
             return JsonResponse(

@@ -234,13 +234,10 @@ class TransactionViewHelper:
         return {'success': True}
 
     @staticmethod
-    def create_free_transaction_body_validator(request_body, member_id):
+    def create_free_transaction_body_validator(request_body):
 
         if not request_body:
             return {'error_message': "Invalid request body"}
-
-        if not member_id:
-            return {'error_message': "send x-member-id in headers"}
 
         if 'plan_id' not in request_body:
             return {'error_message': 'send plan_id in body'}

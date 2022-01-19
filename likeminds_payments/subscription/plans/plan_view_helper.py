@@ -423,7 +423,7 @@ class PlanViewHelper:
             community_data.get('id'))
 
         mail_template = get_template('cm_onboarding/first_plan_creation_cm_onboarding_email.html').render({
-            "community_logo": community_data.get('image_url'),
+            "community_logo": community_data.get('image_link'),
             "community_name": community_data.get('name'),
             "cm_name": user_data.get('name'),
             "community_brand_color": community_data.get('brand_color') if community_data.get('brand_color') else

@@ -899,8 +899,8 @@ class TransactionImpl(TransactionManager):
             return {'error_message': "Only CM can invite for free trial/lifetime plan!"}
 
         transaction_exists = TransactionHelper.check_if_free_transaction_exists(plan_instance.community_id,
-                                                                                transaction_body.get(
-                                                                                    self.get_user_id()))
+                                                                                transaction_body.get('payment_phone'))
+
         if transaction_exists:
             return {'error_message': "Free trial can be subscribed only once!"}
 
@@ -1091,7 +1091,7 @@ class TransactionHelper:
         return transaction_data
 
     @staticmethod
-    def check_if_free_transaction_exists(community_id, user_id):
+    def check_if_free_transaction_exists(community_id, payment_phone):
 
         free_trial_plans = ModelUtilities.get_model_filter(SubscriptionPlan,
                                                            {'community_id': community_id, 'is_paid': False})
@@ -1100,5 +1100,5 @@ class TransactionHelper:
 
         existing_free_transaction = ModelUtilities.is_model_filter_exists(Transaction,
                                                                           {'plan_id__in': plan_ids,
-                                                                           'user_id': user_id})
+                                                                           'payment_phone': payment_phone})
         return existing_free_transaction

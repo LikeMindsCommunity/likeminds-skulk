@@ -831,7 +831,13 @@ class SubscriptionImpl(SubscriptionManager):
         if len(subscriptions) == 0:
             return {'error_message': 'no subscriptions exist with provided user_id'}
 
-        return {'subscriptions': self._serialize_subscriptions(subscriptions)}
+        subscription_context = {'subscriptions': self._serialize_subscriptions(subscriptions)}
+
+        if not member_ids and self.get_community_id():
+            latest_subscription = subscriptions[0]
+            subscription_context['show_upgrade_membership'] = self._show_upgrade_membership(latest_subscription)
+
+        return subscription_context
 
     def cancel_subscription(self) -> dict:
 
@@ -1503,33 +1509,22 @@ class SubscriptionImpl(SubscriptionManager):
 
         return data
 
-    def show_upgrade_membership(self) -> dict:
-
-        show_dict = {'show': False}
-
-        latest_subscription = SubscriptionHistory.get_latest_subscription_history_or_None(
-            user_id=self.get_member_id(),
-            community_id=self.get_community_id()
-        )
-
-        if not latest_subscription:
-            return show_dict
-
+    @staticmethod
+    def _show_upgrade_membership(latest_subscription) -> bool:
         transaction_instance = latest_subscription.transaction
 
         if not transaction_instance:
-            return show_dict
+            return False
 
         plan_instance = SubscriptionPlan.get_plan_or_None(plan_id=transaction_instance.plan_id)
 
         if not plan_instance:
-            return show_dict
+            return False
 
         current_time_in_ms = TimeUtilities.current_time_in_milliseconds()
-        passed_time_in_ms = current_time_in_ms - latest_subscription.start_date
+        passed_time_in_ms = current_time_in_ms - latest_subscription.date_subscribed
 
         if plan_instance.is_paid is False and passed_time_in_ms > TimeUtilities.MILLISECONDS_IN_A_DAY:
-            show_dict['show'] = True
-            return show_dict
+            return True
 
-        return show_dict
+        return False

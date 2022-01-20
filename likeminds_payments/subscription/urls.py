@@ -57,7 +57,6 @@ urlpatterns = [
     path('search_history', SearchHistoryView.as_view(), name='search_history'),
     path('fetch_community_renewals', FetchCommunityRenewalsView.as_view(), name='fetch_community_renewals'),
     path('fetch_subscription_meta', FetchSubscriptionMetaView.as_view(), name='fetch_subscription_meta'),
-    path('show_upgrade_membership', ShowUpgradeMembershipView.as_view(), name='show_upgrade_membership'),
     path('kyc/', include('subscription.kyc.urls')),
     path('transaction/', include('subscription.transactions.urls')),
     path('settlement/', include('subscription.settlements.urls'))

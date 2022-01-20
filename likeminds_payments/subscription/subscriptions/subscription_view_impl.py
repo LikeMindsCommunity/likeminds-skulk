@@ -420,19 +420,3 @@ class FetchSubscriptionMetaView(APIView):
             status=status_codes.HTTP_200_OK
         )
 
-
-class ShowUpgradeMembershipView(APIView):
-
-    def get(self, request):
-        query_params = SubscriptionViewHelper.show_upgrade_membership_body_validator(request)
-        member_id = RequestUtilities.get_parameter_from_headers(request, 'HTTP_X_MEMBER_ID')
-        validator = SubscriptionViewHelper.query_params_and_member_id_validator(query_params, member_id)
-
-        if 'error_message' in validator:
-            response = ResponseUtilities.get_error_context(success=False, error_message=validator['error_message'])
-            return JsonResponse(response, status=status_codes.HTTP_400_BAD_REQUEST)
-
-        subscription_manager = SubscriptionImpl(member_id=member_id, community_id=query_params['community_id'])
-        response_data = subscription_manager.show_upgrade_membership()
-
-        return JsonResponse(response_data, status=status_codes.HTTP_200_OK)

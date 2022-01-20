@@ -285,15 +285,3 @@ class SubscriptionViewHelper:
             return ResponseUtilities.get_inner_error_context('send x-member-id in headers')
 
         return {'success': True}
-
-    @staticmethod
-    def show_upgrade_membership_body_validator(request):
-
-        query_params = {
-            'community_id': request.GET.get('community_id', None),
-        }
-
-        if not query_params['community_id']:
-            return ResponseUtilities.get_inner_error_context('send community_id in query params')
-
-        return query_params

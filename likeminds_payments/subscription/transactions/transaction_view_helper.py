@@ -6,6 +6,7 @@ from .models import Transaction
 from ..plans.models import SubscriptionPlan
 from ..payment_page.models import PaymentPageMeta
 from ..subscriptions.constants import MIGRATION, MANUAL_PAYMENT_PAGE
+from ..utility.response_utilities import ResponseUtilities
 from ..utility.states import TransactionType
 from subscription.transactions.transaction_impl import TransactionImpl
 
@@ -237,21 +238,21 @@ class TransactionViewHelper:
     def create_free_transaction_body_validator(request_body):
 
         if not request_body:
-            return {'error_message': "Invalid request body"}
+            return ResponseUtilities.get_inner_error_context("Invalid request body")
 
         if 'plan_id' not in request_body:
-            return {'error_message': 'send plan_id in body'}
+            return ResponseUtilities.get_inner_error_context("send plan_id in body")
 
         if 'shared_by' not in request_body:
-            return {'error_message': 'send shared_by in body'}
+            return ResponseUtilities.get_inner_error_context("send shared_by in body")
 
         if 'payment_page_url' not in request_body:
-            return {'error_message': 'send payment_page_url in body'}
+            return ResponseUtilities.get_inner_error_context("send payment_page_url in body")
 
         if 'payment_email' not in request_body:
-            return {'error_message': 'send payment_email in body'}
+            return ResponseUtilities.get_inner_error_context("send payment_email in body")
 
         if 'payment_phone' not in request_body:
-            return {'error_message': 'send payment_phone in body'}
+            return ResponseUtilities.get_inner_error_context("send payment_phone in body")
 
         return request_body

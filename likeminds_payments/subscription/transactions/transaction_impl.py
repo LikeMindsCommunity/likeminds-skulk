@@ -893,16 +893,16 @@ class TransactionImpl(TransactionManager):
                                                                        member_id=shared_by)
 
         if isinstance(shared_by_member_state, dict) and 'error_message' in shared_by_member_state:
-            return {'error_message': shared_by_member_state['error_message']}
+            return ResponseUtilities.get_inner_error_context(shared_by_member_state['error_message'])
 
         if shared_by_member_state != MemberState.ADMIN:
-            return {'error_message': "Only CM can invite for free trial/lifetime plan!"}
+            return ResponseUtilities.get_inner_error_context("Only CM can invite for free trial/lifetime plan!")
 
         transaction_exists = TransactionHelper.check_if_free_transaction_exists(plan_instance.community_id,
                                                                                 transaction_body.get('payment_phone'))
 
         if transaction_exists:
-            return {'error_message': "Free trial can be subscribed only once!"}
+            return ResponseUtilities.get_inner_error_context("Free trial can be subscribed only once!")
 
         transaction_data = TransactionHelper.create_transaction_object(plan_id=plan_id,
                                                                        amount=plan_instance.cost,
@@ -917,7 +917,7 @@ class TransactionImpl(TransactionManager):
         transaction_instance = Transaction.create_instance(transaction_data)
 
         if not transaction_instance:
-            return {'error_message': 'error while creating transaction'}
+            return ResponseUtilities.get_inner_error_context("error while creating transaction")
 
         if transaction_data['renew'] and transaction_data['user_id'] is not None:
 
@@ -927,7 +927,7 @@ class TransactionImpl(TransactionManager):
             create_subscription = subscription_manager.create_subscription()
 
             if 'error_message' in create_subscription:
-                return {'error_message': create_subscription['error_message']}
+                return ResponseUtilities.get_inner_error_context(create_subscription['error_message'])
 
             plan_instance = SubscriptionPlan.get_plan_or_None(transaction_instance.plan_id)
 
@@ -935,7 +935,7 @@ class TransactionImpl(TransactionManager):
                                                          transaction_data['user_id'])
 
             if 'error_message' in response:
-                return {'error_message': response['error_message']}
+                return ResponseUtilities.get_inner_error_context(response['error_message'])
 
         if not transaction_data['renew'] and transaction_data['user_id'] is None:
             acquisition_data = self._create_member_acquisition_data(transaction_instance, transaction_data)

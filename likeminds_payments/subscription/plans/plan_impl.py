@@ -143,10 +143,10 @@ class PlanImpl(PlanManager):
 
         else:
             # Adding else part so that free plan can be fetched using plan_id
-            if renew is True:
+            if renew:
                 filters['is_paid'] = True
 
-            elif free is True:
+            elif free:
                 filters['is_paid'] = False
 
             else:
@@ -157,7 +157,7 @@ class PlanImpl(PlanManager):
 
         plans = self._fetch_plans(filters)
 
-        if renew is True:
+        if renew:
             filters['is_paid'] = False
             filters['duration_name'] = LIFETIME_PAYMENT
 

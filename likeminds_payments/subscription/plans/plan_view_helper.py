@@ -50,10 +50,10 @@ class PlanViewHelper:
                 plan_body['is_paid'] = True
 
             if not isinstance(plan_body['is_paid'], bool):
-                return {'error_message': 'is_paid must be boolean'}
+                return ResponseUtilities.get_inner_error_context("is_paid must be boolean")
 
             if not plan_body['is_paid'] and plan_body['cost'] != 0:
-                return {'error_message': 'There should be no cost for free plan!'}
+                return ResponseUtilities.get_inner_error_context("There should be no cost for free plan!")
 
         else:
 

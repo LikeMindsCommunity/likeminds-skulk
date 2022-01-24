@@ -46,8 +46,15 @@ class PlanViewHelper:
             if 'cm_emails' not in plan_body or not plan_body['cm_emails']:
                 return {'error_message': 'send cm_emails'}
 
+            # By default is_paid will be True
             if 'is_paid' not in plan_body:
-                return {'error_message': 'send is_paid'}
+                plan_body['is_paid'] = True
+
+            elif isinstance(plan_body['is_paid'], str):
+                plan_body['is_paid'] = BooleanUtilities.get_boolean_for_string(plan_body['renew'])
+
+            if not plan_body['is_paid'] and plan_body['cost'] != 0:
+                return {'error_message': 'There should be no cost for free plan!'}
 
         else:
 
@@ -398,7 +405,6 @@ class PlanViewHelper:
 
         return {}
 
-
     @staticmethod
     def parameter_validation_for_first_plan_creation_email(user_data, community_data, user_id):
 
@@ -480,4 +486,3 @@ class PlanViewHelper:
         }
 
         analytics.track(user_id, event_name, plan_event_metadata)
-

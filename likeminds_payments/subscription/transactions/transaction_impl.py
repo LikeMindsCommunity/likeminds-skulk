@@ -1045,7 +1045,7 @@ class TransactionHelper:
         if plan_instance is None:
 
             if type_id != TransactionType.PAYMENT_PAGE:
-                return {'error_message': 'invalid plan_id', 'status': status_codes.HTTP_400_BAD_REQUEST}
+                return ResponseUtilities.get_impl_error_context("invalid plan_id", status_codes.HTTP_400_BAD_REQUEST)
 
             plan_name, plan_cost = "", amount
 
@@ -1055,8 +1055,8 @@ class TransactionHelper:
         community_data = CoreServiceUtilities.get_community_data(community_id)
 
         if 'error_message' in community_data:
-            return {'error_message': community_data['error_message'],
-                    'status': status_codes.HTTP_500_INTERNAL_SERVER_ERROR}
+            return ResponseUtilities.get_impl_error_context(community_data['error_message'],
+                                                            status_codes.HTTP_500_INTERNAL_SERVER_ERROR)
 
         transaction_data = {
             "buddy_emails": plan_instance.buddy_emails,

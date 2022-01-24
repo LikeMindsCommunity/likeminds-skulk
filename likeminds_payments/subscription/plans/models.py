@@ -55,7 +55,7 @@ class SubscriptionPlan(models.Model):
         instance.description_icon_type = plan_body['description_icon_type']
         instance.is_paid = plan_body.get('is_paid', True)
 
-        if instance.is_paid is False:
+        if not instance.is_paid:
             instance.cost = 0
 
         instance.save()

@@ -5,7 +5,6 @@ import analytics
 from .constants import *
 from .models import SubscriptionPlan
 from ..subscriptions.constants import SUBSCRIPTION_COHORT_NAME, SUBSCRIPTION_EXPIRED_COHORT_NAME
-from ..utility.boolean_utilities import BooleanUtilities
 from ..utility.core_service_utilities import CoreServiceUtilities
 from ..utility.number_utilities import NumberUtilities
 from ..utility.model_utilities import ModelUtilities
@@ -50,8 +49,8 @@ class PlanViewHelper:
             if 'is_paid' not in plan_body:
                 plan_body['is_paid'] = True
 
-            elif isinstance(plan_body['is_paid'], str):
-                plan_body['is_paid'] = BooleanUtilities.get_boolean_for_string(plan_body['renew'])
+            if not isinstance(plan_body['is_paid'], bool):
+                return {'error_message': 'is_paid must be boolean'}
 
             if not plan_body['is_paid'] and plan_body['cost'] != 0:
                 return {'error_message': 'There should be no cost for free plan!'}
@@ -234,11 +233,11 @@ class PlanViewHelper:
         if not query_params['community_id'] and not query_params['plan_id']:
             return ResponseUtilities.get_inner_error_context('send community_id or plan_id in query params')
 
-        if isinstance(query_params['renew'], str):
-            query_params['renew'] = BooleanUtilities.get_boolean_for_string(query_params['renew'])
+        if not isinstance(query_params['renew'], bool):
+            return ResponseUtilities.get_inner_error_context('renew should be boolean')
 
-        if isinstance(query_params['free'], str):
-            query_params['free'] = BooleanUtilities.get_boolean_for_string(query_params['free'])
+        if not isinstance(query_params['free'], bool):
+            return ResponseUtilities.get_inner_error_context('free should be boolean')
 
         return query_params
 

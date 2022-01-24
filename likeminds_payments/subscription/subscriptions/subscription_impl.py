@@ -351,8 +351,8 @@ class SubscriptionImpl(SubscriptionManager):
                     community_id=plan_instance.community_id)
 
                 if 'error_message' in cohort_response:
-                    return {'error_message': cohort_response['error_message'],
-                            'status_code': cohort_response['status_code']}
+                    return ResponseUtilities.get_impl_error_context(error_message=cohort_response['error_message'],
+                                                                    status_code=cohort_response['status_code'])
 
             return transaction
 
@@ -367,8 +367,8 @@ class SubscriptionImpl(SubscriptionManager):
                 community_id=plan_instance.community_id)
 
             if 'error_message' in cohort_response:
-                return {'error_message': cohort_response['error_message'],
-                        'status_code': cohort_response['status_code']}
+                return ResponseUtilities.get_impl_error_context(error_message=cohort_response['error_message'],
+                                                                status_code=cohort_response['status_code'])
 
             return transaction
 

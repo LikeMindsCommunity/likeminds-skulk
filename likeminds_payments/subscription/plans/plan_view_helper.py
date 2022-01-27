@@ -50,10 +50,8 @@ class PlanViewHelper:
             if 'is_paid' not in plan_body:
                 plan_body['is_paid'] = True
 
-            # If is_paid is passed and it is string, convert to boolean
             elif isinstance(plan_body['is_paid'], str):
                 plan_body['is_paid'] = StringUtilities.get_boolean_from_string(plan_body['is_paid'])
-
 
             if not plan_body['is_paid'] and plan_body['cost'] != 0:
                 return ResponseUtilities.get_inner_error_context("There should be no cost for free plan!")

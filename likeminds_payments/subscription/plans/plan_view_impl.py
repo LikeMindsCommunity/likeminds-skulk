@@ -93,7 +93,9 @@ class FetchPlanView(APIView):
             )
 
         plan_manager = PlanImpl(community_id=query_params['community_id'])
-        response_data = plan_manager.fetch_plan(plan_id=query_params['plan_id'])
+        response_data = plan_manager.fetch_plan(plan_id=query_params['plan_id'],
+                                                renew=query_params['renew'],
+                                                free=query_params['free'])
 
         if 'error_message' in response_data:
             return JsonResponse(
@@ -242,7 +244,6 @@ class UpdateEventPlanView(APIView):
 class FetchSamplePlanCategoryView(TransactionMixin, APIView):
 
     def get(self, request, *args, **kwargs):
-
         plan_manager = PlanImpl()
 
         response_data = plan_manager.fetch_sample_plan_category()

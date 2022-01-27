@@ -6,6 +6,7 @@ from ..plans.plan_manager import PlanManager
 from .models import SubscriptionPlan, SubscriptionEventPlan, SamplePlanCategory, SamplePlan
 from .serializers import PlanSerializer, EventPlanSerializer, SamplePlanCategorySerializers, SamplePlanSerializers, \
     EventCohortPlanSerializer
+from ..subscriptions.constants import LIFETIME_PAYMENT
 from ..utility.async_tasks import update_event_in_webflow_service
 from ..utility.core_service_utilities import CoreServiceUtilities
 from ..utility.model_utilities import ModelUtilities
@@ -101,7 +102,7 @@ class PlanImpl(PlanManager):
 
     @staticmethod
     def _fetch_plans(filters: dict):
-        return ModelUtilities.get_model_filter(SubscriptionPlan, filters).order_by('created_at')
+        return ModelUtilities.get_model_filter(SubscriptionPlan, filters).order_by('-cost')
 
     @staticmethod
     def _serialize_plans(plans) -> list:
@@ -131,7 +132,7 @@ class PlanImpl(PlanManager):
 
         return event_plans
 
-    def fetch_plan(self, plan_id=None) -> dict:
+    def fetch_plan(self, plan_id=None, renew=False, free=False) -> dict:
 
         filters = {
             'is_deleted': False
@@ -140,10 +141,29 @@ class PlanImpl(PlanManager):
         if plan_id:
             filters['plan_id'] = plan_id
 
+        else:
+            # Adding else part so that free plan can be fetched using plan_id
+            if renew:
+                filters['is_paid'] = True
+
+            elif free:
+                filters['is_paid'] = False
+
+            else:
+                filters['is_paid'] = True
+
         if self.get_community_id():
             filters['community_id'] = self.get_community_id()
 
         plans = self._fetch_plans(filters)
+
+        if renew:
+            filters['is_paid'] = False
+            filters['duration_name'] = LIFETIME_PAYMENT
+
+            free_plans_for_renew = ModelUtilities.get_model_filter(SubscriptionPlan, filters).order_by('-cost')
+            plans = plans | free_plans_for_renew
+            plans = plans.order_by('-cost')
 
         if len(plans) == 0:
             return {'error_message': 'no plans exist with provided details'}

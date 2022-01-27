@@ -1,3 +1,4 @@
+from ..plans.plan_helper import PlanHelper
 from ..utility.time_utilities import TimeUtilities
 from ..plans.serializers import PlanSerializer
 from ..plans.models import SubscriptionPlan
@@ -43,8 +44,11 @@ def SubscriptionSerializer(subscriptions) -> list:
         if subscription.transaction is not None:
             subscription_plan = SubscriptionPlan.get_plan_or_None(plan_id=subscription.plan_id)
             if subscription_plan is not None:
-                serialized_plans = PlanSerializer([subscription_plan])
-                subscription_object['plan'] = serialized_plans[0]
+                plan_object = PlanSerializer(subscription_plan)
+                plan_title_context = PlanHelper.get_plan_title_and_subtitle_for_plan(plan_object=plan_object,
+                                                                                     plan_instance=subscription_plan)
+                plan_object.update(plan_title_context)
+                subscription_object['plan'] = plan_object
             subscription_object['grace_period'] = subscription.transaction.grace_period
             subscription_object['valid_till_grace_period'] = TimeUtilities.add_milliseconds_in_epoch_time(
                 subscription.valid_till, subscription.transaction.grace_period)

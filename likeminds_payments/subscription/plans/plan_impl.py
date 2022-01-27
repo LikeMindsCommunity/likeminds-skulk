@@ -106,7 +106,16 @@ class PlanImpl(PlanManager):
 
     @staticmethod
     def _serialize_plans(plans) -> list:
-        return PlanSerializer(plans)
+        plan_serializers = []
+
+        for plan in plans:
+            plan_object = PlanSerializer(plan)
+            plan_title_context = PlanHelper.get_plan_title_and_subtitle_for_plan(plan_object=plan_object,
+                                                                                 plan_instance=plan)
+            plan_object.update(plan_title_context)
+            plan_serializers.append(plan_object)
+
+        return plan_serializers
 
     @staticmethod
     def _serialize_event_plan_list(filters, user_id=None):

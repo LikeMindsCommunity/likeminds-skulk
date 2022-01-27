@@ -1503,8 +1503,8 @@ class SubscriptionImpl(SubscriptionManager):
         data = {
             'total_members': ModelUtilities.get_model_filter(Subscription,
                                                              {'community_id': self.get_community_id()}).count(),
-            'new_members': len(ModelUtilities.get_model_filter(Subscription, {'community_id': self.get_community_id(),
-                                                                              'created_at__gt': new_members_join_days}))
+            'new_members': ModelUtilities.get_model_filter(Subscription, {'community_id': self.get_community_id(),
+                                                                          'created_at__gt': new_members_join_days}).count()
         }
 
         return data

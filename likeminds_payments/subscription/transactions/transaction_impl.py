@@ -904,12 +904,20 @@ class TransactionImpl(TransactionManager):
         if transaction_exists:
             return ResponseUtilities.get_inner_error_context("Free trial can be subscribed only once!")
 
+        user_id = None
+        renew = transaction_body.get('renew', False)
+
+        if renew and self.get_user_id():
+            user_id = self.get_user_id()
+
         transaction_data = TransactionHelper.create_transaction_object(plan_id=plan_id,
                                                                        amount=plan_instance.cost,
                                                                        email=transaction_body.get('payment_email'),
                                                                        phone=transaction_body.get('payment_phone'),
                                                                        type_id=TransactionType.COMMUNITY_SUBSCRIPTION,
                                                                        community_id=plan_instance.community_id,
+                                                                       renew=renew,
+                                                                       user_id=user_id,
                                                                        payment_page_url=transaction_body.get(
                                                                            'payment_page_url'),
                                                                        shared_by=transaction_body.get('shared_by'),

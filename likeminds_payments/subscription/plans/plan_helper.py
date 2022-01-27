@@ -1,5 +1,7 @@
 from subscription.external_services.logging.logging_wrapper import LoggingWrapper
-from subscription.plans.models import EventCohortPlan, SubscriptionEventPlan
+from subscription.plans.constants import SUBSCRIPTION_PLAN_NAMES, FREE_PLAN_TITLE, FREE_TRIAL_TITLE
+from subscription.plans.models import EventCohortPlan, SubscriptionEventPlan, SubscriptionPlan
+from subscription.subscriptions.constants import LIFETIME_PAYMENT
 from subscription.utility.core_service_utilities import CoreServiceUtilities
 from subscription.utility.model_utilities import ModelUtilities
 from subscription.utility.number_utilities import NumberUtilities
@@ -163,3 +165,109 @@ class PlanHelper:
                                                                                  matching_cohorts)
 
         return pricing_context
+
+    @staticmethod
+    def get_plan_title_for_paid_plan(plan_object: dict, plan_instance: SubscriptionPlan):
+        """
+        This method fetches plan title for paid plan
+        @param plan_object: Dictionary containing plan data
+        @param plan_instance: SubscriptionPlan instance
+        @return: str: Plan Title
+        """
+        if plan_instance.name:
+            plan_title = plan_instance.name
+
+        elif SUBSCRIPTION_PLAN_NAMES[plan_object['duration_name']]['unique']:
+            plan_title = SUBSCRIPTION_PLAN_NAMES[plan_object['duration_name']]['title']
+
+        else:
+            plan_title = '{} "{}" Plan'.format(plan_object['duration_in_months'],
+                                               SUBSCRIPTION_PLAN_NAMES[plan_object['duration_name']]['title'])
+
+        return plan_title
+
+    @staticmethod
+    def get_plan_sub_title_for_paid_plan(plan_object: dict):
+        """
+        This method fetches plan sub title for paid plan
+        @param plan_object: Dictionary containing plan data
+        @return: str: Plan Sub Title
+        """
+        if plan_object['duration_name'] == LIFETIME_PAYMENT:
+            plan_sub_title = '{} for {}'.format(
+                plan_object['cost'],
+                SUBSCRIPTION_PLAN_NAMES[plan_object['duration_name']]['subtitle']
+            )
+
+        else:
+            plan_sub_title = '{} for {} {}'.format(
+                plan_object['cost'],
+                plan_object['duration_in_months'],
+                SUBSCRIPTION_PLAN_NAMES[plan_object['duration_name']]['subtitle'])
+
+        return plan_sub_title
+
+    @staticmethod
+    def get_plan_title_for_free_plan(plan_object: dict, plan_instance: SubscriptionPlan):
+        """
+        This method fetches plan title for free plan
+        @param plan_object: Dictionary containing plan data
+        @param plan_instance: SubscriptionPlan instance
+        @return: str: Plan Title
+        """
+        if plan_instance.name:
+            plan_title = plan_instance.name
+
+        elif plan_object['duration_name'] == LIFETIME_PAYMENT:
+            plan_title = FREE_PLAN_TITLE
+
+        else:
+            plan_title = FREE_TRIAL_TITLE
+
+        return plan_title
+
+    @staticmethod
+    def get_plan_sub_title_for_free_plan(plan_object: dict):
+        """
+        This method fetches plan sub title for free plan
+        @param plan_object: Dictionary containing plan data
+        @return: str: Plan Sub Title
+        """
+        if plan_object['duration_name'] == LIFETIME_PAYMENT:
+            plan_sub_title = '0 for {}'.format(
+                SUBSCRIPTION_PLAN_NAMES[plan_object['duration_name']]['subtitle']
+            )
+
+        else:
+            plan_sub_title = '0 for {} {}'.format(
+                plan_object['duration_in_months'],
+                SUBSCRIPTION_PLAN_NAMES[plan_object['duration_name']]['subtitle']
+            )
+
+        return plan_sub_title
+
+    @staticmethod
+    def get_plan_title_and_subtitle_for_plan(plan_object: dict, plan_instance: SubscriptionPlan):
+        """
+        This method fetches plan sub title for free plan
+        @param plan_object: Dictionary containing plan data
+        @param plan_instance: SubscriptionPlan instance
+        @return: dict: Dictionary containing plan title and plan sub title for valid instance
+        """
+
+        plan_title_context = dict()
+
+        if not plan_instance or not plan_object:
+            return plan_title_context
+
+        if not plan_instance.is_paid:
+            plan_title = PlanHelper.get_plan_title_for_free_plan(plan_object=plan_object, plan_instance=plan_instance)
+            plan_sub_title = PlanHelper.get_plan_sub_title_for_free_plan(plan_object=plan_object)
+
+        else:
+            plan_title = PlanHelper.get_plan_title_for_paid_plan(plan_object=plan_object, plan_instance=plan_instance)
+            plan_sub_title = PlanHelper.get_plan_sub_title_for_paid_plan(plan_object=plan_object)
+
+        plan_title_context = {'plan_title': plan_title, 'plan_sub_title': plan_sub_title}
+
+        return plan_title_context

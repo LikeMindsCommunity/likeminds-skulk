@@ -51,7 +51,6 @@ info_logger = LoggingWrapper.get_instance()
 
 
 class SubscriptionImpl(SubscriptionManager):
-
     payment_id = None
     user_id = None
     community_id = None
@@ -352,7 +351,8 @@ class SubscriptionImpl(SubscriptionManager):
                     community_id=plan_instance.community_id)
 
                 if 'error_message' in cohort_response:
-                    return {'error_message': cohort_response['error_message'],  'status_code': cohort_response['status_code']}
+                    return ResponseUtilities.get_impl_error_context(error_message=cohort_response['error_message'],
+                                                                    status_code=cohort_response['status_code'])
 
             return transaction
 
@@ -367,7 +367,8 @@ class SubscriptionImpl(SubscriptionManager):
                 community_id=plan_instance.community_id)
 
             if 'error_message' in cohort_response:
-                return {'error_message': cohort_response['error_message'],  'status_code': cohort_response['status_code']}
+                return ResponseUtilities.get_impl_error_context(error_message=cohort_response['error_message'],
+                                                                status_code=cohort_response['status_code'])
 
             return transaction
 
@@ -566,14 +567,14 @@ class SubscriptionImpl(SubscriptionManager):
     def _convert_to_paid_create_subscription_history_dict(current_time, valid_till, user_id, community_id):
 
         return {
-                "start_date": current_time,
-                "end_date": valid_till,
-                "description": FREE_DESCRIPTION,
-                "transaction": None,
-                "type": "free",
-                "user_id": user_id,
-                "community_id": community_id
-            }
+            "start_date": current_time,
+            "end_date": valid_till,
+            "description": FREE_DESCRIPTION,
+            "transaction": None,
+            "type": "free",
+            "user_id": user_id,
+            "community_id": community_id
+        }
 
     @staticmethod
     def _convert_to_paid_existing_subscription(community_id, user_id):
@@ -746,7 +747,8 @@ class SubscriptionImpl(SubscriptionManager):
 
                         community_data = CoreServiceUtilities.get_community_data(self.get_community_id())
 
-                        if (has_permission_check['has_permission'] is False) and community_data['community'].get('is_paid'):
+                        if (has_permission_check['has_permission'] is False) and community_data['community'].get(
+                                'is_paid'):
                             return ResponseUtilities.get_impl_error_context(error_message='Link invalid',
                                                                             status_code=status_codes.HTTP_406_NOT_ACCEPTABLE)
 
@@ -829,7 +831,13 @@ class SubscriptionImpl(SubscriptionManager):
         if len(subscriptions) == 0:
             return {'error_message': 'no subscriptions exist with provided user_id'}
 
-        return {'subscriptions': self._serialize_subscriptions(subscriptions)}
+        subscription_context = {'subscriptions': self._serialize_subscriptions(subscriptions)}
+
+        if not member_ids and self.get_community_id():
+            latest_subscription = subscriptions[0]
+            subscription_context['show_upgrade_membership'] = self._show_upgrade_membership(latest_subscription)
+
+        return subscription_context
 
     def cancel_subscription(self) -> dict:
 
@@ -1318,7 +1326,6 @@ class SubscriptionImpl(SubscriptionManager):
         }
 
         for question in community_questions:
-
             output_data[question['question_title']] = []
 
         for member_id in members_detail.keys():
@@ -1356,7 +1363,7 @@ class SubscriptionImpl(SubscriptionManager):
 
                 membership_state = MEMBERSHIP_STATES[subscription_details[member_id][0]['membership_state']]
                 valid_till = time.strftime(
-                    "%d %b %Y", time.localtime(subscription_details[member_id][0]['valid_till']/1000))
+                    "%d %b %Y", time.localtime(subscription_details[member_id][0]['valid_till'] / 1000))
 
                 output_data['active_plan'].append(active_plan)
                 output_data['subscription_status'].append(membership_state)
@@ -1405,7 +1412,6 @@ class SubscriptionImpl(SubscriptionManager):
             members_data[member['id']] = member
 
         for member_questions in members_questions:
-
             members_data[member_questions['id']]['question_answers'] = member_questions.get('question_answers', [])
 
         subscription_manager = SubscriptionImpl(member_id=member_id, community_id=community_id)
@@ -1495,9 +1501,30 @@ class SubscriptionImpl(SubscriptionManager):
         new_members_join_days = TimeUtilities.subtract_days_in_epoch_time(current_time, NEW_MEMBER_JOIN_DAYS)
 
         data = {
-            'total_members': len(ModelUtilities.get_model_filter(Subscription, {'community_id': self.get_community_id()})),
-            'new_members': len(ModelUtilities.get_model_filter(Subscription, {'community_id': self.get_community_id(),
-                                                                              'created_at__gt': new_members_join_days}))
+            'total_members': ModelUtilities.get_model_filter(Subscription,
+                                                             {'community_id': self.get_community_id()}).count(),
+            'new_members': ModelUtilities.get_model_filter(Subscription, {'community_id': self.get_community_id(),
+                                                                          'created_at__gt': new_members_join_days}).count()
         }
 
         return data
+
+    @staticmethod
+    def _show_upgrade_membership(latest_subscription) -> bool:
+        transaction_instance = latest_subscription.transaction
+
+        if not transaction_instance:
+            return False
+
+        plan_instance = SubscriptionPlan.get_plan_or_None(plan_id=transaction_instance.plan_id)
+
+        if not plan_instance:
+            return False
+
+        current_time_in_ms = TimeUtilities.current_time_in_milliseconds()
+        passed_time_in_ms = current_time_in_ms - latest_subscription.date_subscribed
+
+        if plan_instance.is_paid is False and passed_time_in_ms > TimeUtilities.MILLISECONDS_IN_A_DAY:
+            return True
+
+        return False

@@ -12,7 +12,8 @@ class TransactionManager(metaclass=abc.ABCMeta):
                 (hasattr(subclass, 'valid_event_payment_id') and callable(subclass.valid_event_payment_id)) and
                 (hasattr(subclass, 'update_payment_id') and callable(subclass.update_payment_id)) and
                 (hasattr(subclass, 'download_all_transaction') and callable(subclass.download_all_transaction)) and
-                (hasattr(subclass, 'fetch_settlement_amount') and callable(subclass.fetch_settlement_amount))
+                (hasattr(subclass, 'fetch_settlement_amount') and callable(subclass.fetch_settlement_amount)) and
+                (hasattr(subclass, 'create_free_transaction') and callable(subclass.create_free_transaction))
                 or
                 NotImplemented)
 
@@ -75,4 +76,11 @@ class TransactionManager(metaclass=abc.ABCMeta):
         get the settlement amount for given community_id
         """
 
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def create_free_transaction(self) -> dict:
+        """
+        creates transaction against a free plan for given user
+        """
         raise NotImplementedError

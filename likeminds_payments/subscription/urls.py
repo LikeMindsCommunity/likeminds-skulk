@@ -22,6 +22,7 @@ urlpatterns = [
     path('create_order', CreateOrderView.as_view(), name="create-order"),
     path('verify_order', VerifyOrderView.as_view(), name="verify-order"),
     path('create_transaction', CreateTransactionView.as_view(), name="create-transaction"),
+    path('create_free_transaction', CreateFreeTransactionView.as_view(), name="create-free-transaction"),
     path('fetch_transactions', FetchTransactionsView.as_view(), name="fetch-transactions"),
     path('refund_transaction', RefundTransactionView.as_view(), name="refund-transaction"),
     path('create_subscription', CreateSubscriptionView.as_view(), name="create-subscription"),

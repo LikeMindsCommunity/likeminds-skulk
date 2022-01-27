@@ -4,6 +4,7 @@ from rest_framework import status as status_codes
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 
+from .plan_helper import PlanHelper
 from .serializers import PlanSerializer
 from ..mixins import TransactionMixin
 from ..search.sync import ElasticSearchSync
@@ -49,8 +50,10 @@ class CreatePlanView(TransactionMixin, APIView):
                 status=status_codes.HTTP_200_OK
             )
 
-        serialized_plan_list = PlanSerializer([instance_data['plan_instance']])
-        serialized_plan = serialized_plan_list[0]
+        serialized_plan = PlanSerializer(instance_data['plan_instance'])
+        plan_title_context = PlanHelper.get_plan_title_and_subtitle_for_plan(plan_object=serialized_plan,
+                                                                             plan_instance=instance_data['plan_instance'])
+        serialized_plan.update(plan_title_context)
 
         # Add Event Analytics
         PlanViewHelper.add_event_for_membership_plan(serialized_plan, analytics_event_name, user_id)
@@ -93,7 +96,9 @@ class FetchPlanView(APIView):
             )
 
         plan_manager = PlanImpl(community_id=query_params['community_id'])
-        response_data = plan_manager.fetch_plan(plan_id=query_params['plan_id'])
+        response_data = plan_manager.fetch_plan(plan_id=query_params['plan_id'],
+                                                renew=query_params['renew'],
+                                                free=query_params['free'])
 
         if 'error_message' in response_data:
             return JsonResponse(
@@ -139,8 +144,10 @@ class DeletePlanView(TransactionMixin, APIView):
         response_data = plan_manager.delete_plan()
 
         # Add Event Analytics
-        serialized_plan_list = PlanSerializer([instance_data['plan_instance']])
-        serialized_plan = serialized_plan_list[0]
+        serialized_plan = PlanSerializer(instance_data['plan_instance'])
+        plan_title_context = PlanHelper.get_plan_title_and_subtitle_for_plan(plan_object=serialized_plan,
+                                                                             plan_instance=instance_data['plan_instance'])
+        serialized_plan.update(plan_title_context)
         PlanViewHelper.add_event_for_membership_plan(serialized_plan, DELETE_PLAN_ANALYTICS_EVENT_NAME, user_id)
 
         if 'error_message' in response_data:
@@ -242,7 +249,6 @@ class UpdateEventPlanView(APIView):
 class FetchSamplePlanCategoryView(TransactionMixin, APIView):
 
     def get(self, request, *args, **kwargs):
-
         plan_manager = PlanImpl()
 
         response_data = plan_manager.fetch_sample_plan_category()

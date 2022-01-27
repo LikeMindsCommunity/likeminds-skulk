@@ -20,6 +20,7 @@ class SubscriptionPlan(models.Model):
     referral_free_days = models.IntegerField(default=0)
     image = models.CharField(max_length=256)
     description_icon_type = models.IntegerField(null=True)
+    is_paid = models.BooleanField(default=True)
     created_at = models.BigIntegerField(default=0)
     updated_at = models.BigIntegerField(default=0)
 
@@ -52,6 +53,11 @@ class SubscriptionPlan(models.Model):
         instance.referral_free_days = plan_body['referral_free_days']
         instance.image = plan_body['image']
         instance.description_icon_type = plan_body['description_icon_type']
+        instance.is_paid = plan_body.get('is_paid', True)
+
+        if not instance.is_paid:
+            instance.cost = 0
+
         instance.save()
 
         return instance
@@ -136,6 +142,7 @@ class EventCohortPlan(models.Model):
         self.updated_at = current_time
 
         super(EventCohortPlan, self).save(*args, **kwargs)
+
 
 class SamplePlanCategory(models.Model):
     id = models.IntegerField(primary_key=True)

@@ -12,6 +12,7 @@ from ..utility.async_tasks import send_email_from_core_service, get_first_verifi
 from ..utility.response_utilities import ResponseUtilities
 from ..utility.states import cohort_types
 from ..utility.json_utilities import JsonUtilities
+from ..utility.string_utilities import StringUtilities
 
 
 class PlanViewHelper:
@@ -39,11 +40,24 @@ class PlanViewHelper:
             if 'duration_in_months' in plan_body and not isinstance(plan_body['duration_in_months'], int):
                 return {'error_message': 'duration_in_months must be integer'}
 
-            if 'cost' not in plan_body or not plan_body['cost']:
+            if 'cost' not in plan_body:
                 return {'error_message': 'send cost of plan'}
 
             if 'cm_emails' not in plan_body or not plan_body['cm_emails']:
                 return {'error_message': 'send cm_emails'}
+
+            # By default is_paid will be True
+            if 'is_paid' not in plan_body:
+                plan_body['is_paid'] = True
+
+            elif isinstance(plan_body['is_paid'], str):
+                plan_body['is_paid'] = StringUtilities.get_boolean_from_string(plan_body['is_paid'])
+
+            if not plan_body['is_paid'] and plan_body['cost'] != 0:
+                return ResponseUtilities.get_inner_error_context("There should be no cost for free plan!")
+
+            elif plan_body['is_paid'] and not plan_body['cost']:
+                return ResponseUtilities.get_inner_error_context("send cost of plan")
 
         else:
 
@@ -52,6 +66,9 @@ class PlanViewHelper:
 
             if 'duration_name' in plan_body:
                 return {'error_message': 'duration_name cannot be updated'}
+
+            if 'is_paid' in plan_body:
+                return {'error_message': 'is_paid cannot be updated'}
 
         if 'referral_free_days' in plan_body:
             if not isinstance(plan_body['referral_free_days'], int) or int(plan_body['referral_free_days']) < 0:
@@ -163,6 +180,9 @@ class PlanViewHelper:
         if 'image' in plan_body and plan_instance.image != plan_body['image']:
             plan_instance.image = plan_body['image']
 
+        if 'is_paid' in plan_body and plan_instance.is_paid != plan_body['is_paid']:
+            plan_instance.is_paid = plan_body['is_paid']
+
         try:
             plan_instance.save()
         except:
@@ -222,11 +242,19 @@ class PlanViewHelper:
 
         query_params = {
             'community_id': request.GET.get('community_id'),
-            'plan_id': request.GET.get('plan_id')
+            'plan_id': request.GET.get('plan_id'),
+            'renew': request.GET.get('renew', False),
+            'free': request.GET.get('free', False)
         }
 
         if not query_params['community_id'] and not query_params['plan_id']:
             return ResponseUtilities.get_inner_error_context('send community_id or plan_id in query params')
+
+        if isinstance(query_params['renew'], str):
+            query_params['renew'] = StringUtilities.get_boolean_from_string(query_params['renew'])
+
+        if isinstance(query_params['free'], str):
+            query_params['free'] = StringUtilities.get_boolean_from_string(query_params['free'])
 
         return query_params
 
@@ -393,7 +421,6 @@ class PlanViewHelper:
 
         return {}
 
-
     @staticmethod
     def parameter_validation_for_first_plan_creation_email(user_data, community_data, user_id):
 
@@ -475,4 +502,3 @@ class PlanViewHelper:
         }
 
         analytics.track(user_id, event_name, plan_event_metadata)
-

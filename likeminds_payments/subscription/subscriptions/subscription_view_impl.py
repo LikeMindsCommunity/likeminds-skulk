@@ -115,10 +115,12 @@ class FetchSubscriptionView(TransactionMixin, APIView):
                 status=status_codes.HTTP_200_OK
             )
 
-        return JsonResponse(
-            {'success': True, 'subscriptions': response_data['subscriptions']},
-            status=status_codes.HTTP_200_OK
-        )
+        response = {'success': True, 'subscriptions': response_data['subscriptions']}
+
+        if 'show_upgrade_membership' in response_data:
+            response['show_upgrade_membership'] = response_data['show_upgrade_membership']
+
+        return JsonResponse(response, status=status_codes.HTTP_200_OK)
 
 
 class CancelSubscriptionView(TransactionMixin, APIView):
@@ -419,3 +421,4 @@ class FetchSubscriptionMetaView(APIView):
              'new_members': response_data['new_members']},
             status=status_codes.HTTP_200_OK
         )
+

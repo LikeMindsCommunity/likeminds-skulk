@@ -80,18 +80,18 @@ class SubscriptionManager(metaclass=abc.ABCMeta):
         """
         sends member details of a community to the cm
         """
-        NotImplementedError
+        raise NotImplementedError
 
     @abc.abstractmethod
     def fetch_community_renewals(self) -> dict:
         """
         sends upcoming renewals in a community
         """
-        NotImplementedError
+        raise NotImplementedError
 
     @abc.abstractmethod
     def fetch_subscription_meta(self) -> dict:
         """
         fetch subscription meta for a community
         """
-        NotImplementedError
+        raise NotImplementedError

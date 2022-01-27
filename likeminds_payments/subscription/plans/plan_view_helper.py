@@ -45,6 +45,16 @@ class PlanViewHelper:
             if 'cm_emails' not in plan_body or not plan_body['cm_emails']:
                 return {'error_message': 'send cm_emails'}
 
+            # By default is_paid will be True
+            if 'is_paid' not in plan_body:
+                plan_body['is_paid'] = True
+
+            if not isinstance(plan_body['is_paid'], bool):
+                return ResponseUtilities.get_inner_error_context("is_paid must be boolean")
+
+            if not plan_body['is_paid'] and plan_body['cost'] != 0:
+                return ResponseUtilities.get_inner_error_context("There should be no cost for free plan!")
+
         else:
 
             if 'community_id' in plan_body:
@@ -163,6 +173,9 @@ class PlanViewHelper:
         if 'image' in plan_body and plan_instance.image != plan_body['image']:
             plan_instance.image = plan_body['image']
 
+        if 'is_paid' in plan_body and plan_instance.is_paid != plan_body['is_paid']:
+            plan_instance.is_paid = plan_body['is_paid']
+
         try:
             plan_instance.save()
         except:
@@ -222,11 +235,19 @@ class PlanViewHelper:
 
         query_params = {
             'community_id': request.GET.get('community_id'),
-            'plan_id': request.GET.get('plan_id')
+            'plan_id': request.GET.get('plan_id'),
+            'renew': request.GET.get('renew', False),
+            'free': request.GET.get('free', False)
         }
 
         if not query_params['community_id'] and not query_params['plan_id']:
             return ResponseUtilities.get_inner_error_context('send community_id or plan_id in query params')
+
+        if not isinstance(query_params['renew'], bool):
+            return ResponseUtilities.get_inner_error_context('renew should be boolean')
+
+        if not isinstance(query_params['free'], bool):
+            return ResponseUtilities.get_inner_error_context('free should be boolean')
 
         return query_params
 
@@ -393,7 +414,6 @@ class PlanViewHelper:
 
         return {}
 
-
     @staticmethod
     def parameter_validation_for_first_plan_creation_email(user_data, community_data, user_id):
 
@@ -475,4 +495,3 @@ class PlanViewHelper:
         }
 
         analytics.track(user_id, event_name, plan_event_metadata)
-

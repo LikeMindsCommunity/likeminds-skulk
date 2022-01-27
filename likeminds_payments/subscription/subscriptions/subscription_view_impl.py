@@ -419,3 +419,4 @@ class FetchSubscriptionMetaView(APIView):
              'new_members': response_data['new_members']},
             status=status_codes.HTTP_200_OK
         )
+

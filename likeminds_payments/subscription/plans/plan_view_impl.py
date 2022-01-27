@@ -52,6 +52,9 @@ class CreatePlanView(TransactionMixin, APIView):
         serialized_plan_list = PlanSerializer([instance_data['plan_instance']])
         serialized_plan = serialized_plan_list[0]
 
+        # Add Event Analytics
+        PlanViewHelper.add_event_for_membership_plan(serialized_plan, analytics_event_name, user_id)
+
         # Creating Subscription Plan Cohort
         cohort_response = PlanViewHelper.create_subscription_plan_cohort(serialized_plan, user_id)
 
@@ -136,6 +139,11 @@ class DeletePlanView(TransactionMixin, APIView):
 
         plan_manager = PlanImpl(plan_instance=instance_data['plan_instance'])
         response_data = plan_manager.delete_plan()
+
+        # Add Event Analytics
+        serialized_plan_list = PlanSerializer([instance_data['plan_instance']])
+        serialized_plan = serialized_plan_list[0]
+        PlanViewHelper.add_event_for_membership_plan(serialized_plan, DELETE_PLAN_ANALYTICS_EVENT_NAME, user_id)
 
         if 'error_message' in response_data:
             return JsonResponse(

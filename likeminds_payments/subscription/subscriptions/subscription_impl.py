@@ -1501,10 +1501,10 @@ class SubscriptionImpl(SubscriptionManager):
         new_members_join_days = TimeUtilities.subtract_days_in_epoch_time(current_time, NEW_MEMBER_JOIN_DAYS)
 
         data = {
-            'total_members': len(
-                ModelUtilities.get_model_filter(Subscription, {'community_id': self.get_community_id()})),
-            'new_members': len(ModelUtilities.get_model_filter(Subscription, {'community_id': self.get_community_id(),
-                                                                              'created_at__gt': new_members_join_days}))
+            'total_members': ModelUtilities.get_model_filter(Subscription,
+                                                             {'community_id': self.get_community_id()}).count(),
+            'new_members': ModelUtilities.get_model_filter(Subscription, {'community_id': self.get_community_id(),
+                                                                          'created_at__gt': new_members_join_days}).count()
         }
 
         return data

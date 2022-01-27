@@ -1,4 +1,5 @@
 from ..plans.models import SubscriptionPlan
+from ..plans.plan_helper import PlanHelper
 from ..plans.serializers import PlanSerializer
 
 
@@ -28,8 +29,11 @@ def SubscriptionHistorySerializer(subscription_history) -> list:
             subscription_plan = SubscriptionPlan.get_plan_or_None(plan_id=entry.transaction.plan_id)
             if subscription_plan is not None:
                 history_object['duration_name'] = subscription_plan.duration_name
-                serialized_plan = PlanSerializer([subscription_plan])
-                history_object['plan'] = serialized_plan[0]
+                plan_object = PlanSerializer(subscription_plan)
+                plan_title_context = PlanHelper.get_plan_title_and_subtitle_for_plan(plan_object=plan_object,
+                                                                                     plan_instance=subscription_plan)
+                plan_object.update(plan_title_context)
+                history_object['plan'] = plan_object
 
         output.append(history_object)
 

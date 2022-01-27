@@ -22,51 +22,43 @@ class EventCohortPlanSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-def PlanSerializer(plans) -> list:
-    output = []
+def PlanSerializer(plan) -> dict:
 
-    for plan in plans:
-        plan_object = {
-            'plan_id': plan.plan_id,
-            'community_id': plan.community_id,
-            'name': plan.name,
-            'duration_name': plan.duration_name,
-            'cost': plan.cost // 100,
-            'strike_cost': plan.strike_cost,
-            'cost_usd': plan.cost_usd,
-            'strike_cost_usd': plan.strike_cost_usd,
-            'duration_in_months': plan.duration_in_months,
-            'cm_emails': plan.cm_emails,
-            'buddy_emails': plan.buddy_emails,
-            'description': plan.description,
-            'referral_free_days': plan.referral_free_days,
-            'image': plan.image,
-            'url': PlanUtilities.generate_plan_url(plan.plan_id),
-            'description_icon_type': plan.description_icon_type,
-            'is_paid': plan.is_paid
-        }
+    plan_object = {
+        'plan_id': plan.plan_id,
+        'community_id': plan.community_id,
+        'name': plan.name,
+        'duration_name': plan.duration_name,
+        'cost': plan.cost // 100,
+        'strike_cost': plan.strike_cost,
+        'cost_usd': plan.cost_usd,
+        'strike_cost_usd': plan.strike_cost_usd,
+        'duration_in_months': plan.duration_in_months,
+        'cm_emails': plan.cm_emails,
+        'buddy_emails': plan.buddy_emails,
+        'description': plan.description,
+        'referral_free_days': plan.referral_free_days,
+        'image': plan.image,
+        'url': PlanUtilities.generate_plan_url(plan.plan_id),
+        'description_icon_type': plan.description_icon_type,
+        'is_paid': plan.is_paid
+    }
 
-        community_data = CoreServiceUtilities.get_community_data(plan.community_id)
+    community_data = CoreServiceUtilities.get_community_data(plan.community_id)
 
-        if 'community' in community_data:
-            plan_object['community_name'] = community_data['community'].get('name')
+    if 'community' in community_data:
+        plan_object['community_name'] = community_data['community'].get('name')
 
-        if plan.strike_cost is not None:
-            plan_object['strike_cost'] = plan.strike_cost // 100
+    if plan.strike_cost is not None:
+        plan_object['strike_cost'] = plan.strike_cost // 100
 
-        if plan.cost_usd is not None:
-            plan_object['cost_usd'] = plan.cost_usd // 100
+    if plan.cost_usd is not None:
+        plan_object['cost_usd'] = plan.cost_usd // 100
 
-        if plan.strike_cost_usd is not None:
-            plan_object['strike_cost_usd'] = plan.strike_cost_usd // 100
+    if plan.strike_cost_usd is not None:
+        plan_object['strike_cost_usd'] = plan.strike_cost_usd // 100
 
-        plan_title_context = PlanHelper.get_plan_title_and_subtitle_for_plan(plan_object=plan_object,
-                                                                             plan_instance=plan)
-        plan_object.update(plan_title_context)
-
-        output.append(plan_object)
-
-    return output
+    return plan_object
 
 
 def EventPlanSerializer(plan_instance) -> dict:

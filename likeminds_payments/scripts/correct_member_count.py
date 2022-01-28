@@ -8,20 +8,20 @@ import time
 
 def get_removed_members():
 
-    # query to fetch members who are not renewed
+    """query to fetch members who are not renewed
 
-    # select
-    # distinct nt.community_id, nt.member_id
-    # from
-    # (select
-    # rm.community_id, rm.member_id
-    # from togther_removedmembers rm
-    # left join togther_members cm
-    # on cm.member_id_id = rm.member_id and cm.community_id_id = rm.community_id
-    # where (cm.member_id_id is null or cm.community_id_id is null) and rm.removed_state = 2) nt
-    # left join togther_subscriptionexpiredmembers em
-    # on nt.community_id = em.community_id and nt.member_id = em.member_id
-    # where em.community_id is not null and em.member_id is not null;
+    select
+    distinct nt.community_id, nt.member_id
+    from
+    (select
+    rm.community_id, rm.member_id
+    from togther_removedmembers rm
+    left join togther_members cm
+    on cm.member_id_id = rm.member_id and cm.community_id_id = rm.community_id
+    where (cm.member_id_id is null or cm.community_id_id is null) and rm.removed_state = 2) nt
+    left join togther_subscriptionexpiredmembers em
+    on nt.community_id = em.community_id and nt.member_id = em.member_id
+    where em.community_id is not null and em.member_id is not null; """
 
     input_csv_path = r'./scripts/scripts_data/renew_member.csv'
     df = pd.read_csv(input_csv_path)
@@ -61,7 +61,7 @@ def main():
                 subscription.save()
                 print('success', subscription.community_id, subscription.user_id)
 
-            time.sleep(5)
+            time.sleep(2)
 
 
 

@@ -831,13 +831,7 @@ class SubscriptionImpl(SubscriptionManager):
         if len(subscriptions) == 0:
             return {'error_message': 'no subscriptions exist with provided user_id'}
 
-        subscription_context = {'subscriptions': self._serialize_subscriptions(subscriptions)}
-
-        if not member_ids and self.get_community_id():
-            latest_subscription = subscriptions[0]
-            subscription_context['show_upgrade_membership'] = self._show_upgrade_membership(latest_subscription)
-
-        return subscription_context
+        return {'subscriptions': self._serialize_subscriptions(subscriptions)}
 
     def cancel_subscription(self) -> dict:
 
@@ -1509,8 +1503,11 @@ class SubscriptionImpl(SubscriptionManager):
 
         return data
 
+
+class SubscriptionHelper:
+
     @staticmethod
-    def _show_upgrade_membership(latest_subscription) -> bool:
+    def show_upgrade_membership(latest_subscription) -> bool:
         transaction_instance = latest_subscription.transaction
 
         if not transaction_instance:

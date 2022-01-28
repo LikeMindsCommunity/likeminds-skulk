@@ -52,8 +52,7 @@ def SubscriptionSerializer(subscriptions) -> list:
             subscription_object['valid_till_grace_period'] = TimeUtilities.add_milliseconds_in_epoch_time(
                 subscription.valid_till, subscription.transaction.grace_period)
             from subscription.subscriptions.subscription_impl import SubscriptionHelper
-            subscription_object['show_upgrade_membership'] = SubscriptionHelper.show_upgrade_membership(
-                subscription_plan)
+            subscription_object['show_upgrade_membership'] = SubscriptionHelper.show_upgrade_membership(subscription)
 
         subscription_object['membership_state'] = getMembershipState(subscription_object)
         output.append(subscription_object)

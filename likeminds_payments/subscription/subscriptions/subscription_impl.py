@@ -831,13 +831,7 @@ class SubscriptionImpl(SubscriptionManager):
         if len(subscriptions) == 0:
             return {'error_message': 'no subscriptions exist with provided user_id'}
 
-        subscription_context = {'subscriptions': self._serialize_subscriptions(subscriptions)}
-
-        if not member_ids and self.get_community_id():
-            latest_subscription = subscriptions[0]
-            subscription_context['show_upgrade_membership'] = self._show_upgrade_membership(latest_subscription)
-
-        return subscription_context
+        return {'subscriptions': self._serialize_subscriptions(subscriptions)}
 
     def cancel_subscription(self) -> dict:
 
@@ -1509,12 +1503,23 @@ class SubscriptionImpl(SubscriptionManager):
 
         return data
 
+
+class SubscriptionHelper:
+
     @staticmethod
-    def _show_upgrade_membership(latest_subscription) -> bool:
+    def show_upgrade_membership(latest_subscription) -> bool:
         transaction_instance = latest_subscription.transaction
 
         if not transaction_instance:
             return False
+
+        subscription_history_filter = ModelUtilities.get_model_filter(SubscriptionHistory,
+                                                                      {'transaction': transaction_instance})
+
+        if not subscription_history_filter:
+            return False
+
+        subscription_history_instance = subscription_history_filter[0]
 
         plan_instance = SubscriptionPlan.get_plan_or_None(plan_id=transaction_instance.plan_id)
 
@@ -1522,7 +1527,7 @@ class SubscriptionImpl(SubscriptionManager):
             return False
 
         current_time_in_ms = TimeUtilities.current_time_in_milliseconds()
-        passed_time_in_ms = current_time_in_ms - latest_subscription.date_subscribed
+        passed_time_in_ms = current_time_in_ms - subscription_history_instance.start_date
 
         if plan_instance.is_paid is False and passed_time_in_ms > TimeUtilities.MILLISECONDS_IN_A_DAY:
             return True

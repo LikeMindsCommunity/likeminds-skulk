@@ -1516,10 +1516,10 @@ class SubscriptionHelper:
         subscription_history_filter = ModelUtilities.get_model_filter(SubscriptionHistory,
                                                                       {'transaction': transaction_instance})
 
-        subscription_history_instance = subscription_history_filter[0]
-
-        if not subscription_history_instance:
+        if not subscription_history_filter:
             return False
+
+        subscription_history_instance = subscription_history_filter[0]
 
         plan_instance = SubscriptionPlan.get_plan_or_None(plan_id=transaction_instance.plan_id)
 

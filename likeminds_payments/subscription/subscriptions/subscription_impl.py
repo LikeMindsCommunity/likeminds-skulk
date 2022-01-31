@@ -1513,13 +1513,21 @@ class SubscriptionHelper:
         if not transaction_instance:
             return False
 
+        subscription_history_filter = ModelUtilities.get_model_filter(SubscriptionHistory,
+                                                                      {'transaction': transaction_instance})
+
+        subscription_history_instance = subscription_history_filter[0]
+
+        if not subscription_history_instance:
+            return False
+
         plan_instance = SubscriptionPlan.get_plan_or_None(plan_id=transaction_instance.plan_id)
 
         if not plan_instance:
             return False
 
         current_time_in_ms = TimeUtilities.current_time_in_milliseconds()
-        passed_time_in_ms = current_time_in_ms - latest_subscription.date_subscribed
+        passed_time_in_ms = current_time_in_ms - subscription_history_instance.start_date
 
         if plan_instance.is_paid is False and passed_time_in_ms > TimeUtilities.MILLISECONDS_IN_A_DAY:
             return True

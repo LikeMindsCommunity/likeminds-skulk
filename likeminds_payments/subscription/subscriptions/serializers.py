@@ -7,7 +7,6 @@ from .constants import *
 
 
 def getMembershipState(subscription_object: dict) -> int:
-
     current_time = TimeUtilities.current_time_in_milliseconds()
 
     if current_time > subscription_object['valid_till']:
@@ -22,7 +21,6 @@ def getMembershipState(subscription_object: dict) -> int:
 
 
 def SubscriptionSerializer(subscriptions) -> list:
-
     output = []
 
     for subscription in subscriptions:
@@ -38,7 +36,8 @@ def SubscriptionSerializer(subscriptions) -> list:
             'grace_period': 0,
             'valid_till_grace_period': subscription.valid_till,
             'membership_state': 0,
-            'plan': None
+            'plan': None,
+            'show_upgrade_membership': False
         }
 
         if subscription.transaction is not None:
@@ -52,21 +51,19 @@ def SubscriptionSerializer(subscriptions) -> list:
             subscription_object['grace_period'] = subscription.transaction.grace_period
             subscription_object['valid_till_grace_period'] = TimeUtilities.add_milliseconds_in_epoch_time(
                 subscription.valid_till, subscription.transaction.grace_period)
+            from subscription.subscriptions.subscription_impl import SubscriptionHelper
+            subscription_object['show_upgrade_membership'] = SubscriptionHelper.show_upgrade_membership(subscription)
 
         subscription_object['membership_state'] = getMembershipState(subscription_object)
-
         output.append(subscription_object)
 
     return output
 
 
 def SubscriptionListSerializer(member_subscriptions) -> dict:
-
     output = {}
 
     for key in member_subscriptions.keys():
-
         output[key] = SubscriptionSerializer(member_subscriptions[key])
 
     return output
-

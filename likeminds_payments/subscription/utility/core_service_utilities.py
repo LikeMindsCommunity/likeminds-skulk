@@ -394,7 +394,8 @@ class CoreServiceUtilities:
 
         data = {
             'chatroom_id': update_info.get('chatroom_id'),
-            'event_payment_link': update_info.get('event_payment_link')
+            'event_payment_link': update_info.get('event_payment_link'),
+            'restrict_event_update_notification': update_info.get('restrict_event_update_notification')
         }
 
         headers = {

@@ -311,7 +311,4 @@ class CreateFreeTransactionView(APIView):
                 status=status_codes.HTTP_200_OK
             )
 
-        return JsonResponse(
-            {'success': True},
-            status=status_codes.HTTP_200_OK
-        )
+        return JsonResponse(response_data, status=status_codes.HTTP_200_OK)

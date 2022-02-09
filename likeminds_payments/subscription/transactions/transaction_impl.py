@@ -953,7 +953,7 @@ class TransactionImpl(TransactionManager):
             # send join community communication
             payment_success_membership_join_communication.delay(transaction_instance.id)
 
-        return {'success': True, 'transaction_id': transaction_instance.id}
+        return {'success': True, 'payment_id': transaction_instance.payment_id}
 
 
 class TransactionHelper:

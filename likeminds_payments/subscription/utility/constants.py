@@ -42,6 +42,8 @@ class EmailCategories:
 
     SETTLEMENT = "Settlement"
 
+    PAYMENT_PAGE = "Payment page email"
+
 
 class EmailSubCategories:
     FIRST_PLAN_CREATED = "First Plan Created"
@@ -50,3 +52,7 @@ class EmailSubCategories:
     SETTLEMENT_SUCCESSFUL_CM = "Settlement successful cm"
     SETTLEMENT_FAILED_ADMIN = "Settlement failed admin"
     SETTLEMENT_SUCCESSFUL_ADMIN = "Settlement successful admin"
+
+    NEW_PAYMENT = "New Payment"
+    FAILED_PAYMENT = "Failed payment"
+    EMAIL_REPORT = "Email report"

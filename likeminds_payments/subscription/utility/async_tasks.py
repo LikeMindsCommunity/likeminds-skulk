@@ -192,6 +192,9 @@ def payment_page_member_payment_success_email(transaction_id):
     payment_page_mail_body_payment_success_member['mail_body'] = member_payment_success_mail_template
     payment_page_mail_body_payment_success_member['mail_recipient_list'] = [transaction_instance.payment_email]
     payment_page_mail_body_payment_success_member['reply_to'] = [owner_verified_email_and_phone['email']]
+    payment_page_mail_body_payment_success_member['categories'] = MailUtilities.get_email_category_list_using_category_subcategory(
+        EmailCategories.PAYMENT_PAGE, EmailSubCategories.NEW_PAYMENT
+    )
 
     send_email_response = send_email_from_core_service(community_owner_details['id'],
                                                        payment_page_mail_body_payment_success_member)
@@ -276,6 +279,8 @@ def payment_page_member_payment_failed_email(transaction_id):
     payment_page_mail_body_payment_failed_member['mail_body'] = member_payment_failed_mail_template
     payment_page_mail_body_payment_failed_member['mail_recipient_list'] = [transaction_instance.payment_email]
     payment_page_mail_body_payment_failed_member['reply_to'] = [owner_verified_email_and_phone['email']]
+    payment_page_mail_body_payment_failed_member['categories'] = MailUtilities.get_email_category_list_using_category_subcategory(
+        EmailCategories.PAYMENT_PAGE, EmailSubCategories.FAILED_PAYMENT)
 
     send_email_response = send_email_from_core_service(community_owner_details['id'],
                                                        payment_page_mail_body_payment_failed_member)
@@ -352,6 +357,8 @@ def payment_page_cm_payment_success_email(transaction_id):
         'subject'].format(str(payment_page_instance.title))
     payment_page_mail_body_payment_success_cm['mail_body'] = cm_payment_success_mail_template
     payment_page_mail_body_payment_success_cm['mail_recipient_list'] = [transaction_instance.payment_email]
+    payment_page_mail_body_payment_success_cm['categories'] = MailUtilities.get_email_category_list_using_category_subcategory(
+        EmailCategories.PAYMENT_PAGE, EmailSubCategories.NEW_PAYMENT)
 
     send_email_response = send_email_from_core_service(community_owner_details['id'],
                                                        payment_page_mail_body_payment_success_cm)

@@ -33,7 +33,8 @@ from subscription.utility.time_utilities import TimeUtilities
 from subscription.utility.number_utilities import NumberUtilities
 from subscription.utility.string_utilities import StringUtilities
 from subscription.utility.url_utilities import UrlUtilities
-from .constants import BRANCH_LINK_BASE_URL, ADMIN_EMAIL
+from .constants import BRANCH_LINK_BASE_URL, ADMIN_EMAIL, EmailCategories, EmailSubCategories
+from .mail_utilities import MailUtilities
 
 
 def create_event_meta_for_webflow_update(event_plan_instance):
@@ -593,6 +594,9 @@ def _get_settlement_processed_email_context(community_details, community_owner_d
 
     cm_emails.append(ADMIN_EMAIL)
 
+    mail_categories = MailUtilities.get_email_category_list_using_category_subcategory(
+        EmailCategories.SETTLEMENT, EmailSubCategories.SETTLEMENT_SUCCESSFUL_CM)
+
     cm_mail_body = {
         "subject": SETTLEMENT_PROCESSED_EMAIL_TO_CM_SUBJECT.format(
             community_details['community'].get('name'),
@@ -600,7 +604,8 @@ def _get_settlement_processed_email_context(community_details, community_owner_d
                            TimeUtilities.convert_epoch_time_in_hh_mm_am_pm(settlement_instance.created_at))
         ),
         "mail_body": template_context,
-        "mail_recipient_list": cm_emails
+        "mail_recipient_list": cm_emails,
+        "categories": mail_categories
     }
 
     return {'email_context': cm_mail_body,
@@ -671,6 +676,9 @@ def _get_settlement_failed_cm_email_context(community_details, community_owner_d
 
     cm_emails.append(ADMIN_EMAIL)
 
+    mail_categories = MailUtilities.get_email_category_list_using_category_subcategory(
+        EmailCategories.SETTLEMENT, EmailSubCategories.SETTLEMENT_FAILED_CM)
+
     cm_mail_body = {
         "subject": SETTLEMENT_FAILED_EMAIL_TO_CM_SUBJECT.format(
             community_details['community'].get('name'),
@@ -678,7 +686,8 @@ def _get_settlement_failed_cm_email_context(community_details, community_owner_d
                            TimeUtilities.convert_epoch_time_in_hh_mm_am_pm(settlement_instance.created_at))
         ),
         "mail_body": template_context,
-        "mail_recipient_list": cm_emails
+        "mail_recipient_list": cm_emails,
+        "categories": mail_categories
     }
 
     return {'email_context': cm_mail_body,
@@ -734,6 +743,9 @@ def _get_settlement_failed_admin_email_context(community_details, community_owne
             owner_id = member['id']
         cm_details[member['id']] = None
 
+    mail_categories = MailUtilities.get_email_category_list_using_category_subcategory(
+        EmailCategories.SETTLEMENT, EmailSubCategories.SETTLEMENT_FAILED_ADMIN)
+
     admin_mail_body = {
         "subject": SETTLEMENT_FAILED_EMAIL_TO_CM_SUBJECT.format(
             community_details['community'].get('name'),
@@ -741,7 +753,8 @@ def _get_settlement_failed_admin_email_context(community_details, community_owne
                            TimeUtilities.convert_epoch_time_in_hh_mm_am_pm(settlement_instance.created_at))
         ),
         "mail_body": template_context,
-        "mail_recipient_list": [ADMIN_EMAIL]
+        "mail_recipient_list": [ADMIN_EMAIL],
+        "categories": mail_categories
     }
 
     return {'email_context': admin_mail_body,

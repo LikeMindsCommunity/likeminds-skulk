@@ -40,6 +40,13 @@ MAIL_CATEGORY_PROD = "prod"
 class EmailCategories:
     CREATE_COMMUNITY = "Create community"
 
+    SETTLEMENT = "Settlement"
+
 
 class EmailSubCategories:
     FIRST_PLAN_CREATED = "First Plan Created"
+
+    SETTLEMENT_FAILED_CM = "Settlement failed cm"
+    SETTLEMENT_SUCCESSFUL_CM = "Settlement successful cm"
+    SETTLEMENT_FAILED_ADMIN = "Settlement failed admin"
+    SETTLEMENT_SUCCESSFUL_ADMIN = "Settlement successful admin"

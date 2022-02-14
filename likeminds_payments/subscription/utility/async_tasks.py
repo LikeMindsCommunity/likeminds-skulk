@@ -472,7 +472,9 @@ def payment_success_membership_join_communication(transaction_id):
     cm_mail_body = {
         "subject": PAYMENT_SUCCESS_MEMBERSHIP_EMAIL_TO_CM_SUBJECT,
         "mail_body": cm_mail_template,
-        "mail_recipient_list": cm_emails
+        "mail_recipient_list": cm_emails,
+        "categories": MailUtilities.get_email_category_list_using_category_subcategory(
+            EmailCategories.JOIN_FLOW, EmailSubCategories.PAYMENT_SUCCESSFUL_AND_MEMBER_JOINED)
     }
 
     member_mail_template = get_template(
@@ -485,7 +487,9 @@ def payment_success_membership_join_communication(transaction_id):
         "subject": PAYMENT_SUCCESS_MEMBERSHIP_EMAIL_TO_MEMBER_SUBJECT.format(transaction_instance.community_name),
         "mail_body": member_mail_template,
         "mail_recipient_list": [transaction_instance.payment_email],
-        "reply_to": cm_emails
+        "reply_to": cm_emails,
+        "categories": MailUtilities.get_email_category_list_using_category_subcategory(
+            EmailCategories.JOIN_FLOW, EmailSubCategories.PAYMENT_SUCCESSFUL)
     }
 
     send_cm_email_response = send_email_from_core_service(owner_id, cm_mail_body)

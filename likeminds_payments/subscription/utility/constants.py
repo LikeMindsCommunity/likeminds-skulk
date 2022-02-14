@@ -44,6 +44,10 @@ class EmailCategories:
 
     PAYMENT_PAGE = "Payment page email"
 
+    JOIN_FLOW = "Join Flow"
+
+    RENEWAL_FLOW = "Renewal Flow"
+
 
 class EmailSubCategories:
     FIRST_PLAN_CREATED = "First Plan Created"
@@ -56,3 +60,6 @@ class EmailSubCategories:
     NEW_PAYMENT = "New Payment"
     FAILED_PAYMENT = "Failed payment"
     EMAIL_REPORT = "Email report"
+
+    PAYMENT_SUCCESSFUL = "Payment Successful"
+    PAYMENT_SUCCESSFUL_AND_MEMBER_JOINED = "Payment successful + Member joined"

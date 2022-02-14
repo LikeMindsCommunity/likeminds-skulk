@@ -13,7 +13,7 @@ class Settlement(models.Model):
     fee_amount = models.IntegerField(null=True, default=None)
     fee_percentage = models.IntegerField(null=True, default=None)
     revenue = models.IntegerField(null=True, default=None)
-    reference_id = models.CharField(max_length=64, unique=True)
+    reference_id = models.CharField(max_length=64, unique=True, null=True)
     created_at = models.BigIntegerField(default=0)
     updated_at = models.BigIntegerField(default=0)
 

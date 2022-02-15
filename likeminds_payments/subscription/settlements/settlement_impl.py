@@ -16,7 +16,7 @@ from subscription.kyc.models import CommunityKYC
 from subscription.transactions.models import Transaction
 from subscription.plans.models import SubscriptionEventPlan
 from subscription.settlements.constants import (PAYOUT_MODE, PAYOUT_PURPOSE, PAYOUT_NARRATION, PAYOUT_QUEUE,
-                                                PAYOUT_STATUS_MAP, SETTLEMENTS_PAGE_SIZE)
+                                                PAYOUT_STATUS_MAP, SETTLEMENTS_PAGE_SIZE, STARTED_SETTLEMENT_STATUS)
 from subscription.utility.async_tasks import (settlement_processed_communication,
                                               settlement_failed_cm_communication,
                                               settlement_failed_admin_communication)
@@ -24,7 +24,6 @@ from django.conf import settings
 import hmac
 import hashlib
 import json
-import uuid
 import shortuuid
 
 
@@ -139,7 +138,7 @@ class SettlementImpl(SettlementManager):
                 status_codes.HTTP_500_INTERNAL_SERVER_ERROR)
 
         payout_details['id'] = None
-        payout_details['status'] = SettlementStatus.STARTED
+        payout_details['status'] = STARTED_SETTLEMENT_STATUS
 
         create_settlement = self._create_settlement_instance(payout_details)
 

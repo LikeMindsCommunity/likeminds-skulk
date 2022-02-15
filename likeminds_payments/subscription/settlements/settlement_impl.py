@@ -25,6 +25,7 @@ import hmac
 import hashlib
 import json
 import uuid
+import shortuuid
 
 
 class SettlementImpl(SettlementManager):
@@ -102,7 +103,9 @@ class SettlementImpl(SettlementManager):
             'mode': PAYOUT_MODE,
             'purpose': PAYOUT_PURPOSE,
             'queue_if_low_balance': PAYOUT_QUEUE,
-            'reference_id': '{}-{}-{}'.format(self.get_community_id(), uuid.uuid4(), settlement_data.get('paid_amount')),
+            'reference_id': '{}-{}-{}'.format(self.get_community_id(),
+                                              shortuuid.uuid(),
+                                              settlement_data.get('paid_amount')),
             'narration': PAYOUT_NARRATION,
             'notes': {
                 'start_epoch': settlement_data.get('start_epoch'),

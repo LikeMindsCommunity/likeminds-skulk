@@ -9,7 +9,8 @@ PAYOUT_STATUS_MAP = {
     'processing': SettlementStatus.INITIATED,
     'processed': SettlementStatus.PROCESSED,
     'reversed': SettlementStatus.REVERSED,
-    'failed': SettlementStatus.FAILED
+    'failed': SettlementStatus.FAILED,
+    'started': SettlementStatus.STARTED
 }
 VALID_PAYOUT_WEBHOOK_EVENTS = [
     "payout.queued",
@@ -29,3 +30,4 @@ SETTLEMENT_STATUS_MAP_FOR_EMAIL = {
 SETTLEMENTS_PAGE_SIZE = 50
 SETTLEMENT_PROCESSED_EMAIL_TO_CM_SUBJECT = "Settlement processed for {} on {}"
 SETTLEMENT_FAILED_EMAIL_TO_CM_SUBJECT = "Settlement failed for {} on {}"
+STARTED_SETTLEMENT_STATUS = 'started'

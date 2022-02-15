@@ -47,3 +47,11 @@ PAYMENT_PAGE_SUCCESS_PAYMENT_PUSH_NOTIFICATION_TO_CM_SUB_TITLE = "We have receiv
                                                                  " {} {} for {}"
 PAYMENT_PAGE_SUCCESS_PAYMENT_PUSH_NOTIFICATION_TO_CM_ROUTE = "route://testing_route_push_notification"
 PAYMENT_PAGE_SIZE = 25
+
+
+class NotificationCategories:
+    PAYMENT_PAGE_SUCCESSFUL = "Payment page successful"
+
+
+class NotificationSubCategories:
+    NEW_PAYMENT_ADDED = "New payment added"

@@ -16,7 +16,7 @@ from subscription.kyc.models import CommunityKYC
 from subscription.transactions.models import Transaction
 from subscription.plans.models import SubscriptionEventPlan
 from subscription.settlements.constants import (PAYOUT_MODE, PAYOUT_PURPOSE, PAYOUT_NARRATION, PAYOUT_QUEUE,
-                                                PAYOUT_STATUS_MAP, SETTLEMENTS_PAGE_SIZE)
+                                                PAYOUT_STATUS_MAP, SETTLEMENTS_PAGE_SIZE, STARTED_SETTLEMENT_STATUS)
 from subscription.utility.async_tasks import (settlement_processed_communication,
                                               settlement_failed_cm_communication,
                                               settlement_failed_admin_communication)
@@ -24,6 +24,7 @@ from django.conf import settings
 import hmac
 import hashlib
 import json
+import shortuuid
 
 
 class SettlementImpl(SettlementManager):
@@ -101,7 +102,9 @@ class SettlementImpl(SettlementManager):
             'mode': PAYOUT_MODE,
             'purpose': PAYOUT_PURPOSE,
             'queue_if_low_balance': PAYOUT_QUEUE,
-            'reference_id': '{}{}{}'.format(self.get_community_id(), current_time, settlement_data.get('paid_amount')),
+            'reference_id': '{}-{}-{}'.format(self.get_community_id(),
+                                              shortuuid.uuid(),
+                                              settlement_data.get('paid_amount')),
             'narration': PAYOUT_NARRATION,
             'notes': {
                 'start_epoch': settlement_data.get('start_epoch'),
@@ -115,7 +118,8 @@ class SettlementImpl(SettlementManager):
 
         if len(settlement_instances) > 0:
 
-            if settlement_instances[0].status in [SettlementStatus.QUEUED, SettlementStatus.INITIATED]:
+            if settlement_instances[0].status in [SettlementStatus.QUEUED, SettlementStatus.INITIATED,
+                                                  SettlementStatus.STARTED]:
                 return ResponseUtilities.get_impl_error_context(
                     'Cannot initiate settlement, previous settlement in progress',
                     status_codes.HTTP_400_BAD_REQUEST)
@@ -132,6 +136,15 @@ class SettlementImpl(SettlementManager):
             return ResponseUtilities.get_impl_error_context(
                 'Payout initiation failed due to {}'.format(response['error_message']),
                 status_codes.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        payout_details['id'] = None
+        payout_details['status'] = STARTED_SETTLEMENT_STATUS
+
+        create_settlement = self._create_settlement_instance(payout_details)
+
+        if 'error_message' in create_settlement:
+            return ResponseUtilities.get_impl_error_context(create_settlement['error_message'],
+                                                            create_settlement['status'])
 
         return {'success': True}
 
@@ -164,7 +177,8 @@ class SettlementImpl(SettlementManager):
             'fee_percentage': settlement_body['notes'].get('fee_percentage'),
             'revenue': settlement_body['notes'].get('revenue'),
             'currency': settlement_body.get('currency'),
-            'status': PAYOUT_STATUS_MAP[settlement_body.get('status')]
+            'status': PAYOUT_STATUS_MAP[settlement_body.get('status')],
+            'reference_id': settlement_body.get('reference_id')
         }
 
         settlement_instance = SettlementSerializer(data=settlement_data)
@@ -235,10 +249,11 @@ class SettlementImpl(SettlementManager):
                                                             status_codes.HTTP_400_BAD_REQUEST)
 
         existing_settlement_list = ModelUtilities.get_model_filter(
-            Settlement, {'settlement_id': payout_entity.get('id')})
+            Settlement, {'reference_id': payout_entity.get('reference_id')})
 
         if len(existing_settlement_list) > 0:
             settlement_instance = existing_settlement_list[0]
+            settlement_instance.settlement_id = payout_entity.get('id')
             settlement_instance.status = PAYOUT_STATUS_MAP[payout_entity.get('status')]
             settlement_instance.save()
 

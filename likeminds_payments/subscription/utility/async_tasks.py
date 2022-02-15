@@ -23,7 +23,8 @@ from subscription.payment_page.constants import (PAYMENT_PAGE_PAYMENT_SUCCESS_EM
                                                  PAYMENT_PAGE_PAYMENT_SUCCESS_EMAIL_TO_CM_BODY,
                                                  PAYMENT_PAGE_SUCCESS_PAYMENT_PUSH_NOTIFICATION_TO_CM_TITLE,
                                                  PAYMENT_PAGE_SUCCESS_PAYMENT_PUSH_NOTIFICATION_TO_CM_SUB_TITLE,
-                                                 PAYMENT_PAGE_SUCCESS_PAYMENT_PUSH_NOTIFICATION_TO_CM_ROUTE)
+                                                 PAYMENT_PAGE_SUCCESS_PAYMENT_PUSH_NOTIFICATION_TO_CM_ROUTE,
+                                                 NotificationCategories, NotificationSubCategories)
 from subscription.settlements.constants import (SETTLEMENT_PROCESSED_EMAIL_TO_CM_SUBJECT,
                                                 SETTLEMENT_FAILED_EMAIL_TO_CM_SUBJECT,
                                                 SETTLEMENT_STATUS_MAP_FOR_EMAIL)
@@ -364,6 +365,10 @@ def payment_page_cm_payment_success_email(transaction_id):
                     str(NumberUtilities.convert_to_rupee_or_none(transaction_instance.amount)),
                     str(payment_page_instance.title)),
                 'route': PAYMENT_PAGE_SUCCESS_PAYMENT_PUSH_NOTIFICATION_TO_CM_ROUTE
+            },
+            'category': {
+                'category': NotificationCategories.PAYMENT_PAGE_SUCCESSFUL,
+                'subcategory': NotificationSubCategories.NEW_PAYMENT_ADDED
             }
         }
 

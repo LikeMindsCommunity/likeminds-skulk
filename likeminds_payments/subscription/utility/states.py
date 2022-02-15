@@ -34,6 +34,7 @@ class SettlementStatus:
     PROCESSED = 2
     REVERSED = 3
     FAILED = 4
+    STARTED = 5
 
 
 class MemberState:

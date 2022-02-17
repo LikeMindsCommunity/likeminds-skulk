@@ -34,7 +34,8 @@ from subscription.utility.time_utilities import TimeUtilities
 from subscription.utility.number_utilities import NumberUtilities
 from subscription.utility.string_utilities import StringUtilities
 from subscription.utility.url_utilities import UrlUtilities
-from .constants import BRANCH_LINK_BASE_URL, ADMIN_EMAIL
+from .constants import BRANCH_LINK_BASE_URL, ADMIN_EMAIL, EmailCategories, EmailSubCategories
+from .mail_utilities import MailUtilities
 
 
 def create_event_meta_for_webflow_update(event_plan_instance):
@@ -192,6 +193,9 @@ def payment_page_member_payment_success_email(transaction_id):
     payment_page_mail_body_payment_success_member['mail_body'] = member_payment_success_mail_template
     payment_page_mail_body_payment_success_member['mail_recipient_list'] = [transaction_instance.payment_email]
     payment_page_mail_body_payment_success_member['reply_to'] = [owner_verified_email_and_phone['email']]
+    payment_page_mail_body_payment_success_member['categories'] = MailUtilities.get_email_category_list_using_category_subcategory(
+        EmailCategories.PAYMENT_PAGE, EmailSubCategories.NEW_PAYMENT
+    )
 
     send_email_response = send_email_from_core_service(community_owner_details['id'],
                                                        payment_page_mail_body_payment_success_member)
@@ -276,6 +280,8 @@ def payment_page_member_payment_failed_email(transaction_id):
     payment_page_mail_body_payment_failed_member['mail_body'] = member_payment_failed_mail_template
     payment_page_mail_body_payment_failed_member['mail_recipient_list'] = [transaction_instance.payment_email]
     payment_page_mail_body_payment_failed_member['reply_to'] = [owner_verified_email_and_phone['email']]
+    payment_page_mail_body_payment_failed_member['categories'] = MailUtilities.get_email_category_list_using_category_subcategory(
+        EmailCategories.PAYMENT_PAGE, EmailSubCategories.FAILED_PAYMENT)
 
     send_email_response = send_email_from_core_service(community_owner_details['id'],
                                                        payment_page_mail_body_payment_failed_member)
@@ -352,6 +358,8 @@ def payment_page_cm_payment_success_email(transaction_id):
         'subject'].format(str(payment_page_instance.title))
     payment_page_mail_body_payment_success_cm['mail_body'] = cm_payment_success_mail_template
     payment_page_mail_body_payment_success_cm['mail_recipient_list'] = [transaction_instance.payment_email]
+    payment_page_mail_body_payment_success_cm['categories'] = MailUtilities.get_email_category_list_using_category_subcategory(
+        EmailCategories.PAYMENT_PAGE, EmailSubCategories.NEW_PAYMENT)
 
     send_email_response = send_email_from_core_service(community_owner_details['id'],
                                                        payment_page_mail_body_payment_success_cm)
@@ -464,7 +472,9 @@ def payment_success_membership_join_communication(transaction_id):
     cm_mail_body = {
         "subject": PAYMENT_SUCCESS_MEMBERSHIP_EMAIL_TO_CM_SUBJECT,
         "mail_body": cm_mail_template,
-        "mail_recipient_list": cm_emails
+        "mail_recipient_list": cm_emails,
+        "categories": MailUtilities.get_email_category_list_using_category_subcategory(
+            EmailCategories.JOIN_FLOW, EmailSubCategories.PAYMENT_SUCCESSFUL_AND_MEMBER_JOINED)
     }
 
     member_mail_template = get_template(
@@ -477,7 +487,9 @@ def payment_success_membership_join_communication(transaction_id):
         "subject": PAYMENT_SUCCESS_MEMBERSHIP_EMAIL_TO_MEMBER_SUBJECT.format(transaction_instance.community_name),
         "mail_body": member_mail_template,
         "mail_recipient_list": [transaction_instance.payment_email],
-        "reply_to": cm_emails
+        "reply_to": cm_emails,
+        "categories": MailUtilities.get_email_category_list_using_category_subcategory(
+            EmailCategories.JOIN_FLOW, EmailSubCategories.PAYMENT_SUCCESSFUL)
     }
 
     send_cm_email_response = send_email_from_core_service(owner_id, cm_mail_body)
@@ -598,6 +610,9 @@ def _get_settlement_processed_email_context(community_details, community_owner_d
 
     cm_emails.append(ADMIN_EMAIL)
 
+    mail_categories = MailUtilities.get_email_category_list_using_category_subcategory(
+        EmailCategories.SETTLEMENT, EmailSubCategories.SETTLEMENT_SUCCESSFUL_CM)
+
     cm_mail_body = {
         "subject": SETTLEMENT_PROCESSED_EMAIL_TO_CM_SUBJECT.format(
             community_details['community'].get('name'),
@@ -605,7 +620,8 @@ def _get_settlement_processed_email_context(community_details, community_owner_d
                            TimeUtilities.convert_epoch_time_in_hh_mm_am_pm(settlement_instance.created_at))
         ),
         "mail_body": template_context,
-        "mail_recipient_list": cm_emails
+        "mail_recipient_list": cm_emails,
+        "categories": mail_categories
     }
 
     return {'email_context': cm_mail_body,
@@ -676,6 +692,9 @@ def _get_settlement_failed_cm_email_context(community_details, community_owner_d
 
     cm_emails.append(ADMIN_EMAIL)
 
+    mail_categories = MailUtilities.get_email_category_list_using_category_subcategory(
+        EmailCategories.SETTLEMENT, EmailSubCategories.SETTLEMENT_FAILED_CM)
+
     cm_mail_body = {
         "subject": SETTLEMENT_FAILED_EMAIL_TO_CM_SUBJECT.format(
             community_details['community'].get('name'),
@@ -683,7 +702,8 @@ def _get_settlement_failed_cm_email_context(community_details, community_owner_d
                            TimeUtilities.convert_epoch_time_in_hh_mm_am_pm(settlement_instance.created_at))
         ),
         "mail_body": template_context,
-        "mail_recipient_list": cm_emails
+        "mail_recipient_list": cm_emails,
+        "categories": mail_categories
     }
 
     return {'email_context': cm_mail_body,
@@ -739,6 +759,9 @@ def _get_settlement_failed_admin_email_context(community_details, community_owne
             owner_id = member['id']
         cm_details[member['id']] = None
 
+    mail_categories = MailUtilities.get_email_category_list_using_category_subcategory(
+        EmailCategories.SETTLEMENT, EmailSubCategories.SETTLEMENT_FAILED_ADMIN)
+
     admin_mail_body = {
         "subject": SETTLEMENT_FAILED_EMAIL_TO_CM_SUBJECT.format(
             community_details['community'].get('name'),
@@ -746,7 +769,8 @@ def _get_settlement_failed_admin_email_context(community_details, community_owne
                            TimeUtilities.convert_epoch_time_in_hh_mm_am_pm(settlement_instance.created_at))
         ),
         "mail_body": template_context,
-        "mail_recipient_list": [ADMIN_EMAIL]
+        "mail_recipient_list": [ADMIN_EMAIL],
+        "categories": mail_categories
     }
 
     return {'email_context': admin_mail_body,

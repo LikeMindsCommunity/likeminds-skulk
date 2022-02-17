@@ -6,6 +6,8 @@ import time
 from ..payment_page.payment_page_manager import PaymentPageManager
 from .models import PaymentPageMeta
 from ..payment_page.payment_page_view_helper import PaymentPageViewHelper
+from ..utility.constants import EmailCategories, EmailSubCategories
+from ..utility.mail_utilities import MailUtilities
 from ..utility.model_utilities import ModelUtilities
 from ..utility.csv_utilities import CsvUtilities
 from ..utility.time_utilities import TimeUtilities
@@ -214,7 +216,9 @@ class PaymentPageImpl(PaymentPageManager):
 
         payment_page_mail_body['mail_body'] = mail_template
         payment_page_mail_body['mail_recipient_list'] = [user_verified_mobile_and_email['email']]
-
+        payment_page_mail_body['categories'] = MailUtilities.get_email_category_list_using_category_subcategory(
+            EmailCategories.PAYMENT_PAGE, EmailSubCategories.EMAIL_REPORT
+        )
         send_email_response = send_email_from_core_service(self.get_user_id(), payment_page_mail_body)
 
         return send_email_response

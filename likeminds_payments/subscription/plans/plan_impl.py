@@ -3,7 +3,7 @@ from .constants import EVENT_PAYMENT_LINK
 from .plan_helper import PlanHelper
 from ..external_services.logging.logging_wrapper import LoggingWrapper
 from ..plans.plan_manager import PlanManager
-from .models import SubscriptionPlan, SubscriptionEventPlan, SamplePlanCategory, SamplePlan
+from .models import SubscriptionPlan, SubscriptionEventPlan, SamplePlanCategory, SamplePlan, EventCohortPlan
 from .serializers import PlanSerializer, EventPlanSerializer, SamplePlanCategorySerializers, SamplePlanSerializers, \
     EventCohortPlanSerializer
 from ..subscriptions.constants import LIFETIME_PAYMENT
@@ -118,7 +118,7 @@ class PlanImpl(PlanManager):
         return plan_serializers
 
     @staticmethod
-    def _serialize_event_plan_list(filters, user_id=None):
+    def _serialize_event_plan_list(filters, user_id=None, with_cohorts=False):
 
         event_filter = ModelUtilities.get_model_filter(SubscriptionEventPlan, filters).order_by('created_at')
 
@@ -136,6 +136,13 @@ class PlanImpl(PlanManager):
 
             if event_serializer['discount_type'] == EventDiscountType.FLAT:
                 event_serializer['discount'] = NumberUtilities.convert_to_rupee_or_none(pricing_context.get('discount'))
+
+            if with_cohorts:
+                event_cohort_plan_list = ModelUtilities.get_model_filter(EventCohortPlan,
+                                                                         {'event_plan_id': event_plan_instance.id})
+
+                event_serializer['event_cohort_plans'] = EventCohortPlanSerializer(event_cohort_plan_list,
+                                                                                   many=True).data
 
             event_plans.append(event_serializer)
 
@@ -275,3 +282,9 @@ class PlanImpl(PlanManager):
             sample_plans.append(sample_plan)
 
         return {'success': True, 'sample_plans': sample_plans}
+
+    def fetch_event_plan_with_cohort_plan(self, filters=None, user_id=None) -> dict:
+
+        event_plans_with_cohort = self._serialize_event_plan_list(filters, user_id, with_cohorts=True)
+
+        return {'event_plans': event_plans_with_cohort}

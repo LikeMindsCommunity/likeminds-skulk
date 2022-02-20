@@ -19,7 +19,7 @@ error_logger = LoggingWrapper.get_instance()
 class EventCohortPlanSerializer(serializers.ModelSerializer):
     class Meta:
         model = EventCohortPlan
-        fields = '__all__'
+        fields = ('id', 'cohort_id', 'cost', 'strike_cost', 'cost_usd', 'strike_cost_usd', 'discount_type', 'discount')
 
 
 def PlanSerializer(plan) -> dict:

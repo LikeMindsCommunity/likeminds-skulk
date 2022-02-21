@@ -350,6 +350,11 @@ class PlanViewHelper:
         if not event_plan_id:
             return {'success': False, 'error_message': "In-valid event plan id"}
 
+        cohort_plan = req_body.get('cohort_plan', [])
+
+        if not isinstance(cohort_plan, list):
+            return ResponseUtilities.get_error_context(False, 'cohort_plan should be list')
+
         return {}
 
     @staticmethod

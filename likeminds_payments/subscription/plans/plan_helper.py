@@ -271,3 +271,35 @@ class PlanHelper:
         plan_title_context = {'plan_title': plan_title, 'plan_sub_title': plan_sub_title}
 
         return plan_title_context
+
+    @staticmethod
+    def get_update_event_cohort_plan_dict(event_cohort_plan_instance : EventCohortPlan, cohort_plan_body):
+
+        update_cohort_plan_dict = dict()
+
+        update_cohort_plan_dict['cost'] = NumberUtilities.convert_to_paisa_or_none(
+            cohort_plan_body.get('cost', event_cohort_plan_instance.cost))
+
+        update_cohort_plan_dict['strike_cost'] = NumberUtilities.convert_to_paisa_or_none(
+            cohort_plan_body.get('strike_cost', event_cohort_plan_instance.strike_cost))
+
+        update_cohort_plan_dict['cost_usd'] = NumberUtilities.convert_to_paisa_or_none(
+            cohort_plan_body.get('cost_usd', event_cohort_plan_instance.cost_usd))
+
+        update_cohort_plan_dict['strike_cost_usd'] = NumberUtilities.convert_to_paisa_or_none(
+            cohort_plan_body.get('strike_cost_usd', event_cohort_plan_instance.strike_cost_usd))
+
+        discount_type = cohort_plan_body.get('discount_type', event_cohort_plan_instance.discount_type)
+        discount = event_cohort_plan_instance.discount
+
+        if discount_type == EventDiscountType.PERCENTAGE:
+            discount = cohort_plan_body.get('discount', event_cohort_plan_instance.discount)
+
+        elif discount_type == EventDiscountType.FLAT:
+            discount = NumberUtilities.convert_to_paisa_or_none(
+                cohort_plan_body.get('discount', event_cohort_plan_instance.discount))
+
+        update_cohort_plan_dict['discount_type'] = discount_type
+        update_cohort_plan_dict['discount'] = discount
+
+        return update_cohort_plan_dict

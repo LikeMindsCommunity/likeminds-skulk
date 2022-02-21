@@ -19,11 +19,37 @@ error_logger = LoggingWrapper.get_instance()
 class EventCohortPlanSerializer(serializers.ModelSerializer):
     class Meta:
         model = EventCohortPlan
-        fields = ('id', 'cohort_id', 'cost', 'strike_cost', 'cost_usd', 'strike_cost_usd', 'discount_type', 'discount')
+        fields = ('id', 'cohort_id', 'cost', 'strike_cost', 'cost_usd', 'strike_cost_usd', 'discount_type', 'discount',
+                  'event_plan')
+
+    def to_representation(self, event_plan_instance):
+        data = super(EventCohortPlanSerializer, self).to_representation(event_plan_instance)
+
+        fields = self._readable_fields
+
+        for field in fields:
+            if field.field_name == 'cost':
+                data['cost'] = NumberUtilities.convert_to_rupee_or_none(event_plan_instance.cost)
+
+            if field.field_name == 'strike_cost':
+                data['strike_cost'] = NumberUtilities.convert_to_rupee_or_none(event_plan_instance.strike_cost)
+
+            if field.field_name == 'cost_usd':
+                data['cost_usd'] = NumberUtilities.convert_to_rupee_or_none(event_plan_instance.cost_usd)
+
+            if field.field_name == 'strike_cost_usd':
+                data['strike_cost_usd'] = NumberUtilities.convert_to_rupee_or_none(event_plan_instance.strike_cost_usd)
+
+            if field.field_name == 'event_plan':
+                del data['event_plan']
+
+        if data['discount_type'] == EventDiscountType.FLAT:
+            data['discount'] = NumberUtilities.convert_to_rupee_or_none(data.get('discount'))
+
+        return data
 
 
 def PlanSerializer(plan) -> dict:
-
     plan_object = {
         'plan_id': plan.plan_id,
         'community_id': plan.community_id,

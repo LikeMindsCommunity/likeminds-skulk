@@ -5,7 +5,9 @@ import analytics
 from .constants import *
 from .models import SubscriptionPlan
 from ..subscriptions.constants import SUBSCRIPTION_COHORT_NAME, SUBSCRIPTION_EXPIRED_COHORT_NAME
+from ..utility.constants import EmailCategories, EmailSubCategories
 from ..utility.core_service_utilities import CoreServiceUtilities
+from ..utility.mail_utilities import MailUtilities
 from ..utility.number_utilities import NumberUtilities
 from ..utility.model_utilities import ModelUtilities
 from ..utility.async_tasks import send_email_from_core_service, get_first_verified_email_and_phone
@@ -348,6 +350,11 @@ class PlanViewHelper:
         if not event_plan_id:
             return {'success': False, 'error_message': "In-valid event plan id"}
 
+        cohort_plan = req_body.get('cohort_plan', [])
+
+        if not isinstance(cohort_plan, list):
+            return ResponseUtilities.get_error_context(False, 'cohort_plan should be list')
+
         return {}
 
     @staticmethod
@@ -446,6 +453,9 @@ class PlanViewHelper:
 
         mail_subject = FIRST_MEMBERSHIP_PLAN_CM_MAIL_SUBJECT.format(user_data.get('name'))
 
+        mail_categories = MailUtilities.get_email_category_list_using_category_subcategory(
+            EmailCategories.CREATE_COMMUNITY, EmailSubCategories.FIRST_PLAN_CREATED)
+
         cm_onboarding_branch_url = CoreServiceUtilities.get_cm_onboarding_community_feed_url(
             community_data.get('id'))
 
@@ -464,7 +474,8 @@ class PlanViewHelper:
             'subject': mail_subject,
             'mail_body': mail_template,
             'mail_recipient_list': [verified_email.get('email')],
-            'reply_to': [FIRST_MEMBERSHIP_PLAN_CM_REPLY_EMAIL]
+            'reply_to': [FIRST_MEMBERSHIP_PLAN_CM_REPLY_EMAIL],
+            'categories': mail_categories
         }
 
         return mail_body

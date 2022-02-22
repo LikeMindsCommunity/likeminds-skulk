@@ -12,6 +12,8 @@ import time
 from rest_framework import status as status_codes
 from ..external_services.razorpay.razorpay_wrapper import RazorpayWrapper
 from ..external_services.segment.segment_impl import SegmentImpl
+from ..utility.constants import EmailCategories, EmailSubCategories
+from ..utility.mail_utilities import MailUtilities
 from ..utility.number_utilities import NumberUtilities
 from ..utility.states import TransactionType, SettlementStatus, TransactionRefundState, MemberState, \
     TransactionStatusType
@@ -632,7 +634,7 @@ class TransactionImpl(TransactionManager):
 
         payment_page_instance = payment_page_filter[0]
 
-        transactions_filter = TransactionHelper.fetch_payment_transactions(req_body.get('payment_page_id'))
+        transactions_filter = TransactionHelper.fetch_payment_transactions({'plan_id': req_body.get('payment_page_id')})
 
         transaction_serialized_object = self._serialize_transactions(transactions_filter)
 
@@ -686,6 +688,9 @@ class TransactionImpl(TransactionManager):
 
         transaction_payment_page_mail_body['mail_body'] = mail_template
         transaction_payment_page_mail_body['mail_recipient_list'] = [user_verified_mobile_and_email['email']]
+
+        transaction_payment_page_mail_body['categories'] = MailUtilities.get_email_category_list_using_category_subcategory(
+            EmailCategories.PAYMENT_PAGE, EmailSubCategories.EMAIL_REPORT)
 
         send_email_response = send_email_from_core_service(user_id, transaction_payment_page_mail_body)
 

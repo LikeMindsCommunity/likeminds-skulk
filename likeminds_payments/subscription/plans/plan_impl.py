@@ -3,7 +3,7 @@ from .constants import EVENT_PAYMENT_LINK
 from .plan_helper import PlanHelper
 from ..external_services.logging.logging_wrapper import LoggingWrapper
 from ..plans.plan_manager import PlanManager
-from .models import SubscriptionPlan, SubscriptionEventPlan, SamplePlanCategory, SamplePlan
+from .models import SubscriptionPlan, SubscriptionEventPlan, SamplePlanCategory, SamplePlan, EventCohortPlan
 from .serializers import PlanSerializer, EventPlanSerializer, SamplePlanCategorySerializers, SamplePlanSerializers, \
     EventCohortPlanSerializer
 from ..subscriptions.constants import LIFETIME_PAYMENT
@@ -91,6 +91,48 @@ class PlanImpl(PlanManager):
 
         event_plan_instance.save()
 
+    @staticmethod
+    def update_event_related_cohort_plans(event_plan_instance, cohort_plans):
+
+        if not cohort_plans:
+            return
+
+        for update_cohort_plan_dict in cohort_plans:
+            cohort_plan_id = update_cohort_plan_dict.get('cohort_id')
+            event_cohort_plan_filter = ModelUtilities.get_model_filter(EventCohortPlan, {
+                'event_plan_id': event_plan_instance.id,
+                'cohort_id': cohort_plan_id
+            })
+
+            if not event_cohort_plan_filter:
+                event_cohort_plan_context = PlanHelper.create_event_cohort_plan_context(
+                    event_plan_instance=event_plan_instance,
+                    cohort_plan=update_cohort_plan_dict
+                )
+
+                event_cohort_plan_serializer = EventCohortPlanSerializer(data=event_cohort_plan_context)
+
+                if event_cohort_plan_serializer.is_valid():
+                    event_cohort_plan_serializer.save()
+
+                else:
+                    error_logger.error(f' Event Plan Serializer:{event_cohort_plan_serializer.errors},'
+                                       f' cohort plan data:{event_cohort_plan_context}')
+
+            else:
+                update_dict = PlanHelper.get_update_event_cohort_plan_dict(event_cohort_plan_filter[0],
+                                                                           update_cohort_plan_dict)
+
+                event_cohort_plan_serializer = EventCohortPlanSerializer(event_cohort_plan_filter[0],
+                                                                         data=update_dict, partial=True)
+
+                if event_cohort_plan_serializer.is_valid():
+                    event_cohort_plan_serializer.save()
+
+                else:
+                    error_logger.error(f' Event Plan Serializer:{event_cohort_plan_serializer.errors},'
+                                       f' update cohort plan data:{update_dict}')
+
     def create_plan(self) -> dict:
 
         response = self._generate_response_from_plan(self.get_plan_instance())
@@ -118,7 +160,7 @@ class PlanImpl(PlanManager):
         return plan_serializers
 
     @staticmethod
-    def _serialize_event_plan_list(filters, user_id=None):
+    def _serialize_event_plan_list(filters, user_id=None, with_cohorts=False):
 
         event_filter = ModelUtilities.get_model_filter(SubscriptionEventPlan, filters).order_by('created_at')
 
@@ -136,6 +178,13 @@ class PlanImpl(PlanManager):
 
             if event_serializer['discount_type'] == EventDiscountType.FLAT:
                 event_serializer['discount'] = NumberUtilities.convert_to_rupee_or_none(pricing_context.get('discount'))
+
+            if with_cohorts:
+                event_cohort_plan_list = ModelUtilities.get_model_filter(EventCohortPlan,
+                                                                         {'event_plan_id': event_plan_instance.id})
+
+                event_serializer['event_cohort_plans'] = EventCohortPlanSerializer(event_cohort_plan_list,
+                                                                                   many=True).data
 
             event_plans.append(event_serializer)
 
@@ -225,6 +274,10 @@ class PlanImpl(PlanManager):
 
         event_plan_instance = event_plan_filter[0]
         self.update_event_plan_context(event_plan_instance, req_body)
+
+        if 'cohort_plan' in req_body:
+            self.update_event_related_cohort_plans(event_plan_instance, req_body.get('cohort_plan', []))
+
         update_event_in_webflow_service.delay(event_plan_instance.event_plan_id, member_id)
 
         return {'success': True}
@@ -275,3 +328,9 @@ class PlanImpl(PlanManager):
             sample_plans.append(sample_plan)
 
         return {'success': True, 'sample_plans': sample_plans}
+
+    def fetch_event_plan_with_cohort_plan(self, filters=None, user_id=None) -> dict:
+
+        event_plans_with_cohort = self._serialize_event_plan_list(filters, user_id, with_cohorts=True)
+
+        return {'event_plans': event_plans_with_cohort}

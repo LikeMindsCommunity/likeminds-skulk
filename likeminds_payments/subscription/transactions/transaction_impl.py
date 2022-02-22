@@ -634,7 +634,7 @@ class TransactionImpl(TransactionManager):
 
         payment_page_instance = payment_page_filter[0]
 
-        transactions_filter = TransactionHelper.fetch_payment_transactions(req_body.get('payment_page_id'))
+        transactions_filter = TransactionHelper.fetch_payment_transactions({'plan_id': req_body.get('payment_page_id')})
 
         transaction_serialized_object = self._serialize_transactions(transactions_filter)
 

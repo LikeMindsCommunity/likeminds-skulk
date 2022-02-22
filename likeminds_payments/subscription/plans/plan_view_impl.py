@@ -306,5 +306,5 @@ class FetchEventPlanWithCohortPlanView(APIView):
 
         return JsonResponse(
             {'success': True, 'event_plans': response_data['event_plans']},
-            status=status_codes.HTTP_200_OK
+            status=status_codes.HTTP_400_BAD_REQUEST
         )

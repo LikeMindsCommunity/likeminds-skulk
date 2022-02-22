@@ -280,3 +280,31 @@ class FetchSamplePlanView(TransactionMixin, APIView):
                                                                                 status_codes.HTTP_400_BAD_REQUEST))
 
         return JsonResponse(response_data)
+
+
+class FetchEventPlanWithCohortPlanView(APIView):
+
+    def get(self, request, *args, **kwargs):
+
+        query_params = PlanViewHelper.get_event_plan_params(request)
+        member_id = RequestUtilities.get_parameter_from_headers(request, 'HTTP_X_MEMBER_ID')
+
+        if 'error_message' in query_params:
+            return JsonResponse(
+                {'success': False, 'error_message': query_params['error_message']},
+                status=status_codes.HTTP_400_BAD_REQUEST
+            )
+
+        plan_manager = PlanImpl()
+        response_data = plan_manager.fetch_event_plan_with_cohort_plan(filters=query_params, user_id=member_id)
+
+        if 'error_message' in response_data:
+            return JsonResponse(
+                {'success': False, 'error_message': response_data['error_message']},
+                status=status_codes.HTTP_200_OK
+            )
+
+        return JsonResponse(
+            {'success': True, 'event_plans': response_data['event_plans']},
+            status=status_codes.HTTP_200_OK
+        )

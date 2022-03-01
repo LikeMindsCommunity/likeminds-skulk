@@ -168,16 +168,20 @@ class PlanImpl(PlanManager):
 
         for event_plan_instance in event_filter:
             event_serializer = EventPlanSerializer(event_plan_instance)
+            discount = event_serializer.get('discount')
 
-            pricing_context = PlanHelper.get_event_plan_cost_context_based_on_event_cohort_plan(
-                event_plan_instance=event_plan_instance,
-                user_id=user_id
-            )
+            if not with_cohorts:
 
-            event_serializer.update(pricing_context)
+                pricing_context = PlanHelper.get_event_plan_cost_context_based_on_event_cohort_plan(
+                    event_plan_instance=event_plan_instance,
+                    user_id=user_id
+                )
+
+                event_serializer.update(pricing_context)
+                discount = pricing_context.get('discount')
 
             if event_serializer['discount_type'] == EventDiscountType.FLAT:
-                event_serializer['discount'] = NumberUtilities.convert_to_rupee_or_none(pricing_context.get('discount'))
+                event_serializer['discount'] = NumberUtilities.convert_to_rupee_or_none(discount)
 
             if with_cohorts:
                 event_cohort_plan_list = ModelUtilities.get_model_filter(EventCohortPlan,

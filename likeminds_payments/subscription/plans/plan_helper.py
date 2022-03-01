@@ -131,6 +131,7 @@ class PlanHelper:
             'cost': NumberUtilities.convert_to_rupee_or_none(event_plan_instance.cost),
             'discount': event_plan_instance.discount,
             'discount_type': event_plan_instance.discount_type,
+            'strike_cost': NumberUtilities.convert_to_rupee_or_none(event_plan_instance.strike_cost)
         }
 
         # Return Context for that user.
@@ -144,6 +145,8 @@ class PlanHelper:
             return pricing_context
 
         pricing_context['cost'] = NumberUtilities.convert_to_rupee_or_none(member_event_plan_cohorts[0].cost)
+        pricing_context['strike_cost'] = NumberUtilities.convert_to_rupee_or_none(
+            member_event_plan_cohorts[0].strike_cost)
         pricing_context['discount'] = member_event_plan_cohorts[0].discount
         pricing_context['discount_type'] = member_event_plan_cohorts[0].discount_type
 

@@ -147,9 +147,6 @@ class OrderViewHelper:
         if not request_body.get('payment_page_url'):
             return {'error_message': 'send payment_page_url'}
 
-        if not request_body.get('user_id'):
-            return {'error_message': 'Invalid user id'}
-
         return request_body
 
     @staticmethod

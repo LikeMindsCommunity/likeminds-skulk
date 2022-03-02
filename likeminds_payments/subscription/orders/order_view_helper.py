@@ -165,7 +165,7 @@ class OrderViewHelper:
                 "community_name": community_data['name'],
                 "payment_page_url": order_body['payment_page_url'],
                 "type": "event",
-                "user_id": order_body['user_id'],
+                "user_id": order_body.get('user_id'),
                 "event_time": '',
                 "join_link": ''
             }

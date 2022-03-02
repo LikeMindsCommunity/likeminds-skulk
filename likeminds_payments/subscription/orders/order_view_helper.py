@@ -186,8 +186,12 @@ class OrderViewHelper:
         if community_data.get('error_message'):
             return {'error_message': community_data['error_message']}
 
-        member_state = CoreServiceUtilities.get_member_state(community_data['community']['id'],
-                                                             order_body.get('user_id'))
+        if order_body.get('user_id'):
+            member_state = CoreServiceUtilities.get_member_state(community_data['community']['id'],
+                                                                 order_body.get('user_id'))
+
+        else:
+            member_state = MemberState.GUEST
 
         matching_cohorts = PlanHelper.get_member_event_cohorts(event_plan_instance=plan_instance,
                                                                community_id=community_data['community']['id'],

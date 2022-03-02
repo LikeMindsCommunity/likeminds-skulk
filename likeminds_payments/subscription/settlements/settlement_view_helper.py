@@ -67,4 +67,5 @@ class SettlementViewHelper:
         categories = MailUtilities.get_email_category_list_using_category_subcategory(
             EmailCategories.LOGGING, EmailSubCategories.SETTLEMENT_WEBHOOK_ERROR)
 
-        MailWrapper.send_email(SETTLEMENT_ERROR_SUBJECT, response, SETTLEMENT_ERROR_RECEIVER_LIST, categories=categories)
+        MailWrapper.send_email(SETTLEMENT_ERROR_SUBJECT, str(response),
+                               SETTLEMENT_ERROR_RECEIVER_LIST, categories=categories)

@@ -48,6 +48,8 @@ class EmailCategories:
 
     RENEWAL_FLOW = "Renewal Flow"
 
+    LOGGING = "Logging"
+
 
 class EmailSubCategories:
     FIRST_PLAN_CREATED = "First Plan Created"
@@ -63,3 +65,5 @@ class EmailSubCategories:
 
     PAYMENT_SUCCESSFUL = "Payment Successful"
     PAYMENT_SUCCESSFUL_AND_MEMBER_JOINED = "Payment successful + Member joined"
+
+    SETTLEMENT_WEBHOOK_ERROR = "Razorpayxwh"

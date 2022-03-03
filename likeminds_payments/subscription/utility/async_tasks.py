@@ -39,10 +39,15 @@ from .mail_utilities import MailUtilities
 
 
 def create_event_meta_for_webflow_update(event_plan_instance):
+    event_plan_cost = event_plan_instance.cost
+
+    if event_plan_instance.strike_cost:
+        event_plan_cost = event_plan_instance.strike_cost
+
     event_meta = {
         'fields': {
             'cost': StringUtilities.get_string_from_integer(
-                NumberUtilities.convert_to_rupee_or_none(event_plan_instance.strike_cost)),
+                NumberUtilities.convert_to_rupee_or_none(event_plan_cost)),
             'payment-link': EVENT_PAYMENT_LINK % (
                 settings.WEB_URL, event_plan_instance.event_plan_id,
                 event_plan_instance.chatroom_id, event_plan_instance.community_id)

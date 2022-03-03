@@ -147,9 +147,6 @@ class OrderViewHelper:
         if not request_body.get('payment_page_url'):
             return {'error_message': 'send payment_page_url'}
 
-        if not request_body.get('user_id'):
-            return {'error_message': 'Invalid user id'}
-
         return request_body
 
     @staticmethod
@@ -168,7 +165,7 @@ class OrderViewHelper:
                 "community_name": community_data['name'],
                 "payment_page_url": order_body['payment_page_url'],
                 "type": "event",
-                "user_id": order_body['user_id'],
+                "user_id": order_body.get('user_id'),
                 "event_time": '',
                 "join_link": ''
             }
@@ -189,8 +186,12 @@ class OrderViewHelper:
         if community_data.get('error_message'):
             return {'error_message': community_data['error_message']}
 
-        member_state = CoreServiceUtilities.get_member_state(community_data['community']['id'],
-                                                             order_body.get('user_id'))
+        if order_body.get('user_id'):
+            member_state = CoreServiceUtilities.get_member_state(community_data['community']['id'],
+                                                                 order_body.get('user_id'))
+
+        else:
+            member_state = MemberState.GUEST
 
         matching_cohorts = PlanHelper.get_member_event_cohorts(event_plan_instance=plan_instance,
                                                                community_id=community_data['community']['id'],

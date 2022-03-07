@@ -307,9 +307,9 @@ class TransactionImpl(TransactionManager):
         return transaction_data_list
 
     @staticmethod
-    def _create_member_acquisition_data(transaction_instance: Transaction, transaction_data: dict) -> dict:
+    def _create_member_acquisition_data(transaction_instance: Transaction) -> dict:
 
-        plan_instance = SubscriptionPlan.get_plan_or_None(transaction_data['plan_id'])
+        plan_instance = SubscriptionPlan.get_plan_or_None(transaction_instance.plan_id)
 
         acquisition_data = {
             'link_type': 'paid',
@@ -373,6 +373,134 @@ class TransactionImpl(TransactionManager):
 
             analytics.track(transaction_instance.user_id, 'Membership transaction refunded (Backend)', analytics_data)
 
+    @staticmethod
+    def _process_transaction(transaction_instance: Transaction) -> dict:
+
+        if transaction_instance.type == TransactionType.COMMUNITY_SUBSCRIPTION:
+
+            if transaction_instance.status == 'captured':
+
+                if transaction_instance.renew and transaction_instance.user_id is not None:
+
+                    subscription_manager = SubscriptionImpl(payment_id=transaction_instance.payment_id,
+                                                            member_id=transaction_instance.user_id)
+
+                    create_subscription = subscription_manager.create_subscription()
+
+                    if 'error_message' in create_subscription:
+                        return {'error_message': create_subscription['error_message']}
+
+                    plan_instance = SubscriptionPlan.get_plan_or_None(transaction_instance.plan_id)
+
+                    response = CoreServiceUtilities.renew_member(plan_instance.community_id,
+                                                                 transaction_instance.user_id)
+
+                    if 'error_message' in response:
+                        return {'error_message': response['error_message']}
+
+                if not transaction_instance.renew and transaction_instance.user_id is None:
+                    acquisition_data = TransactionImpl._create_member_acquisition_data(transaction_instance)
+
+                    MemberAcquisition.create_instance(acquisition_data)
+
+                    # send join community communication
+                    payment_success_membership_join_communication.delay(transaction_instance.id)
+
+            if transaction_instance.status == 'refund':
+
+                TransactionImpl._send_analytics_for_membership_refund(transaction_instance)
+
+                if transaction_instance.user_id is not None:
+
+                    plan_instance = SubscriptionPlan.get_plan_or_None(transaction_instance.plan_id)
+
+                    subscription_instance = Subscription.get_subscription_or_None(
+                        transaction_instance.user_id, plan_instance.community_id)
+
+                    if subscription_instance is not None:
+                        current_time = TimeUtilities.current_time_in_milliseconds()
+                        subscription_instance.valid_till = current_time
+                        subscription_instance.renewal_due = TimeUtilities.subtract_days_in_epoch_time(
+                            subscription_instance.valid_till, NOTIFY_PERIOD)
+                        subscription_instance.save()
+
+                    subscription_history_instance = SubscriptionHistory.objects.get(transaction=transaction_instance)
+
+                    if subscription_history_instance is not None:
+                        subscription_history_instance.type = 'refunded'
+                        subscription_history_instance.save()
+
+        if transaction_instance.type == TransactionType.EVENT and transaction_instance.user_id:
+
+            if transaction_instance.status == 'captured':
+                TransactionImpl._attend_event_for_paid_transaction(transaction_instance)
+
+            TransactionHelper.send_analytics_for_event_transaction.delay(transaction_instance.id)
+
+        if transaction_instance.type == TransactionType.PAYMENT_PAGE:
+
+            if transaction_instance.status == 'captured':
+
+                # Send Payment Page member success email and whatsapp
+                payment_page_member_payment_success_email.delay(transaction_instance.id)
+
+                # Send Payment Page CM success email
+                payment_page_cm_payment_success_email.delay(transaction_instance.id)
+
+            elif transaction_instance.status == 'failed':
+
+                # Send Payment Page member success email and whatsapp
+                payment_page_member_payment_failed_email.delay(transaction_instance.id)
+
+        return {'success': True}
+
+    @staticmethod
+    def _create_or_update_transaction(transaction_body: dict) -> dict:
+
+        existing_transactions = ModelUtilities.get_model_filter(
+            Transaction, {'payment_id': transaction_body['payload']['payment']['entity']['id']})
+
+        if not existing_transactions:
+
+            transaction_data_list = TransactionImpl._create_transaction_data(transaction_body)
+
+            for transaction_data in transaction_data_list:
+
+                if 'error_message' in transaction_data:
+                    return {'error_message': transaction_data['error_message']}
+
+                # What if one transaction is created but other could not be created
+                transaction_instance = Transaction.create_instance(transaction_data)
+
+                if not transaction_instance:
+                    return {'error_message': 'error while creating transaction'}
+
+                process_transaction = TransactionImpl._process_transaction(transaction_instance)
+
+                if 'error_message' in process_transaction:
+                    return {'error_message': process_transaction['error_message']}
+
+        else:
+
+            for transaction_instance in existing_transactions:
+
+                if transaction_instance.type in [TransactionType.COMMUNITY_SUBSCRIPTION, TransactionType.PAYMENT_PAGE]:
+
+                    if transaction_body.get('event') == 'payment.captured':
+                        transaction_instance.status = "captured"
+
+                    if transaction_body.get('event') == "refund.processed":
+                        transaction_instance.status = "refund"
+
+                    transaction_instance.save()
+
+                process_transaction = TransactionImpl._process_transaction(transaction_instance)
+
+                if 'error_message' in process_transaction:
+                    return {'error_message': process_transaction['error_message']}
+
+        return {'success': True}
+
     def create_transaction(self) -> dict:
 
         transaction_raw_body = self.get_transaction_raw_body()
@@ -384,122 +512,10 @@ class TransactionImpl(TransactionManager):
         if 'error_message' in signature_verification:
             return {'error_message': signature_verification['error_message']}
 
-        existing_transaction_list = Transaction.get_transaction_list_or_None(
-            transaction_body['payload']['payment']['entity']['id']
-        )
+        create_or_update_transaction = self._create_or_update_transaction(transaction_body)
 
-        for existing_transaction_instance in existing_transaction_list:
-
-            if existing_transaction_instance and \
-                    existing_transaction_instance.type == TransactionType.COMMUNITY_SUBSCRIPTION:
-
-                plan_instance = SubscriptionPlan.get_plan_or_None(plan_id=existing_transaction_instance.plan_id)
-
-                if transaction_body["event"] == "refund.processed":
-                    existing_transaction_instance.status = "refund"
-                    existing_transaction_instance.save()
-
-                    self._send_analytics_for_membership_refund(existing_transaction_instance)
-
-                    if existing_transaction_instance.user_id is not None:
-                        subscription_instance = Subscription.get_subscription_or_None(
-                            existing_transaction_instance.user_id, plan_instance.community_id)
-
-                        if subscription_instance is not None:
-                            current_time = TimeUtilities.current_time_in_milliseconds()
-                            subscription_instance.valid_till = current_time
-                            subscription_instance.renewal_due = TimeUtilities.subtract_days_in_epoch_time(
-                                subscription_instance.valid_till, NOTIFY_PERIOD)
-                            subscription_instance.save()
-
-                        subscription_history_instance = SubscriptionHistory.objects.get(
-                            transaction=existing_transaction_instance)
-
-                        if subscription_history_instance is not None:
-                            subscription_history_instance.type = 'refunded'
-                            subscription_history_instance.save()
-
-                    return {'success': True}
-
-                else:
-
-                    return {'error_message': 'transaction exists with given plan_id'}
-
-            elif existing_transaction_instance and \
-                    existing_transaction_instance.type == TransactionType.PAYMENT_PAGE:
-
-                if transaction_body["event"] == "refund.processed":
-                    existing_transaction_instance.status = "refund"
-                    existing_transaction_instance.save()
-
-                    return {'success': True}
-
-                else:
-                    return {'error_message': 'transaction exists with given plan_id'}
-
-        transaction_data_list = self._create_transaction_data(transaction_body)
-
-        for transaction_data in transaction_data_list:
-
-            if 'error_message' in transaction_data:
-                return {'error_message': transaction_data['error_message']}
-
-            # What if one transaction is created but other could not be created
-            transaction_instance = Transaction.create_instance(transaction_data)
-
-            if not transaction_instance:
-                return {'error_message': 'error while creating transaction'}
-
-            if transaction_body['event'] == 'payment.captured' and \
-                    transaction_instance.type == TransactionType.COMMUNITY_SUBSCRIPTION:
-
-                if transaction_data['renew'] and transaction_data['user_id'] is not None:
-
-                    subscription_manager = SubscriptionImpl(payment_id=transaction_data['payment_id'],
-                                                            member_id=transaction_data['user_id'])
-
-                    create_subscription = subscription_manager.create_subscription()
-
-                    if 'error_message' in create_subscription:
-                        return {'error_message': create_subscription['error_message']}
-
-                    plan_instance = SubscriptionPlan.get_plan_or_None(transaction_instance.plan_id)
-
-                    response = CoreServiceUtilities.renew_member(plan_instance.community_id,
-                                                                 transaction_data['user_id'])
-
-                    if 'error_message' in response:
-                        return {'error_message': response['error_message']}
-
-                if not transaction_data['renew'] and transaction_data['user_id'] is None:
-                    acquisition_data = self._create_member_acquisition_data(transaction_instance, transaction_data)
-
-                    MemberAcquisition.create_instance(acquisition_data)
-
-                    # send join community communication
-                    payment_success_membership_join_communication.delay(transaction_instance.id)
-
-            if transaction_instance.type == TransactionType.EVENT and transaction_instance.user_id:
-
-                if transaction_instance.status == 'captured':
-                    self._attend_event_for_paid_transaction(transaction_instance)
-
-                TransactionHelper.send_analytics_for_event_transaction.delay(transaction_instance.id)
-
-            if transaction_instance.type == TransactionType.PAYMENT_PAGE:
-
-                if transaction_instance.status == 'captured':
-
-                    # Send Payment Page member success email and whatsapp
-                    payment_page_member_payment_success_email.delay(transaction_instance.id)
-
-                    # Send Payment Page CM success email
-                    payment_page_cm_payment_success_email.delay(transaction_instance.id)
-
-                elif transaction_instance.status == 'failed':
-
-                    # Send Payment Page member success email and whatsapp
-                    payment_page_member_payment_failed_email.delay(transaction_instance.id)
+        if 'error_message' in create_or_update_transaction:
+            return {'error_message': create_or_update_transaction['error_message']}
 
         return {'success': True}
 

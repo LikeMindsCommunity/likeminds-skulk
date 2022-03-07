@@ -67,14 +67,17 @@ class PlanImpl(PlanManager):
     @staticmethod
     def update_event_plan_context(event_plan_instance, req_body):
 
-        event_plan_instance.cost = NumberUtilities.convert_to_paisa_or_none(req_body.get('cost',
-                                                                                         event_plan_instance.cost))
-        event_plan_instance.strike_cost = NumberUtilities.convert_to_paisa_or_none(
-            req_body.get('strike_cost', event_plan_instance.strike_cost))
-        event_plan_instance.cost_usd = NumberUtilities.convert_to_paisa_or_none(
-            req_body.get('cost_usd', event_plan_instance.cost_usd))
-        event_plan_instance.strike_cost_usd = NumberUtilities.convert_to_paisa_or_none(
-            req_body.get('strike_cost_usd', event_plan_instance.strike_cost_usd))
+        if 'cost' in req_body:
+            event_plan_instance.cost = NumberUtilities.convert_to_paisa_or_none(req_body.get('cost'))
+
+        if 'strike_cost' in req_body:
+            event_plan_instance.strike_cost = NumberUtilities.convert_to_paisa_or_none(req_body.get('strike_cost'))
+
+        if 'cost_usd' in req_body:
+            event_plan_instance.cost_usd = NumberUtilities.convert_to_paisa_or_none(req_body.get('cost_usd'))
+
+        if 'strike_cost_usd' in req_body:
+            event_plan_instance.cost = NumberUtilities.convert_to_paisa_or_none(req_body.get('strike_cost_usd'))
 
         discount_type = req_body.get('discount_type', event_plan_instance.discount_type)
         discount = event_plan_instance.discount

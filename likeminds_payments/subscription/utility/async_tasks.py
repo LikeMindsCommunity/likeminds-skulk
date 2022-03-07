@@ -28,6 +28,8 @@ from subscription.payment_page.constants import (PAYMENT_PAGE_PAYMENT_SUCCESS_EM
 from subscription.settlements.constants import (SETTLEMENT_PROCESSED_EMAIL_TO_CM_SUBJECT,
                                                 SETTLEMENT_FAILED_EMAIL_TO_CM_SUBJECT,
                                                 SETTLEMENT_STATUS_MAP_FOR_EMAIL)
+from subscription.transactions.constants import (EVENT_PAYMENT_SUCCESS_WHATSAPP_TEMPLATE_NAME,
+                                                 EVENT_PAYMENT_SUCCESS_WHATSAPP_BROADCAST_NAME)
 from subscription.utility.core_service_utilities import CoreServiceUtilities
 from subscription.utility.model_utilities import ModelUtilities
 from subscription.utility.time_utilities import TimeUtilities
@@ -805,3 +807,65 @@ def settlement_failed_admin_communication(settlement_id):
                                                           communication_email_details.get('email_context'))
 
     return send_cm_email_response, None
+
+
+@shared_task
+def send_event_payment_success_whatsapp(transaction_id):
+
+    transaction_instance = ModelUtilities.get_model_instance_or_none(Transaction, transaction_id)
+
+    if not transaction_instance:
+        return {'error_message': "Invalid transaction_id"}
+
+    event_plan_instance = SubscriptionEventPlan.get_event_plan_or_None(transaction_instance.plan_id)
+
+    if not transaction_instance:
+        return {'error_message': "Invalid event_plan_id"}
+
+    user_id = transaction_instance.user_id
+
+    if not user_id:
+        # Get Owner of community
+        community_owner_details = CoreServiceUtilities.get_community_admins(transaction_instance.type_id,
+                                                                            fetch_owner_only=True)
+
+        if not community_owner_details:
+            return {'error_message': "No owner found for the community"}
+
+        user_id = community_owner_details[0]["id"]
+
+    payment_success_whatsapp_body = {
+        "receivers_list": [
+            {
+                "whatsappNumber": NumberUtilities.get_integer_from_string(transaction_instance.payment_phone),
+                "customParams": [
+                    {
+                        "name": "event_name",
+                        "value": transaction_instance.payment_name
+                    },
+                    {
+                        "name": "community_name",
+                        "value": transaction_instance.community_name
+                    },
+                    {
+                        "name": "event_date_time",
+                        "value": transaction_instance.payment_name
+                    },
+                    {
+                        "name": "payment_id",
+                        "value": transaction_instance.payment_id
+                    },
+                    {
+                        "name": "link",
+                        "value": "{}?payment_id={}".format(event_plan_instance.chatroom_id,
+                                                           transaction_instance.payment_id)
+                    }
+                ]
+            }
+        ],
+        "template_name": EVENT_PAYMENT_SUCCESS_WHATSAPP_TEMPLATE_NAME,
+        "broadcast_name": EVENT_PAYMENT_SUCCESS_WHATSAPP_BROADCAST_NAME
+    }
+
+    send_wa_messages_response = send_wa_messages_from_core_service(user_id, payment_success_whatsapp_body)
+    return send_wa_messages_response

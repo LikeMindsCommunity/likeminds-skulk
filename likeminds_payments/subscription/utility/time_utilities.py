@@ -140,3 +140,13 @@ class TimeUtilities:
 
         return datetime.datetime(year, month, day).timestamp()*1000
 
+    @staticmethod
+    def convert_epoch_time_to_month_date(epoch_time) -> str:
+
+        """format -- March 09"""
+
+        if TimeUtilities.is_epoch_in_milliseconds(epoch_time):
+            epoch_time = TimeUtilities.convert_milliseconds_to_sec(epoch_time)
+
+        return time.strftime('%B %d', time.localtime(epoch_time))
+

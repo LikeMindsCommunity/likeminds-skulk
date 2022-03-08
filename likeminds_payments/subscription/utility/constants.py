@@ -32,10 +32,16 @@ CMS_PASSWORD = 'TheLMGrowth@1001'
 TRIGGER_EVENT_CREATION_MAIL = '{}/api/notifications/send_event_creation_mail'.format(settings.CORE_SERVICE_URL)
 FETCH_CHATROOM_URL = "{}/api/chatroom/fetch".format(settings.CORE_SERVICE_URL)
 
+CHATROOM_URL_WITH_COMMUNITY_ID = "{}/collabcard/%s?community_id=%s".format(settings.CORE_SERVICE_URL)
+
 ADMIN_EMAIL = 'admin@likeminds.community'
 
 MAIL_CATEGORY_BETA = "beta"
 MAIL_CATEGORY_PROD = "prod"
+
+PAYMENT_SUCCESS_EMAIL_TO_MEMBER = {
+    "subject": "Registration complete ✅"
+}
 
 
 class EmailCategories:
@@ -48,6 +54,8 @@ class EmailCategories:
     JOIN_FLOW = "Join Flow"
 
     RENEWAL_FLOW = "Renewal Flow"
+
+    EVENT_PAYMENT = "Event Payment"
 
 
 class EmailSubCategories:

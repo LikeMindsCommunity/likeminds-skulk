@@ -36,7 +36,8 @@ from subscription.utility.time_utilities import TimeUtilities
 from subscription.utility.number_utilities import NumberUtilities
 from subscription.utility.string_utilities import StringUtilities
 from subscription.utility.url_utilities import UrlUtilities
-from .constants import BRANCH_LINK_BASE_URL, ADMIN_EMAIL, EmailCategories, EmailSubCategories
+from .constants import BRANCH_LINK_BASE_URL, ADMIN_EMAIL, EmailCategories, EmailSubCategories, \
+    CHATROOM_URL_WITH_COMMUNITY_ID, PAYMENT_SUCCESS_EMAIL_TO_MEMBER
 from .mail_utilities import MailUtilities
 
 
@@ -842,8 +843,28 @@ def send_event_payment_success_whatsapp_and_email_to_non_member(transaction_id):
         return chatroom_data
 
     chatroom_data = chatroom_data.get("chatroom")
+    event_name = chatroom_data.get("header")
     event_date_time = "{} {}".format(TimeUtilities.convert_epoch_time_in_hh_mm_am_pm(chatroom_data.get("date_time")),
                                      TimeUtilities.convert_epoch_time_to_date_month_year(chatroom_data.get("date_time")))
+
+    link = CHATROOM_URL_WITH_COMMUNITY_ID % (str(event_plan_instance.chatroom_id),
+                                             str(event_plan_instance.community_id))
+
+    payment_success_mail_template = get_template(
+        'paid_event_reg_success_non_member.html').render(
+        {"event_name": event_name,
+         "event_date": TimeUtilities.convert_epoch_time_to_month_date(chatroom_data.get("date_time")),
+         "event_time": TimeUtilities.convert_epoch_time_in_hh_mm_am_pm(chatroom_data.get("date_time")),
+         "link": link})
+
+    mail_body_payment_success_member = PAYMENT_SUCCESS_EMAIL_TO_MEMBER.copy()
+    mail_body_payment_success_member['mail_body'] = payment_success_mail_template
+    mail_body_payment_success_member['mail_recipient_list'] = [transaction_instance.payment_email]
+    mail_body_payment_success_member['categories'] = MailUtilities.get_email_category_list_using_category_subcategory(
+        EmailCategories.EVENT_PAYMENT, EmailSubCategories.PAYMENT_SUCCESSFUL)
+
+    send_email_response = send_email_from_core_service(community_owner_details['id'],
+                                                       mail_body_payment_success_member)
 
     payment_success_whatsapp_body = {
         "receivers_list": [
@@ -852,7 +873,7 @@ def send_event_payment_success_whatsapp_and_email_to_non_member(transaction_id):
                 "customParams": [
                     {
                         "name": "event_name",
-                        "value": chatroom_data.get("header")
+                        "value": event_name
                     },
                     {
                         "name": "community_name",
@@ -879,4 +900,4 @@ def send_event_payment_success_whatsapp_and_email_to_non_member(transaction_id):
     }
 
     send_wa_messages_response = send_wa_messages_from_core_service(user_id, payment_success_whatsapp_body)
-    return send_wa_messages_response
+    return send_email_response, send_wa_messages_response

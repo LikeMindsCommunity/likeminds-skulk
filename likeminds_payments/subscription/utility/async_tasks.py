@@ -863,8 +863,7 @@ def send_event_payment_success_whatsapp_and_email_to_non_member(transaction_id):
     mail_body_payment_success_member['categories'] = MailUtilities.get_email_category_list_using_category_subcategory(
         EmailCategories.EVENT_PAYMENT, EmailSubCategories.PAYMENT_SUCCESSFUL)
 
-    send_email_response = send_email_from_core_service(community_owner_details['id'],
-                                                       mail_body_payment_success_member)
+    send_email_response = send_email_from_core_service(user_id, mail_body_payment_success_member)
 
     payment_success_whatsapp_body = {
         "receivers_list": [

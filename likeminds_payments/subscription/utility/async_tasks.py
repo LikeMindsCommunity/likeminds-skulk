@@ -851,7 +851,7 @@ def send_event_payment_success_whatsapp_and_email_to_non_member(transaction_id):
                                              str(event_plan_instance.community_id))
 
     payment_success_mail_template = get_template(
-        'paid_event_reg_success_non_member.html').render(
+        'event_comms/paid_event_reg_success_non_member.html').render(
         {"event_name": event_name,
          "event_date": TimeUtilities.convert_epoch_time_to_month_date(chatroom_data.get("date_time")),
          "event_time": TimeUtilities.convert_epoch_time_in_hh_mm_am_pm(chatroom_data.get("date_time")),

@@ -55,6 +55,8 @@ class EmailCategories:
 
     RENEWAL_FLOW = "Renewal Flow"
 
+    LOGGING = "Logging"
+
     EVENT_PAYMENT = "Event Payment"
 
 
@@ -72,3 +74,5 @@ class EmailSubCategories:
 
     PAYMENT_SUCCESSFUL = "Payment Successful"
     PAYMENT_SUCCESSFUL_AND_MEMBER_JOINED = "Payment successful + Member joined"
+
+    SETTLEMENT_WEBHOOK_ERROR = "Razorpayxwh"

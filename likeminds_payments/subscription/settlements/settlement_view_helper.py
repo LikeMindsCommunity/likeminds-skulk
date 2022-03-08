@@ -1,6 +1,8 @@
-from .constants import VALID_PAYOUT_WEBHOOK_EVENTS
+from .constants import VALID_PAYOUT_WEBHOOK_EVENTS, SETTLEMENT_ERROR_SUBJECT, SETTLEMENT_ERROR_RECEIVER_LIST
 from ..utility.response_utilities import ResponseUtilities
-
+from ..utility.mail_utilities import MailUtilities
+from ..utility.constants import EmailCategories, EmailSubCategories
+from ..external_services.email.email_wrapper import MailWrapper
 
 class SettlementViewHelper:
 
@@ -58,3 +60,12 @@ class SettlementViewHelper:
                 output[param] = query_params[param]
 
         return output
+
+    @staticmethod
+    def send_webhook_failed_communication(response):
+
+        categories = MailUtilities.get_email_category_list_using_category_subcategory(
+            EmailCategories.LOGGING, EmailSubCategories.SETTLEMENT_WEBHOOK_ERROR)
+
+        MailWrapper.send_email(SETTLEMENT_ERROR_SUBJECT, str(response),
+                               SETTLEMENT_ERROR_RECEIVER_LIST, categories=categories)

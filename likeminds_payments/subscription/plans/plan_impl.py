@@ -85,9 +85,8 @@ class PlanImpl(PlanManager):
         if discount_type == EventDiscountType.PERCENTAGE:
             discount = req_body.get('discount', event_plan_instance.discount)
 
-        elif discount_type == EventDiscountType.FLAT:
-            discount = NumberUtilities.convert_to_paisa_or_none(req_body.get('discount',
-                                                                             event_plan_instance.discount))
+        elif discount_type == EventDiscountType.FLAT and 'discount' in req_body:
+            discount = NumberUtilities.convert_to_paisa_or_none(req_body.get('discount'))
 
         event_plan_instance.discount_type = discount_type
         event_plan_instance.discount = discount

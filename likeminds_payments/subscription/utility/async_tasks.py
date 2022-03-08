@@ -829,7 +829,7 @@ def send_event_payment_success_whatsapp_and_email_to_non_member(transaction_id):
         return
 
     # Get Owner of community
-    community_owner_details = CoreServiceUtilities.get_community_admins(transaction_instance.type_id,
+    community_owner_details = CoreServiceUtilities.get_community_admins(event_plan_instance.community_id,
                                                                         fetch_owner_only=True)
 
     if not community_owner_details:

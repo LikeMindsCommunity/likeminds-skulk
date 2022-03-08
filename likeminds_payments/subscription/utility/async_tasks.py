@@ -810,7 +810,7 @@ def settlement_failed_admin_communication(settlement_id):
 
 
 @shared_task
-def send_event_payment_success_whatsapp(transaction_id):
+def send_event_payment_success_whatsapp_and_email_to_non_member(transaction_id):
 
     transaction_instance = ModelUtilities.get_model_instance_or_none(Transaction, transaction_id)
 
@@ -824,15 +824,26 @@ def send_event_payment_success_whatsapp(transaction_id):
 
     user_id = transaction_instance.user_id
 
-    if not user_id:
-        # Get Owner of community
-        community_owner_details = CoreServiceUtilities.get_community_admins(transaction_instance.type_id,
-                                                                            fetch_owner_only=True)
+    if user_id:
+        return
 
-        if not community_owner_details:
-            return {'error_message': "No owner found for the community"}
+    # Get Owner of community
+    community_owner_details = CoreServiceUtilities.get_community_admins(transaction_instance.type_id,
+                                                                        fetch_owner_only=True)
 
-        user_id = community_owner_details[0]["id"]
+    if not community_owner_details:
+        return {'error_message': "No owner found for the community"}
+
+    user_id = community_owner_details[0]["id"]
+
+    chatroom_data = CoreServiceUtilities.get_chatroom_data(user_id, event_plan_instance.chatroom_id)
+
+    if "error_message" in chatroom_data:
+        return chatroom_data
+
+    chatroom_data = chatroom_data.get("chatroom")
+    event_date_time = "{} {}".format(TimeUtilities.convert_epoch_time_in_hh_mm_am_pm(chatroom_data.get("date_time")),
+                                     TimeUtilities.convert_epoch_time_to_date_month_year(chatroom_data.get("date_time")))
 
     payment_success_whatsapp_body = {
         "receivers_list": [
@@ -841,7 +852,7 @@ def send_event_payment_success_whatsapp(transaction_id):
                 "customParams": [
                     {
                         "name": "event_name",
-                        "value": transaction_instance.payment_name
+                        "value": chatroom_data.get("header")
                     },
                     {
                         "name": "community_name",
@@ -849,7 +860,7 @@ def send_event_payment_success_whatsapp(transaction_id):
                     },
                     {
                         "name": "event_date_time",
-                        "value": transaction_instance.payment_name
+                        "value": event_date_time
                     },
                     {
                         "name": "payment_id",

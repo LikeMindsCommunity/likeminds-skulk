@@ -661,3 +661,15 @@ class CoreServiceUtilities:
         except Exception as e:
             error_logger.error("Exception occurred while sending post request to /api/notifications/send_event_creation_mail \
                                 | exception = %s") % e.args
+
+    @staticmethod
+    def get_chatroom_data(user_id, chatroom_id):
+
+        headers = {
+            'x-member-id': '{}'.format(user_id)
+        }
+
+        url = FETCH_CHATROOM_URL + "?chatroom_id={}&is_internal=true".format(chatroom_id)
+        response = ApiUtilities.generate_get_request(url=url, headers=headers)
+
+        return response

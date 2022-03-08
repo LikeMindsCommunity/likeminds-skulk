@@ -37,7 +37,7 @@ from subscription.utility.number_utilities import NumberUtilities
 from subscription.utility.string_utilities import StringUtilities
 from subscription.utility.url_utilities import UrlUtilities
 from .constants import BRANCH_LINK_BASE_URL, ADMIN_EMAIL, EmailCategories, EmailSubCategories, \
-    CHATROOM_URL_WITH_COMMUNITY_ID, PAYMENT_SUCCESS_EMAIL_TO_MEMBER
+    EVENT_PAYMENT_SUCCESS_NON_MEMBER_LINK, PAYMENT_SUCCESS_EMAIL_TO_MEMBER
 from .mail_utilities import MailUtilities
 
 
@@ -847,8 +847,8 @@ def send_event_payment_success_whatsapp_and_email_to_non_member(transaction_id):
     event_date_time = "{} {}".format(TimeUtilities.convert_epoch_time_in_hh_mm_am_pm(chatroom_data.get("date_time")),
                                      TimeUtilities.convert_epoch_time_to_date_month_year(chatroom_data.get("date_time")))
 
-    link = CHATROOM_URL_WITH_COMMUNITY_ID % (str(event_plan_instance.chatroom_id),
-                                             str(event_plan_instance.community_id))
+    link = EVENT_PAYMENT_SUCCESS_NON_MEMBER_LINK % (str(event_plan_instance.chatroom_id),
+                                                    str(event_plan_instance.payment_id))
 
     payment_success_mail_template = get_template(
         'event_comms/paid_event_reg_success_non_member.html').render(

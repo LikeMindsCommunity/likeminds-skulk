@@ -13,6 +13,7 @@ pipeline{
                     steps{
                         sshagent([sshID]){
                             // To transfer the file FTP
+                            sh 'ssh -o StrictHostKeyChecking=no ec2-user@ec2-13-233-242-7.ap-south-1.compute.amazonaws.com'
                             sh 'scp /var/lib/jenkins/workspace/nds-Subscription_test_deployment/deployment/deploy-on-beta-subscription.sh ec2-user@ec2-13-233-242-7.ap-south-1.compute.amazonaws.com:~'
                             // To add execute permissions to the file.
                             sh 'ssh ec2-user@ec2-13-233-242-7.ap-south-1.compute.amazonaws.com chmod +x /home/ec2-user/deploy-on-beta-subscription.sh'

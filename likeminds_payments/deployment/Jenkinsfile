@@ -4,7 +4,7 @@ pipeline{
     stages{
         stage("beta-deployment"){
             when{
-                branch 'development'
+                branch 'test_deployment'
             }
 
             stages{

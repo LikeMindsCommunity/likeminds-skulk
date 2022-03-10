@@ -1,0 +1,24 @@
+pipeline{
+    agent any
+
+    stages{
+        stage("beta-deployment"){
+            when{
+                branch 'development'
+            }
+
+            stages{
+                stage("deployment-initial"){
+                    steps{
+                        echo "Hey"
+                    }
+                }
+                stage("deployment-celery"){
+                    steps{
+                        echo "Hello"
+                    }
+                }
+            }
+        }
+    }
+}

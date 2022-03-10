@@ -62,6 +62,9 @@ class CreateSettlementView(APIView):
         if not razorpay_signature or 'error_message' in validated_request_body:
             context = ResponseUtilities.get_view_impl_error_context(validated_request_body['error_message'],
                                                                     status_codes.HTTP_400_BAD_REQUEST)
+
+            SettlementViewHelper.send_webhook_failed_communication(context)
+
             return JsonResponse(context['data'], status=context['status'])
 
         settlement_manager = SettlementImpl()
@@ -72,6 +75,9 @@ class CreateSettlementView(APIView):
         if 'error_message' in response_data:
             context = ResponseUtilities.get_view_impl_error_context(response_data['error_message'],
                                                                     response_data['status'])
+
+            SettlementViewHelper.send_webhook_failed_communication(context)
+
             return JsonResponse(context['data'], status=context['status'])
 
         return JsonResponse(

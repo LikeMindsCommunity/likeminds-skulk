@@ -30,11 +30,18 @@ CMS_USER_NAME = 'teamGrowth'
 CMS_PASSWORD = 'TheLMGrowth@1001'
 
 TRIGGER_EVENT_CREATION_MAIL = '{}/api/notifications/send_event_creation_mail'.format(settings.CORE_SERVICE_URL)
+FETCH_CHATROOM_URL = "{}/api/chatroom/fetch".format(settings.CORE_SERVICE_URL)
+
+EVENT_PAYMENT_SUCCESS_NON_MEMBER_LINK = "{}/event/%s?payment_id=%s".format(settings.WEB_URL)
 
 ADMIN_EMAIL = 'admin@likeminds.community'
 
 MAIL_CATEGORY_BETA = "beta"
 MAIL_CATEGORY_PROD = "prod"
+
+PAYMENT_SUCCESS_EMAIL_TO_MEMBER = {
+    "subject": "Registration complete ✅"
+}
 
 
 class EmailCategories:
@@ -47,6 +54,10 @@ class EmailCategories:
     JOIN_FLOW = "Join Flow"
 
     RENEWAL_FLOW = "Renewal Flow"
+
+    LOGGING = "Logging"
+
+    EVENT_PAYMENT = "Event Payment"
 
 
 class EmailSubCategories:
@@ -63,3 +74,5 @@ class EmailSubCategories:
 
     PAYMENT_SUCCESSFUL = "Payment Successful"
     PAYMENT_SUCCESSFUL_AND_MEMBER_JOINED = "Payment successful + Member joined"
+
+    SETTLEMENT_WEBHOOK_ERROR = "Razorpayxwh"

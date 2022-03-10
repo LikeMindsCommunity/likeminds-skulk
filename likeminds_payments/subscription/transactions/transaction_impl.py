@@ -23,7 +23,8 @@ from ..utility.core_service_utilities import CoreServiceUtilities
 from subscription.utility.response_utilities import ResponseUtilities
 from ..utility.async_tasks import (payment_page_member_payment_success_email, payment_page_member_payment_failed_email,
                                    payment_page_cm_payment_success_email, send_email_from_core_service,
-                                   payment_success_membership_join_communication)
+                                   payment_success_membership_join_communication,
+                                   send_event_payment_success_whatsapp_and_email_to_non_member)
 from ..utility.csv_utilities import CsvUtilities
 from .constants import *
 from .models import Transaction
@@ -430,12 +431,17 @@ class TransactionImpl(TransactionManager):
                         subscription_history_instance.type = 'refunded'
                         subscription_history_instance.save()
 
-        if transaction_instance.type == TransactionType.EVENT and transaction_instance.user_id:
+        if transaction_instance.type == TransactionType.EVENT:
 
-            if transaction_instance.status == 'captured':
-                TransactionImpl._attend_event_for_paid_transaction(transaction_instance)
+            if transaction_instance.user_id:
 
-            TransactionHelper.send_analytics_for_event_transaction.delay(transaction_instance.id)
+                if transaction_instance.status == 'captured':
+                    TransactionImpl._attend_event_for_paid_transaction(transaction_instance)
+
+                TransactionHelper.send_analytics_for_event_transaction.delay(transaction_instance.id)
+
+            elif transaction_instance.status == 'captured':
+                send_event_payment_success_whatsapp_and_email_to_non_member.delay(transaction_instance.id)
 
         if transaction_instance.type == TransactionType.PAYMENT_PAGE:
 

@@ -31,3 +31,5 @@ SETTLEMENTS_PAGE_SIZE = 50
 SETTLEMENT_PROCESSED_EMAIL_TO_CM_SUBJECT = "Settlement processed for {} on {}"
 SETTLEMENT_FAILED_EMAIL_TO_CM_SUBJECT = "Settlement failed for {} on {}"
 STARTED_SETTLEMENT_STATUS = 'started'
+SETTLEMENT_ERROR_SUBJECT = "Settlement Webhook Error"
+SETTLEMENT_ERROR_RECEIVER_LIST = ['backend@likeminds.community']

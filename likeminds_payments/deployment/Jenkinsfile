@@ -1,3 +1,4 @@
+sshID='subscription-beta'
 pipeline{
     agent any
 
@@ -9,8 +10,13 @@ pipeline{
 
             stages{
                 stage("deployment-initial"){
-                    steps{
-                        echo "Hey"
+                    sshagent([sshID]){
+                        // To transfer the file FTP
+                        sh 'scp /var/lib/jenkins/workspace/nds-Subscription_test_deployment/deployment/deploy-on-beta-subscription.sh ec2-user@ec2-13-233-242-7.ap-south-1.compute.amazonaws.com:~'
+                        // To add execute permissions to the file.
+                        sh 'ssh ec2-user@ec2-13-233-242-7.ap-south-1.compute.amazonaws.com chmod +x /home/ec2-user/deploy-on-beta-subscription.sh'
+                        // To run file on beta server.
+                        sh 'ssh -vT ec2-user@ec2-13-233-242-7.ap-south-1.compute.amazonaws.com /home/ec2-user/deploy-on-beta-subscription.sh'
                     }
                 }
                 stage("deployment-celery"){

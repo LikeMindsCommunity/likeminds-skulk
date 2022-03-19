@@ -267,7 +267,8 @@ class TransactionImpl(TransactionManager):
                                            'attending_status': True,
                                            'member_id': transaction_instance.user_id})
 
-    def _create_transaction_data(self, transaction_body):
+    @staticmethod
+    def _create_transaction_data(transaction_body):
         payment_instance = transaction_body['payload']['payment']['entity']
         refund_instance = {}
 
@@ -287,22 +288,24 @@ class TransactionImpl(TransactionManager):
         is_payment_page_transaction = order_notes['type'] == 'payment_page'
 
         if is_payment_page_transaction:
-            transaction_data = self._fetch_transaction_data_for_payment_page(order_notes, payment_instance,
-                                                                             refund_instance)
+            transaction_data = TransactionImpl._fetch_transaction_data_for_payment_page(order_notes, payment_instance,
+                                                                                        refund_instance)
 
             transaction_data_list = [transaction_data]
 
         elif is_community_and_event_transaction:
-            transaction_data_list = self._fetch_transaction_data_for_community_and_event(order_notes, payment_instance,
-                                                                                         refund_instance)
+            transaction_data_list = TransactionImpl._fetch_transaction_data_for_community_and_event(order_notes,
+                                                                                                    payment_instance,
+                                                                                                    refund_instance)
         elif is_event_transaction:
-            transaction_data = self._fetch_transaction_data_for_event(order_notes, payment_instance, refund_instance)
+            transaction_data = TransactionImpl._fetch_transaction_data_for_event(order_notes, payment_instance,
+                                                                                 refund_instance)
             transaction_data_list = [transaction_data]
 
         else:
-            transaction_data = self._fetch_transaction_data_for_community_subscription(order_notes,
-                                                                                       payment_instance,
-                                                                                       refund_instance)
+            transaction_data = TransactionImpl._fetch_transaction_data_for_community_subscription(order_notes,
+                                                                                                  payment_instance,
+                                                                                                  refund_instance)
             transaction_data_list = [transaction_data]
 
         return transaction_data_list

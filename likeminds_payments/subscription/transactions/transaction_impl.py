@@ -997,31 +997,10 @@ class TransactionImpl(TransactionManager):
         if not transaction_instance:
             return ResponseUtilities.get_inner_error_context("error while creating transaction")
 
-        if transaction_data['renew'] and transaction_data['user_id'] is not None:
+        process_transaction = TransactionImpl._process_transaction(transaction_instance)
 
-            subscription_manager = SubscriptionImpl(payment_id=transaction_data['payment_id'],
-                                                    member_id=transaction_data['user_id'])
-
-            create_subscription = subscription_manager.create_subscription()
-
-            if 'error_message' in create_subscription:
-                return ResponseUtilities.get_inner_error_context(create_subscription['error_message'])
-
-            plan_instance = SubscriptionPlan.get_plan_or_None(transaction_instance.plan_id)
-
-            response = CoreServiceUtilities.renew_member(plan_instance.community_id,
-                                                         transaction_data['user_id'])
-
-            if 'error_message' in response:
-                return ResponseUtilities.get_inner_error_context(response['error_message'])
-
-        if not transaction_data['renew'] and transaction_data['user_id'] is None:
-            acquisition_data = self._create_member_acquisition_data(transaction_instance, transaction_data)
-
-            MemberAcquisition.create_instance(acquisition_data)
-
-            # send join community communication
-            payment_success_membership_join_communication.delay(transaction_instance.id)
+        if 'error_message' in process_transaction:
+            return {'error_message': process_transaction['error_message']}
 
         return {'success': True, 'payment_id': transaction_instance.payment_id}
 

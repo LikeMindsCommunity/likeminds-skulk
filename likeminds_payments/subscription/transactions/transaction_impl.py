@@ -438,7 +438,7 @@ class TransactionImpl(TransactionManager):
     @staticmethod
     def _process_subscription_transaction(transaction_instance: Transaction) -> dict:
 
-        process_transaction = None
+        process_transaction = {}
 
         if transaction_instance.status == 'captured':
             process_transaction = TransactionImpl._process_subscription_captured_transaction(transaction_instance)
@@ -487,7 +487,7 @@ class TransactionImpl(TransactionManager):
     @staticmethod
     def _process_transaction(transaction_instance: Transaction) -> dict:
 
-        process_transaction = None
+        process_transaction = {}
 
         if transaction_instance.type == TransactionType.COMMUNITY_SUBSCRIPTION:
             process_transaction = TransactionImpl._process_subscription_transaction(transaction_instance)

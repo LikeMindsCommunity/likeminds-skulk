@@ -61,10 +61,10 @@ class PlanHelper:
 
         member_cohort_dict = response.get('member_cohorts')
 
-        if not member_cohort_dict or not member_cohort_dict.get(str(user_id)):
+        if not member_cohort_dict:
             return []
 
-        member_cohorts = [obj.get('id') for obj in member_cohort_dict.get(str(user_id))]
+        member_cohorts = [obj.get('cohort').get('id') for obj in member_cohort_dict]
 
         return member_cohorts
 

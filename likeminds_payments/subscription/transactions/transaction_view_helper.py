@@ -243,7 +243,7 @@ class TransactionViewHelper:
         if 'plan_id' not in request_body:
             return ResponseUtilities.get_inner_error_context("send plan_id in body")
 
-        if 'shared_by' not in request_body and (request_body.get('renew') is True):
+        if 'shared_by' not in request_body and (not request_body.get('renew', False)):
             return ResponseUtilities.get_inner_error_context("send shared_by in body")
 
         if 'payment_page_url' not in request_body:

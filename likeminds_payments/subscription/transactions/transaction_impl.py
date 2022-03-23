@@ -958,15 +958,19 @@ class TransactionImpl(TransactionManager):
         if not plan_filter:
             return {'error_message': "Invalid parameter: plan_id"}
 
+        renew = transaction_body.get('renew', False)
+
         plan_instance = plan_filter[0]
-        shared_by_member_state = CoreServiceUtilities.get_member_state(community_id=plan_instance.community_id,
-                                                                       member_id=shared_by)
 
-        if isinstance(shared_by_member_state, dict) and 'error_message' in shared_by_member_state:
-            return ResponseUtilities.get_inner_error_context(shared_by_member_state['error_message'])
+        if not renew:
+            shared_by_member_state = CoreServiceUtilities.get_member_state(community_id=plan_instance.community_id,
+                                                                           member_id=shared_by)
 
-        if shared_by_member_state != MemberState.ADMIN:
-            return ResponseUtilities.get_inner_error_context("Only CM can invite for free trial/lifetime plan!")
+            if isinstance(shared_by_member_state, dict) and 'error_message' in shared_by_member_state:
+                return ResponseUtilities.get_inner_error_context(shared_by_member_state['error_message'])
+
+            if shared_by_member_state != MemberState.ADMIN:
+                return ResponseUtilities.get_inner_error_context("Only CM can invite for free trial/lifetime plan!")
 
         transaction_exists = TransactionHelper.check_if_free_transaction_exists(plan_instance.community_id,
                                                                                 transaction_body.get('payment_phone'))
@@ -975,7 +979,6 @@ class TransactionImpl(TransactionManager):
             return ResponseUtilities.get_inner_error_context("Free trial can be subscribed only once!")
 
         user_id = None
-        renew = transaction_body.get('renew', False)
 
         if renew and self.get_user_id():
             user_id = self.get_user_id()

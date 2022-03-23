@@ -1529,7 +1529,12 @@ class SubscriptionHelper:
         current_time_in_ms = TimeUtilities.current_time_in_milliseconds()
         passed_time_in_ms = current_time_in_ms - subscription_history_instance.start_date
 
-        if plan_instance.is_paid is False and passed_time_in_ms > TimeUtilities.MILLISECONDS_IN_A_DAY:
+        upgrade_membership_time = TimeUtilities.MILLISECONDS_IN_A_DAY
+
+        if settings.IS_BETA:
+            upgrade_membership_time = MILLISECONDS_IN_15_MINS
+
+        if plan_instance.is_paid is False and passed_time_in_ms > upgrade_membership_time:
             return True
 
         return False

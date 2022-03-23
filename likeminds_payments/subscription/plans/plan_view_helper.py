@@ -12,7 +12,7 @@ from ..utility.number_utilities import NumberUtilities
 from ..utility.model_utilities import ModelUtilities
 from ..utility.async_tasks import send_email_from_core_service, get_first_verified_email_and_phone
 from ..utility.response_utilities import ResponseUtilities
-from ..utility.states import cohort_types
+from ..utility.states import cohort_types, SamplePlanTypes
 from ..utility.json_utilities import JsonUtilities
 from ..utility.string_utilities import StringUtilities
 
@@ -114,6 +114,9 @@ class PlanViewHelper:
             plan_body['name'] = ""
 
         if plan_body['duration_name'] in SUBSCRIPTION_PLAN_CHOICES and 'duration_in_months' not in plan_body:
+            plan_body['duration_in_months'] = SUBSCRIPTION_PLAN_CHOICES[plan_body['duration_name']]
+
+        if plan_body['duration_name'] == SamplePlanTypes.LIFETIME:
             plan_body['duration_in_months'] = SUBSCRIPTION_PLAN_CHOICES[plan_body['duration_name']]
 
         if 'description' not in plan_body or not plan_body['description']:

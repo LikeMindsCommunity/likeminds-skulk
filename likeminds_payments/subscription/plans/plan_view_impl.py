@@ -55,6 +55,13 @@ class CreatePlanView(TransactionMixin, APIView):
                                                                              plan_instance=instance_data['plan_instance'])
         serialized_plan.update(plan_title_context)
 
+        update_is_freemium_flag = PlanViewHelper.update_is_freemium_community(serialized_plan.get('community_id'),
+                                                                              user_id)
+
+        if 'error_message' in update_is_freemium_flag:
+            return JsonResponse(ResponseUtilities.get_view_impl_error_context(update_is_freemium_flag['error_message'],
+                                                                              status_codes.HTTP_200_OK))
+
         # Add Event Analytics
         PlanViewHelper.add_event_for_membership_plan(serialized_plan, analytics_event_name, user_id)
 

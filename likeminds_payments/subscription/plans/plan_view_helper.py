@@ -516,3 +516,12 @@ class PlanViewHelper:
         }
 
         analytics.track(user_id, event_name, plan_event_metadata)
+
+    @staticmethod
+    def update_is_freemium_community(user_id, community_id):
+        data = {
+            'community_id': community_id,
+            'is_freemium_community': True
+        }
+
+        return CoreServiceUtilities.edit_community(community_id, member_id=user_id, params_data=data)

@@ -55,8 +55,7 @@ class CreatePlanView(TransactionMixin, APIView):
                                                                              plan_instance=instance_data['plan_instance'])
         serialized_plan.update(plan_title_context)
 
-        update_is_freemium_flag = PlanViewHelper.update_is_freemium_community(serialized_plan.get('community_id'),
-                                                                              user_id)
+        update_is_freemium_flag = PlanViewHelper.update_is_freemium_community(serialized_plan, user_id)
 
         if 'error_message' in update_is_freemium_flag:
             return JsonResponse(ResponseUtilities.get_view_impl_error_context(update_is_freemium_flag['error_message'],

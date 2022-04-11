@@ -518,7 +518,12 @@ class PlanViewHelper:
         analytics.track(user_id, event_name, plan_event_metadata)
 
     @staticmethod
-    def update_is_freemium_community(user_id, community_id):
+    def update_is_freemium_community(serialized_plan, user_id):
+
+        if serialized_plan.get('cost', 1) != 0:
+            return {'success': True}
+
+        community_id = serialized_plan.get('community_id')
         data = {
             'community_id': community_id,
             'is_freemium_community': True

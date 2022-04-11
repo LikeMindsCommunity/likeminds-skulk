@@ -374,6 +374,7 @@ def payment_page_cm_payment_success_email(transaction_id):
 
     notifications_body = {
             'member_ids': [community_owner_details['id']],
+            'community_id': transaction_instance.type_id,
             'message_payload': {
                 'title': PAYMENT_PAGE_SUCCESS_PAYMENT_PUSH_NOTIFICATION_TO_CM_TITLE,
                 'sub_title': PAYMENT_PAGE_SUCCESS_PAYMENT_PUSH_NOTIFICATION_TO_CM_SUB_TITLE.format(

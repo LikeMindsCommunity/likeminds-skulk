@@ -446,6 +446,8 @@ class TransactionImpl(TransactionManager):
         if transaction_instance.status == 'refund':
             process_transaction = TransactionImpl._process_subscription_refund_transaction(transaction_instance)
 
+        TransactionHelper.send_analytics_for_payment_transaction.delay(transaction_instance.id)
+
         if 'error_message' in process_transaction:
             return {'error_message': process_transaction['error_message']}
 
@@ -497,8 +499,6 @@ class TransactionImpl(TransactionManager):
 
         if transaction_instance.type == TransactionType.PAYMENT_PAGE:
             process_transaction = TransactionImpl._process_payment_page_transaction(transaction_instance)
-
-        TransactionHelper.send_analytics_for_payment_transaction.delay(transaction_instance.id)
 
         if 'error_message' in process_transaction:
             return {'error_message': process_transaction['error_message']}

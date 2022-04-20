@@ -515,6 +515,16 @@ class PlanViewHelper:
             'plan_id': plan_serialized_object.get('plan_id')
         }
 
+        if plan_serialized_object.get('is_paid', False):
+            plan_event_metadata['plan_type'] = SEGMENT_PAID_PLAN_TITLE
+
+        elif (not plan_serialized_object.get('is_paid', False)) and plan_serialized_object.get('duration_name') == \
+                SamplePlanTypes.LIFETIME:
+            plan_event_metadata['plan_type'] = SEGMENT_FREE_PLAN_TITLE
+
+        else:
+            plan_event_metadata['plan_type'] = SEGMENT_FREE_TRIAL_TITLE
+
         analytics.track(user_id, event_name, plan_event_metadata)
 
     @staticmethod

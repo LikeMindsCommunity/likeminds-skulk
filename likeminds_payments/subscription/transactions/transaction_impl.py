@@ -16,7 +16,7 @@ from ..utility.constants import EmailCategories, EmailSubCategories
 from ..utility.mail_utilities import MailUtilities
 from ..utility.number_utilities import NumberUtilities
 from ..utility.states import TransactionType, SettlementStatus, TransactionRefundState, MemberState, \
-    TransactionStatusType
+    TransactionStatusType, SamplePlanTypes
 from ..utility.time_utilities import TimeUtilities
 from ..utility.model_utilities import ModelUtilities
 from ..utility.core_service_utilities import CoreServiceUtilities
@@ -30,11 +30,11 @@ from .constants import *
 from .models import Transaction
 from subscription.settlements.models import Settlement
 from ..plans.models import SubscriptionPlan, SubscriptionEventPlan
+from subscription.plans.constants import (SEGMENT_PAID_PLAN_TITLE, SEGMENT_FREE_TRIAL_TITLE, SEGMENT_FREE_PLAN_TITLE)
 from ..subscriptions.models import Subscription
 from ..payment_page.models import PaymentPageMeta
 from ..payment_page.payment_page_view_helper import PaymentPageViewHelper
 from ..subscription_histories.models import SubscriptionHistory
-from subscription.plans.models import SubscriptionEventPlan
 from subscription.subscriptions.constants import LIFETIME_VALID_TILL, MIGRATION, MANUAL_PAYMENT_PAGE, LIFETIME_PAYMENT
 from ..member_acquisition.models import MemberAcquisition
 from ..subscriptions.subscription_view_impl import SubscriptionImpl
@@ -497,6 +497,8 @@ class TransactionImpl(TransactionManager):
 
         if transaction_instance.type == TransactionType.PAYMENT_PAGE:
             process_transaction = TransactionImpl._process_payment_page_transaction(transaction_instance)
+
+        TransactionHelper.send_analytics_for_payment_transaction.delay(transaction_instance.id)
 
         if 'error_message' in process_transaction:
             return {'error_message': process_transaction['error_message']}
@@ -1043,6 +1045,23 @@ class TransactionHelper:
         return event_metadata
 
     @staticmethod
+    def compute_subscription_metadata_for_analytics(subscription_plan_id):
+
+        subscription_instance = ModelUtilities.get_model_instance_or_none(SubscriptionPlan, subscription_plan_id)
+
+        if not subscription_instance:
+            return
+
+        elif subscription_instance.is_paid:
+            return {'plan_type': SEGMENT_PAID_PLAN_TITLE}
+
+        elif (not subscription_instance.is_paid) and subscription_instance.duration_name == SamplePlanTypes.LIFETIME:
+            return {'plan_type': SEGMENT_FREE_PLAN_TITLE}
+
+        else:
+            return {'plan_type': SEGMENT_PAID_PLAN_TITLE}
+
+    @staticmethod
     @shared_task
     def send_analytics_for_event_transaction(transaction_id):
 
@@ -1074,6 +1093,37 @@ class TransactionHelper:
 
         event_metadata = TransactionHelper.compute_event_metadata_for_analytics(chatroom_id, user_id)
         SegmentImpl.track_event(user_id, event_name, event_metadata)
+
+    @staticmethod
+    @shared_task
+    def send_analytics_for_payment_transaction(transaction_id):
+
+        transaction_instance = ModelUtilities.get_model_instance_or_none(Transaction, transaction_id)
+
+        if not transaction_instance:
+            return
+
+        if transaction_instance.status == TransactionStatusType.CAPTURED:
+            event_name = "Payment successful (Subscription Service)"
+
+        elif transaction_instance.status == TransactionStatusType.FAILED:
+            event_name = "Payment failed (Subscription Service)"
+
+        else:
+            return
+
+        event_plan_id = transaction_instance.plan_id
+        plan_instance = SubscriptionPlan.get_plan_or_None(event_plan_id)
+
+        if not plan_instance:
+            return
+
+        user_id = transaction_instance.user_id
+
+        event_metadata = TransactionHelper.compute_subscription_metadata_for_analytics(plan_instance.id)
+
+        if event_metadata:
+            SegmentImpl.track_event(user_id, event_name, event_metadata)
 
     @staticmethod
     def fetch_payment_transactions(filters):

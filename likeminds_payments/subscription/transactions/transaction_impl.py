@@ -34,7 +34,6 @@ from ..subscriptions.models import Subscription
 from ..payment_page.models import PaymentPageMeta
 from ..payment_page.payment_page_view_helper import PaymentPageViewHelper
 from ..subscription_histories.models import SubscriptionHistory
-from subscription.plans.models import SubscriptionEventPlan
 from subscription.subscriptions.constants import LIFETIME_VALID_TILL, MIGRATION, MANUAL_PAYMENT_PAGE, LIFETIME_PAYMENT
 from ..member_acquisition.models import MemberAcquisition
 from ..subscriptions.subscription_view_impl import SubscriptionImpl

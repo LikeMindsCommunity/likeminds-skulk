@@ -72,3 +72,9 @@ class SamplePlanTypes:
 
 
 sample_plan_types = SamplePlanTypes()
+
+
+class RazorpayWebhookEventTypes:
+    PAYMENT_CAPTURED = 'payment.captured'
+    PAYMENT_FAILED = 'payment.failed'
+    REFUND_PROCESSED = 'refund.processed'

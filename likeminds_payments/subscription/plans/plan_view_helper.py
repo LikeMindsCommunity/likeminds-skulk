@@ -474,22 +474,26 @@ class PlanViewHelper:
             else ''
         }
 
+        context = {
+            'subject': mail_subject,
+            'template': None,
+            'to_mails_list': [verified_email.get('email')],
+            'from_email': None,
+            'reply_to': [FIRST_MEMBERSHIP_PLAN_CM_REPLY_EMAIL],
+            'categories': mail_categories,
+            'from_name': None,
+            'email_type': None,
+            'community_id': community_data.get('id')
+        }
+
         template_mapping = email_mapper.get_email_mapping(EmailCategories.CREATE_COMMUNITY,
                                                           EmailSubCategories.FIRST_PLAN_CREATED)
 
         if template_mapping:
-            mail_template = get_template(template_mapping.get('location')).render(email_context)
+            context['template'] = get_template(template_mapping.get('location')).render(email_context)
+            context['email_type'] = template_mapping.get('email_type', None)
 
-            mail_body = {
-                'subject': mail_subject,
-                'mail_body': mail_template,
-                'mail_recipient_list': [verified_email.get('email')],
-                'reply_to': [FIRST_MEMBERSHIP_PLAN_CM_REPLY_EMAIL],
-                'categories': mail_categories,
-                'email_type': template_mapping.get('email_type', None)
-            }
-
-            return mail_body
+        return context
 
     @staticmethod
     @shared_task

@@ -593,8 +593,9 @@ def cash_payment_renewal_communication(transaction_id):
 
     cm_mail_body = {
         "subject": PAYMENT_SUCCESS_MEMBERSHIP_RENEW_EMAIL_TO_CM_SUBJECT.format(transaction_instance.community_name),
-        "mail_body": cm_mail_template,
-        "mail_recipient_list": cm_emails
+        "template": cm_mail_template,
+        "to_mails_list": cm_emails,
+        "community_id": transaction_instance.type_id
     }
 
     send_cm_email_response = send_email_from_core_service(transaction_instance.user_id, cm_mail_body)

@@ -15,6 +15,7 @@ from ..utility.response_utilities import ResponseUtilities
 from ..utility.states import cohort_types, SamplePlanTypes
 from ..utility.json_utilities import JsonUtilities
 from ..utility.string_utilities import StringUtilities
+from ..utility.email_mappings import email_mapper
 
 
 class PlanViewHelper:
@@ -462,7 +463,7 @@ class PlanViewHelper:
         cm_onboarding_branch_url = CoreServiceUtilities.get_cm_onboarding_community_feed_url(
             community_data.get('id'))
 
-        mail_template = get_template('cm_onboarding/first_plan_creation_cm_onboarding_email.html').render({
+        email_context = {
             "community_logo": community_data.get('image_url'),
             "community_name": community_data.get('name'),
             "cm_name": user_data.get('name'),
@@ -471,17 +472,24 @@ class PlanViewHelper:
             "button_text": FIRST_MEMBERSHIP_PLAN_CM_MAIL_BUTTON_TEXT,
             "button_link": cm_onboarding_branch_url.get('feed_url') if cm_onboarding_branch_url.get('feed_url')
             else ''
-        })
-
-        mail_body = {
-            'subject': mail_subject,
-            'mail_body': mail_template,
-            'mail_recipient_list': [verified_email.get('email')],
-            'reply_to': [FIRST_MEMBERSHIP_PLAN_CM_REPLY_EMAIL],
-            'categories': mail_categories
         }
 
-        return mail_body
+        template_mapping = email_mapper.get_email_mapping(EmailCategories.CREATE_COMMUNITY,
+                                                          EmailSubCategories.FIRST_PLAN_CREATED)
+
+        if template_mapping:
+            mail_template = get_template(template_mapping.get('location')).render(email_context)
+
+            mail_body = {
+                'subject': mail_subject,
+                'mail_body': mail_template,
+                'mail_recipient_list': [verified_email.get('email')],
+                'reply_to': [FIRST_MEMBERSHIP_PLAN_CM_REPLY_EMAIL],
+                'categories': mail_categories,
+                'email_type': template_mapping.get('email_type', None)
+            }
+
+            return mail_body
 
     @staticmethod
     @shared_task

@@ -18,6 +18,7 @@ from ..utility.states import TransactionStatusType
 from ..transactions.models import Transaction
 from ..utility.core_service_utilities import CoreServiceUtilities
 from ..utility.async_tasks import send_email_from_core_service
+from ..utility.email_mappings import email_mapper
 from ..external_services.s3.s3_wrapper import S3Wrapper
 
 
@@ -207,18 +208,31 @@ class PaymentPageImpl(PaymentPageManager):
             return {'success': False, 'error_message': upload_status['error_message']}
 
         # Send Email
-        mail_template = get_template("all_payment_page_download_report_mail.html").render(
-            {"link": upload_status['link'],
-             "cm_name": cm_name,
-             "community_name": community_name})
+        mail_context = {"link": upload_status['link'],
+                        "cm_name": cm_name,
+                        "community_name": community_name,
+                        }
 
-        payment_page_mail_body = PAYMENT_PAGE_ALL_REPORTS_DOWNLOAD_EMAIL_BODY.copy()
+        context = {
+            'subject': PAYMENT_PAGE_ALL_REPORTS_DOWNLOAD_EMAIL_BODY['subject'],
+            'template': None,
+            'to_mails_list': [user_verified_mobile_and_email['email']],
+            'from_email': None,
+            'reply_to': None,
+            'categories': MailUtilities.get_email_category_list_using_category_subcategory(
+                EmailCategories.PAYMENT_PAGE, EmailSubCategories.EMAIL_REPORT),
+            'from_name': None,
+            'email_type': None,
+            'community_id': self.get_community_id()
+        }
 
-        payment_page_mail_body['mail_body'] = mail_template
-        payment_page_mail_body['mail_recipient_list'] = [user_verified_mobile_and_email['email']]
-        payment_page_mail_body['categories'] = MailUtilities.get_email_category_list_using_category_subcategory(
-            EmailCategories.PAYMENT_PAGE, EmailSubCategories.EMAIL_REPORT
-        )
-        send_email_response = send_email_from_core_service(self.get_user_id(), payment_page_mail_body)
+        template_mapping = email_mapper.get_email_mapping(EmailCategories.PAYMENT_PAGE,
+                                                          EmailSubCategories.EMAIL_REPORT)
+
+        if template_mapping:
+            context['template'] = get_template(template_mapping.get('location')).render(mail_context)
+            context['email_type'] = template_mapping.get('email_type', None)
+
+        send_email_response = send_email_from_core_service(self.get_user_id(), context)
 
         return send_email_response

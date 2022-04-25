@@ -19,6 +19,7 @@ from ..utility.states import TransactionType, SettlementStatus, TransactionRefun
     TransactionStatusType
 from ..utility.time_utilities import TimeUtilities
 from ..utility.model_utilities import ModelUtilities
+from ..utility.email_mappings import email_mapper
 from ..utility.core_service_utilities import CoreServiceUtilities
 from subscription.utility.response_utilities import ResponseUtilities
 from ..utility.async_tasks import (payment_page_member_payment_success_email, payment_page_member_payment_failed_email,
@@ -744,20 +745,32 @@ class TransactionImpl(TransactionManager):
         user_verified_mobile_and_email = PaymentPageViewHelper.get_first_verified_email_and_phone(user_id)
 
         # Send Email
-        mail_template = get_template("transactions_all_payment_page_download_report_mail.html").render(
-            {"link": upload_status['link'],
-             "cm_name": community_owner_details['name'],
-             "payment_page_title": payment_page_instance.title})
+        mail_context = {"link": upload_status['link'],
+                        "cm_name": community_owner_details['name'],
+                        "payment_page_title": payment_page_instance.title}
 
-        transaction_payment_page_mail_body = TRANSACTION_DOWNLOAD_ALL_PAYMENT_PAGEREPORT_TO_CM_BODY.copy()
+        context = {
+            'subject': TRANSACTION_DOWNLOAD_ALL_PAYMENT_PAGEREPORT_TO_CM_BODY['subject'],
+            'template': None,
+            'to_mails_list': [user_verified_mobile_and_email['email']],
+            'from_email': None,
+            'reply_to': None,
+            'categories': MailUtilities.get_email_category_list_using_category_subcategory(
+                EmailCategories.PAYMENT_PAGE, EmailSubCategories.EMAIL_REPORT),
+            'from_name': None,
+            'email_type': None,
+            'community_id': payment_page_instance.community_id
+        }
 
-        transaction_payment_page_mail_body['mail_body'] = mail_template
-        transaction_payment_page_mail_body['mail_recipient_list'] = [user_verified_mobile_and_email['email']]
+        template_mapping = email_mapper.get_email_mapping(EmailCategories.PAYMENT_PAGE,
+                                                          EmailSubCategories.EMAIL_REPORT,
+                                                          2)
 
-        transaction_payment_page_mail_body['categories'] = MailUtilities.get_email_category_list_using_category_subcategory(
-            EmailCategories.PAYMENT_PAGE, EmailSubCategories.EMAIL_REPORT)
+        if template_mapping:
+            context['template'] = get_template(template_mapping.get('location')).render(mail_context)
+            context['email_type'] = template_mapping.get('email_type', None)
 
-        send_email_response = send_email_from_core_service(user_id, transaction_payment_page_mail_body)
+        send_email_response = send_email_from_core_service(user_id, context)
 
         return send_email_response
 

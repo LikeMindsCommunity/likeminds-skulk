@@ -72,3 +72,11 @@ class SamplePlanTypes:
 
 
 sample_plan_types = SamplePlanTypes()
+
+
+class EmailTypes:
+    ADMIN_EMAIL = 'admin_mail'
+    COMMUNITY_EMAIL = 'community_mail'
+
+
+email_types = EmailTypes()

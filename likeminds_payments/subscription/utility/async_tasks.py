@@ -36,6 +36,7 @@ from subscription.utility.time_utilities import TimeUtilities
 from subscription.utility.number_utilities import NumberUtilities
 from subscription.utility.string_utilities import StringUtilities
 from subscription.utility.url_utilities import UrlUtilities
+from subscription.utility.email_mappings import email_mapper
 from .constants import BRANCH_LINK_BASE_URL, ADMIN_EMAIL, EmailCategories, EmailSubCategories, \
     EVENT_PAYMENT_SUCCESS_NON_MEMBER_LINK, PAYMENT_SUCCESS_EMAIL_TO_MEMBER
 from .mail_utilities import MailUtilities
@@ -185,28 +186,36 @@ def payment_page_member_payment_success_email(transaction_id):
     successful_payment_message = payment_page_instance.custom_success_message if \
         payment_page_instance.custom_success_message else ""
 
-    member_payment_success_mail_template = get_template(
-        'payment_success_member_email_payment_page.html').render(
-        {"member_name": transaction_instance.payment_name,
-         "currency": transaction_instance.currency,
-         "amount": NumberUtilities.convert_to_rupee_or_none(transaction_instance.amount),
-         "community_name": transaction_instance.community_name,
-         "successful_payment_message": successful_payment_message,
-         "community_manager_name": community_owner_details['name']})
+    member_mail_context = {"member_name": transaction_instance.payment_name,
+                           "currency": transaction_instance.currency,
+                           "amount": NumberUtilities.convert_to_rupee_or_none(transaction_instance.amount),
+                           "community_name": transaction_instance.community_name,
+                           "successful_payment_message": successful_payment_message,
+                           "community_manager_name": community_owner_details['name']}
 
-    payment_page_mail_body_payment_success_member = PAYMENT_PAGE_PAYMENT_SUCCESS_EMAIL_TO_MEMBER_BODY.copy()
+    context = {
+        'subject': PAYMENT_PAGE_PAYMENT_SUCCESS_EMAIL_TO_MEMBER_BODY[
+            'subject'].format(transaction_instance.community_name),
+        'template': None,
+        'to_mails_list': [transaction_instance.payment_email],
+        'from_email': None,
+        'reply_to': [owner_verified_email_and_phone['email']],
+        'categories': MailUtilities.get_email_category_list_using_category_subcategory(
+            EmailCategories.PAYMENT_PAGE, EmailSubCategories.NEW_PAYMENT),
+        'from_name': None,
+        'email_type': None,
+        'community_id': transaction_instance.type_id
+    }
 
-    payment_page_mail_body_payment_success_member['subject'] = payment_page_mail_body_payment_success_member[
-        'subject'].format(transaction_instance.community_name)
-    payment_page_mail_body_payment_success_member['mail_body'] = member_payment_success_mail_template
-    payment_page_mail_body_payment_success_member['mail_recipient_list'] = [transaction_instance.payment_email]
-    payment_page_mail_body_payment_success_member['reply_to'] = [owner_verified_email_and_phone['email']]
-    payment_page_mail_body_payment_success_member['categories'] = MailUtilities.get_email_category_list_using_category_subcategory(
-        EmailCategories.PAYMENT_PAGE, EmailSubCategories.NEW_PAYMENT
-    )
+    template_mapping = email_mapper.get_email_mapping(EmailCategories.PAYMENT_PAGE,
+                                                      EmailSubCategories.NEW_PAYMENT,
+                                                      'member')
 
-    send_email_response = send_email_from_core_service(community_owner_details['id'],
-                                                       payment_page_mail_body_payment_success_member)
+    if template_mapping:
+        context['template'] = get_template(template_mapping.get('location')).render(member_mail_context)
+        context['email_type'] = template_mapping.get('email_type', None)
+
+    send_email_response = send_email_from_core_service(community_owner_details['id'], context)
 
     payment_success_whatsapp_member_body = {
         "receivers_list": [
@@ -237,7 +246,8 @@ def payment_page_member_payment_success_email(transaction_id):
         "broadcast_name": PAYMENT_PAGE_PAYMENT_SUCCESS_MEMBER_WHATSAPP_BROADCAST_NAME
     }
 
-    send_wa_messages_response = send_wa_messages_from_core_service(community_owner_details['id'], payment_success_whatsapp_member_body)
+    send_wa_messages_response = send_wa_messages_from_core_service(community_owner_details['id'],
+                                                                   payment_success_whatsapp_member_body)
 
     return send_email_response, send_wa_messages_response
 
@@ -273,26 +283,33 @@ def payment_page_member_payment_failed_email(transaction_id):
     if 'error_message' in owner_verified_email_and_phone:
         return {'error_message': owner_verified_email_and_phone['error_message']}
 
-    member_payment_failed_mail_template = get_template(
-        'payment_failed_member_email_payment_page.html').render(
-        {"member_name": transaction_instance.payment_name,
-         "payment_page_title": payment_page_instance.title,
-         "payment_page_url": '/'.join([BRANCH_LINK_BASE_URL, transaction_instance.payment_page_url]),
-         "community_name": transaction_instance.community_name,
-         "community_manager_name": community_owner_details['name']})
+    mail_context = {"member_name": transaction_instance.payment_name,
+                    "payment_page_title": payment_page_instance.title,
+                    "payment_page_url": '/'.join([BRANCH_LINK_BASE_URL, transaction_instance.payment_page_url]),
+                    "community_name": transaction_instance.community_name,
+                    "community_manager_name": community_owner_details['name']}
 
-    payment_page_mail_body_payment_failed_member = PAYMENT_PAGE_PAYMENT_FAILED_EMAIL_TO_MEMBER_BODY.copy()
+    context = {
+        'subject': PAYMENT_PAGE_PAYMENT_FAILED_EMAIL_TO_MEMBER_BODY['subject'].format(payment_page_instance.title),
+        'template': None,
+        'to_mails_list': [transaction_instance.payment_email],
+        'from_email': None,
+        'reply_to': [owner_verified_email_and_phone['email']],
+        'categories': MailUtilities.get_email_category_list_using_category_subcategory(
+            EmailCategories.PAYMENT_PAGE, EmailSubCategories.FAILED_PAYMENT),
+        'from_name': None,
+        'email_type': None,
+        'community_id': transaction_instance.type_id
+    }
 
-    payment_page_mail_body_payment_failed_member['subject'] = payment_page_mail_body_payment_failed_member[
-        'subject'].format(payment_page_instance.title)
-    payment_page_mail_body_payment_failed_member['mail_body'] = member_payment_failed_mail_template
-    payment_page_mail_body_payment_failed_member['mail_recipient_list'] = [transaction_instance.payment_email]
-    payment_page_mail_body_payment_failed_member['reply_to'] = [owner_verified_email_and_phone['email']]
-    payment_page_mail_body_payment_failed_member['categories'] = MailUtilities.get_email_category_list_using_category_subcategory(
-        EmailCategories.PAYMENT_PAGE, EmailSubCategories.FAILED_PAYMENT)
+    template_mapping = email_mapper.get_email_mapping(EmailCategories.PAYMENT_PAGE,
+                                                      EmailSubCategories.FAILED_PAYMENT)
 
-    send_email_response = send_email_from_core_service(community_owner_details['id'],
-                                                       payment_page_mail_body_payment_failed_member)
+    if template_mapping:
+        context['template'] = get_template(template_mapping.get('location')).render(mail_context)
+        context['email_type'] = template_mapping.get('email_type', None)
+
+    send_email_response = send_email_from_core_service(community_owner_details['id'], context)
 
     payment_success_whatsapp_member_body = {
         "receivers_list": [
@@ -351,26 +368,35 @@ def payment_page_cm_payment_success_email(transaction_id):
     if 'error_message' in owner_verified_email_and_phone:
         return {'error_message': owner_verified_email_and_phone['error_message']}
 
-    cm_payment_success_mail_template = get_template(
-        'payment_success_cm_email_payment_page.html').render(
-        {"member_name": transaction_instance.payment_name,
-         "member_email": transaction_instance.payment_email,
-         "member_phone": transaction_instance.payment_phone,
-         "currency": transaction_instance.currency,
-         "amount": NumberUtilities.convert_to_rupee_or_none(transaction_instance.amount),
-         "community_name": transaction_instance.community_name})
+    mail_context = {"member_name": transaction_instance.payment_name,
+                    "member_email": transaction_instance.payment_email,
+                    "member_phone": transaction_instance.payment_phone,
+                    "currency": transaction_instance.currency,
+                    "amount": NumberUtilities.convert_to_rupee_or_none(transaction_instance.amount),
+                    "community_name": transaction_instance.community_name}
 
-    payment_page_mail_body_payment_success_cm = PAYMENT_PAGE_PAYMENT_SUCCESS_EMAIL_TO_CM_BODY.copy()
+    context = {
+        'subject': PAYMENT_PAGE_PAYMENT_SUCCESS_EMAIL_TO_CM_BODY['subject'].format(str(payment_page_instance.title)),
+        'template': None,
+        'to_mails_list': [transaction_instance.payment_email],
+        'from_email': None,
+        'reply_to': None,
+        'categories': MailUtilities.get_email_category_list_using_category_subcategory(
+            EmailCategories.PAYMENT_PAGE, EmailSubCategories.NEW_PAYMENT),
+        'from_name': None,
+        'email_type': None,
+        'community_id': transaction_instance.type_id
+    }
 
-    payment_page_mail_body_payment_success_cm['subject'] = payment_page_mail_body_payment_success_cm[
-        'subject'].format(str(payment_page_instance.title))
-    payment_page_mail_body_payment_success_cm['mail_body'] = cm_payment_success_mail_template
-    payment_page_mail_body_payment_success_cm['mail_recipient_list'] = [transaction_instance.payment_email]
-    payment_page_mail_body_payment_success_cm['categories'] = MailUtilities.get_email_category_list_using_category_subcategory(
-        EmailCategories.PAYMENT_PAGE, EmailSubCategories.NEW_PAYMENT)
+    template_mapping = email_mapper.get_email_mapping(EmailCategories.PAYMENT_PAGE,
+                                                      EmailSubCategories.NEW_PAYMENT,
+                                                      'cm')
 
-    send_email_response = send_email_from_core_service(community_owner_details['id'],
-                                                       payment_page_mail_body_payment_success_cm)
+    if template_mapping:
+        context['template'] = get_template(template_mapping.get('location')).render(mail_context)
+        context['email_type'] = template_mapping.get('email_type', None)
+
+    send_email_response = send_email_from_core_service(community_owner_details['id'], context)
 
     notifications_body = {
             'member_ids': [community_owner_details['id']],
@@ -468,40 +494,59 @@ def payment_success_membership_join_communication(transaction_id):
 
     send_wa_messages_response = send_wa_messages_from_core_service(owner_id, whatsapp_member_body)
 
-    cm_mail_template = get_template(
-        'cash_payments/cm_email_member_join.html').render(
-        {"community_name": transaction_instance.community_name,
-         "member_email": transaction_instance.payment_email,
-         "member_phone": transaction_instance.payment_phone,
-         "otl_link": otl_link['private_link'],
-         "plan_name": transaction_instance.plan_name,
-         "cost": NumberUtilities.convert_to_rupee_or_none(transaction_instance.amount)})
+    cm_email_context = {"community_name": transaction_instance.community_name,
+                        "member_email": transaction_instance.payment_email,
+                        "member_phone": transaction_instance.payment_phone,
+                        "otl_link": otl_link['private_link'],
+                        "plan_name": transaction_instance.plan_name,
+                        "cost": NumberUtilities.convert_to_rupee_or_none(transaction_instance.amount)}
 
-    cm_mail_body = {
-        "subject": PAYMENT_SUCCESS_MEMBERSHIP_EMAIL_TO_CM_SUBJECT,
-        "mail_body": cm_mail_template,
-        "mail_recipient_list": cm_emails,
-        "categories": MailUtilities.get_email_category_list_using_category_subcategory(
-            EmailCategories.JOIN_FLOW, EmailSubCategories.PAYMENT_SUCCESSFUL_AND_MEMBER_JOINED)
+    cm_context = {
+        'subject': PAYMENT_SUCCESS_MEMBERSHIP_EMAIL_TO_CM_SUBJECT,
+        'template': None,
+        'to_mails_list': cm_emails,
+        'from_email': None,
+        'reply_to': None,
+        'categories': MailUtilities.get_email_category_list_using_category_subcategory(
+            EmailCategories.JOIN_FLOW, EmailSubCategories.PAYMENT_SUCCESSFUL_AND_MEMBER_JOINED),
+        'from_name': None,
+        'email_type': None,
+        'community_id': transaction_instance.type_id
     }
 
-    member_mail_template = get_template(
-        'cash_payments/member_email_member_join.html').render(
-        {"community_name": transaction_instance.community_name,
-         "otl_link": otl_link['private_link'],
-         "payment_id": transaction_instance.payment_id})
+    template_mapping = email_mapper.get_email_mapping(EmailCategories.CREATE_COMMUNITY,
+                                                      EmailSubCategories.FIRST_PLAN_CREATED)
 
-    member_mail_body = {
-        "subject": PAYMENT_SUCCESS_MEMBERSHIP_EMAIL_TO_MEMBER_SUBJECT.format(transaction_instance.community_name),
-        "mail_body": member_mail_template,
-        "mail_recipient_list": [transaction_instance.payment_email],
-        "reply_to": cm_emails,
-        "categories": MailUtilities.get_email_category_list_using_category_subcategory(
-            EmailCategories.JOIN_FLOW, EmailSubCategories.PAYMENT_SUCCESSFUL)
+    if template_mapping:
+        cm_context['template'] = get_template(template_mapping.get('location')).render(cm_email_context)
+        cm_context['email_type'] = template_mapping.get('email_type', None)
+
+    member_email_context = {"community_name": transaction_instance.community_name,
+                            "otl_link": otl_link['private_link'],
+                            "payment_id": transaction_instance.payment_id}
+
+    member_context = {
+        'subject': PAYMENT_SUCCESS_MEMBERSHIP_EMAIL_TO_MEMBER_SUBJECT.format(transaction_instance.community_name),
+        'template': None,
+        'to_mails_list': [transaction_instance.payment_email],
+        'from_email': None,
+        'reply_to': cm_emails,
+        'categories': MailUtilities.get_email_category_list_using_category_subcategory(
+            EmailCategories.JOIN_FLOW, EmailSubCategories.PAYMENT_SUCCESSFUL),
+        'from_name': None,
+        'email_type': None,
+        'community_id': transaction_instance.type_id
     }
 
-    send_cm_email_response = send_email_from_core_service(owner_id, cm_mail_body)
-    send_member_email_response = send_email_from_core_service(owner_id, member_mail_body)
+    template_mapping = email_mapper.get_email_mapping(EmailCategories.CREATE_COMMUNITY,
+                                                      EmailSubCategories.FIRST_PLAN_CREATED)
+
+    if template_mapping:
+        member_context['template'] = get_template(template_mapping.get('location')).render(member_email_context)
+        member_context['email_type'] = template_mapping.get('email_type', None)
+
+    send_cm_email_response = send_email_from_core_service(owner_id, cm_context)
+    send_member_email_response = send_email_from_core_service(owner_id, member_context)
 
     return send_cm_email_response, send_member_email_response, send_wa_messages_response
 
@@ -579,20 +624,7 @@ def _settlement_validator(settlement_id) -> dict:
             'community_owner_details': community_owner_details}
 
 
-def _get_settlement_processed_template_context(community_details, settlement_instance):
-
-    cm_mail_template = get_template(
-        'settlements/settlement_processed_cm_email.html').render(
-        {"community_name": community_details['community'].get('name'),
-         "currency": settlement_instance.currency,
-         "amount": NumberUtilities.convert_to_rupee_or_none(settlement_instance.amount),
-         "settlement_id": settlement_instance.settlement_id})
-
-    return cm_mail_template
-
-
-def _get_settlement_processed_email_context(community_details, community_owner_details, settlement_instance,
-                                            template_context):
+def _get_settlement_processed_email_context(community_details, community_owner_details, settlement_instance):
 
     cm_details = {}
     owner_id = None
@@ -621,18 +653,35 @@ def _get_settlement_processed_email_context(community_details, community_owner_d
     mail_categories = MailUtilities.get_email_category_list_using_category_subcategory(
         EmailCategories.SETTLEMENT, EmailSubCategories.SETTLEMENT_SUCCESSFUL_CM)
 
-    cm_mail_body = {
-        "subject": SETTLEMENT_PROCESSED_EMAIL_TO_CM_SUBJECT.format(
+    cm_mail_context = {"community_name": community_details['community'].get('name'),
+                       "currency": settlement_instance.currency,
+                       "amount": NumberUtilities.convert_to_rupee_or_none(settlement_instance.amount),
+                       "settlement_id": settlement_instance.settlement_id}
+
+    context = {
+        'subject': SETTLEMENT_PROCESSED_EMAIL_TO_CM_SUBJECT.format(
             community_details['community'].get('name'),
             '{} {}'.format(TimeUtilities.convert_epoch_to_date(settlement_instance.created_at),
                            TimeUtilities.convert_epoch_time_in_hh_mm_am_pm(settlement_instance.created_at))
         ),
-        "mail_body": template_context,
-        "mail_recipient_list": cm_emails,
-        "categories": mail_categories
+        'template': None,
+        'to_mails_list': cm_emails,
+        'from_email': None,
+        'reply_to': None,
+        'categories': mail_categories,
+        'from_name': None,
+        'email_type': None,
+        'community_id': settlement_instance.community_id
     }
 
-    return {'email_context': cm_mail_body,
+    template_mapping = email_mapper.get_email_mapping(EmailCategories.SETTLEMENT,
+                                                      EmailSubCategories.SETTLEMENT_SUCCESSFUL_CM)
+
+    if template_mapping:
+        context['template'] = get_template(template_mapping.get('location')).render(cm_mail_context)
+        context['email_type'] = template_mapping.get('email_type', None)
+
+    return {'email_context': context,
             'owner_id': owner_id}
 
 
@@ -644,15 +693,10 @@ def settlement_processed_communication(settlement_id):
     if 'error_message' in communication_validator:
         return communication_validator['error_message']
 
-    communication_template_context = _get_settlement_processed_template_context(
-        communication_validator.get('community_details'),
-        communication_validator.get('settlement_instance'))
-
     communication_email_details = _get_settlement_processed_email_context(
         communication_validator.get('community_details'),
         communication_validator.get('community_owner_details'),
-        communication_validator.get('settlement_instance'),
-        communication_template_context
+        communication_validator.get('settlement_instance')
     )
 
     send_cm_email_response = send_email_from_core_service(communication_email_details.get('owner_id'),
@@ -661,20 +705,7 @@ def settlement_processed_communication(settlement_id):
     return send_cm_email_response, None
 
 
-def _get_settlement_failed_cm_template_context(community_details, settlement_instance):
-
-    cm_mail_template = get_template(
-        'settlements/settlement_failed_cm_email.html').render(
-        {"community_name": community_details['community'].get('name'),
-         "currency": settlement_instance.currency,
-         "amount": NumberUtilities.convert_to_rupee_or_none(settlement_instance.amount),
-         "settlement_id": settlement_instance.settlement_id})
-
-    return cm_mail_template
-
-
-def _get_settlement_failed_cm_email_context(community_details, community_owner_details, settlement_instance,
-                                            template_context):
+def _get_settlement_failed_cm_email_context(community_details, community_owner_details, settlement_instance):
 
     cm_details = {}
     owner_id = None
@@ -703,18 +734,35 @@ def _get_settlement_failed_cm_email_context(community_details, community_owner_d
     mail_categories = MailUtilities.get_email_category_list_using_category_subcategory(
         EmailCategories.SETTLEMENT, EmailSubCategories.SETTLEMENT_FAILED_CM)
 
-    cm_mail_body = {
-        "subject": SETTLEMENT_FAILED_EMAIL_TO_CM_SUBJECT.format(
+    cm_mail_context = {"community_name": community_details['community'].get('name'),
+                       "currency": settlement_instance.currency,
+                       "amount": NumberUtilities.convert_to_rupee_or_none(settlement_instance.amount),
+                       "settlement_id": settlement_instance.settlement_id}
+
+    context = {
+        'subject': SETTLEMENT_FAILED_EMAIL_TO_CM_SUBJECT.format(
             community_details['community'].get('name'),
             '{} {}'.format(TimeUtilities.convert_epoch_to_date(settlement_instance.created_at),
                            TimeUtilities.convert_epoch_time_in_hh_mm_am_pm(settlement_instance.created_at))
         ),
-        "mail_body": template_context,
-        "mail_recipient_list": cm_emails,
-        "categories": mail_categories
+        'template': None,
+        'to_mails_list': cm_emails,
+        'from_email': None,
+        'reply_to': None,
+        'categories': mail_categories,
+        'from_name': None,
+        'email_type': None,
+        'community_id': settlement_instance.community_id
     }
 
-    return {'email_context': cm_mail_body,
+    template_mapping = email_mapper.get_email_mapping(EmailCategories.SETTLEMENT,
+                                                      EmailSubCategories.SETTLEMENT_FAILED_CM)
+
+    if template_mapping:
+        context['template'] = get_template(template_mapping.get('location')).render(cm_mail_context)
+        context['email_type'] = template_mapping.get('email_type', None)
+
+    return {'email_context': context,
             'owner_id': owner_id}
 
 
@@ -726,15 +774,10 @@ def settlement_failed_cm_communication(settlement_id):
     if 'error_message' in communication_validator:
         return communication_validator['error_message']
 
-    communication_template_context = _get_settlement_failed_cm_template_context(
-        communication_validator.get('community_details'),
-        communication_validator.get('settlement_instance'))
-
     communication_email_details = _get_settlement_failed_cm_email_context(
         communication_validator.get('community_details'),
         communication_validator.get('community_owner_details'),
-        communication_validator.get('settlement_instance'),
-        communication_template_context
+        communication_validator.get('settlement_instance')
     )
 
     send_cm_email_response = send_email_from_core_service(communication_email_details.get('owner_id'),
@@ -743,21 +786,7 @@ def settlement_failed_cm_communication(settlement_id):
     return send_cm_email_response, None
 
 
-def _get_settlement_failed_admin_template_context(community_details, settlement_instance):
-
-    admin_mail_template = get_template(
-        'settlements/settlement_failed_admin_email.html').render(
-        {"community_name": community_details['community'].get('name'),
-         "currency": settlement_instance.currency,
-         "amount": NumberUtilities.convert_to_rupee_or_none(settlement_instance.amount),
-         "settlement_id": settlement_instance.settlement_id,
-         "status": SETTLEMENT_STATUS_MAP_FOR_EMAIL[settlement_instance.status]})
-
-    return admin_mail_template
-
-
-def _get_settlement_failed_admin_email_context(community_details, community_owner_details, settlement_instance,
-                                               template_context):
+def _get_settlement_failed_admin_email_context(community_details, community_owner_details, settlement_instance):
 
     cm_details = {}
     owner_id = None
@@ -770,18 +799,36 @@ def _get_settlement_failed_admin_email_context(community_details, community_owne
     mail_categories = MailUtilities.get_email_category_list_using_category_subcategory(
         EmailCategories.SETTLEMENT, EmailSubCategories.SETTLEMENT_FAILED_ADMIN)
 
-    admin_mail_body = {
-        "subject": SETTLEMENT_FAILED_EMAIL_TO_CM_SUBJECT.format(
+    admin_mail_context = {"community_name": community_details['community'].get('name'),
+                          "currency": settlement_instance.currency,
+                          "amount": NumberUtilities.convert_to_rupee_or_none(settlement_instance.amount),
+                          "settlement_id": settlement_instance.settlement_id,
+                          "status": SETTLEMENT_STATUS_MAP_FOR_EMAIL[settlement_instance.status]}
+
+    context = {
+        'subject': SETTLEMENT_FAILED_EMAIL_TO_CM_SUBJECT.format(
             community_details['community'].get('name'),
             '{} {}'.format(TimeUtilities.convert_epoch_to_date(settlement_instance.created_at),
                            TimeUtilities.convert_epoch_time_in_hh_mm_am_pm(settlement_instance.created_at))
         ),
-        "mail_body": template_context,
-        "mail_recipient_list": [ADMIN_EMAIL],
-        "categories": mail_categories
+        'template': None,
+        'to_mails_list': [ADMIN_EMAIL],
+        'from_email': None,
+        'reply_to': None,
+        'categories': mail_categories,
+        'from_name': None,
+        'email_type': None,
+        'community_id': settlement_instance.community_id
     }
 
-    return {'email_context': admin_mail_body,
+    template_mapping = email_mapper.get_email_mapping(EmailCategories.SETTLEMENT,
+                                                      EmailSubCategories.SETTLEMENT_FAILED_ADMIN)
+
+    if template_mapping:
+        context['template'] = get_template(template_mapping.get('location')).render(admin_mail_context)
+        context['email_type'] = template_mapping.get('email_type', None)
+
+    return {'email_context': context,
             'owner_id': owner_id}
 
 
@@ -793,15 +840,10 @@ def settlement_failed_admin_communication(settlement_id):
     if 'error_message' in communication_validator:
         return communication_validator['error_message']
 
-    communication_template_context = _get_settlement_failed_admin_template_context(
-        communication_validator.get('community_details'),
-        communication_validator.get('settlement_instance'))
-
     communication_email_details = _get_settlement_failed_admin_email_context(
         communication_validator.get('community_details'),
         communication_validator.get('community_owner_details'),
-        communication_validator.get('settlement_instance'),
-        communication_template_context
+        communication_validator.get('settlement_instance')
     )
 
     send_cm_email_response = send_email_from_core_service(communication_email_details.get('owner_id'),
@@ -850,20 +892,32 @@ def send_event_payment_success_whatsapp_and_email_to_non_member(transaction_id):
     link = EVENT_PAYMENT_SUCCESS_NON_MEMBER_LINK % (str(event_plan_instance.chatroom_id),
                                                     str(transaction_instance.payment_id))
 
-    payment_success_mail_template = get_template(
-        'event_comms/paid_event_reg_success_non_member.html').render(
-        {"event_name": event_name,
-         "event_date": TimeUtilities.convert_epoch_time_to_month_date(chatroom_data.get("date_time")),
-         "event_time": TimeUtilities.convert_epoch_time_in_hh_mm_am_pm(chatroom_data.get("date_time")),
-         "link": link})
+    mail_context = {"event_name": event_name,
+                    "event_date": TimeUtilities.convert_epoch_time_to_month_date(chatroom_data.get("date_time")),
+                    "event_time": TimeUtilities.convert_epoch_time_in_hh_mm_am_pm(chatroom_data.get("date_time")),
+                    "link": link}
 
-    mail_body_payment_success_member = PAYMENT_SUCCESS_EMAIL_TO_MEMBER.copy()
-    mail_body_payment_success_member['mail_body'] = payment_success_mail_template
-    mail_body_payment_success_member['mail_recipient_list'] = [transaction_instance.payment_email]
-    mail_body_payment_success_member['categories'] = MailUtilities.get_email_category_list_using_category_subcategory(
-        EmailCategories.EVENT_PAYMENT, EmailSubCategories.PAYMENT_SUCCESSFUL)
+    context = {
+        'subject': PAYMENT_SUCCESS_EMAIL_TO_MEMBER['subject'],
+        'template': None,
+        'to_mails_list': [transaction_instance.payment_email],
+        'from_email': None,
+        'reply_to': None,
+        'categories': MailUtilities.get_email_category_list_using_category_subcategory(
+            EmailCategories.EVENT_PAYMENT, EmailSubCategories.PAYMENT_SUCCESSFUL),
+        'from_name': None,
+        'email_type': None,
+        'community_id': event_plan_instance.community_id
+    }
 
-    send_email_response = send_email_from_core_service(user_id, mail_body_payment_success_member)
+    template_mapping = email_mapper.get_email_mapping(EmailCategories.EVENT_PAYMENT,
+                                                      EmailSubCategories.PAYMENT_SUCCESSFUL)
+
+    if template_mapping:
+        context['template'] = get_template(template_mapping.get('location')).render(mail_context)
+        context['email_type'] = template_mapping.get('email_type', None)
+
+    send_email_response = send_email_from_core_service(user_id, context)
 
     payment_success_whatsapp_body = {
         "receivers_list": [

@@ -175,7 +175,7 @@ class CoreServiceUtilities:
         return {'success': response['success']}
 
     @staticmethod
-    def edit_community(community_id: str, member_id: str):
+    def edit_community(community_id: str, member_id: str, params_data=None):
 
         if not community_id:
             return {'error_message': 'send community_id'}
@@ -191,6 +191,10 @@ class CoreServiceUtilities:
             'community_id': community_id,
             'is_paid': True
         }
+
+        if params_data:
+            data = params_data
+
         headers = {
             'x-member-id': '{}'.format(member_id)
         }

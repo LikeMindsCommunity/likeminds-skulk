@@ -16,7 +16,7 @@ from ..utility.constants import EmailCategories, EmailSubCategories
 from ..utility.mail_utilities import MailUtilities
 from ..utility.number_utilities import NumberUtilities
 from ..utility.states import TransactionType, SettlementStatus, TransactionRefundState, MemberState, \
-    TransactionStatusType
+    TransactionStatusType, RazorpayWebhookEventTypes
 from ..utility.time_utilities import TimeUtilities
 from ..utility.model_utilities import ModelUtilities
 from ..utility.core_service_utilities import CoreServiceUtilities
@@ -34,7 +34,6 @@ from ..subscriptions.models import Subscription
 from ..payment_page.models import PaymentPageMeta
 from ..payment_page.payment_page_view_helper import PaymentPageViewHelper
 from ..subscription_histories.models import SubscriptionHistory
-from subscription.plans.models import SubscriptionEventPlan
 from subscription.subscriptions.constants import LIFETIME_VALID_TILL, MIGRATION, MANUAL_PAYMENT_PAGE, LIFETIME_PAYMENT
 from ..member_acquisition.models import MemberAcquisition
 from ..subscriptions.subscription_view_impl import SubscriptionImpl
@@ -254,7 +253,7 @@ class TransactionImpl(TransactionManager):
         return transaction_data_list
 
     @staticmethod
-    def _attend_event_for_paid_transaction(transaction_instance):
+    def _attend_event_for_paid_transaction(transaction_instance, attending_status=True):
 
         event_plan_id = transaction_instance.plan_id
         event_plan_instance = SubscriptionEventPlan.get_event_plan_or_None(event_plan_id)
@@ -264,7 +263,7 @@ class TransactionImpl(TransactionManager):
 
         chatroom_id = event_plan_instance.chatroom_id
         CoreServiceUtilities.attend_event({'chatroom_id': chatroom_id,
-                                           'attending_status': True,
+                                           'attending_status': attending_status,
                                            'member_id': transaction_instance.user_id})
 
     @staticmethod
@@ -440,10 +439,10 @@ class TransactionImpl(TransactionManager):
 
         process_transaction = {}
 
-        if transaction_instance.status == 'captured':
+        if transaction_instance.status == TransactionStatusType.CAPTURED:
             process_transaction = TransactionImpl._process_subscription_captured_transaction(transaction_instance)
 
-        if transaction_instance.status == 'refund':
+        if transaction_instance.status == TransactionStatusType.REFUND:
             process_transaction = TransactionImpl._process_subscription_refund_transaction(transaction_instance)
 
         if 'error_message' in process_transaction:
@@ -456,12 +455,15 @@ class TransactionImpl(TransactionManager):
 
         if transaction_instance.user_id:
 
-            if transaction_instance.status == 'captured':
+            if transaction_instance.status == TransactionStatusType.CAPTURED:
                 TransactionImpl._attend_event_for_paid_transaction(transaction_instance)
+
+            elif transaction_instance.status == TransactionStatusType.REFUND:
+                TransactionImpl._attend_event_for_paid_transaction(transaction_instance, attending_status=False)
 
             TransactionHelper.send_analytics_for_event_transaction.delay(transaction_instance.id)
 
-        elif transaction_instance.status == 'captured':
+        elif transaction_instance.status == TransactionStatusType.CAPTURED:
             send_event_payment_success_whatsapp_and_email_to_non_member.delay(transaction_instance.id)
 
         return {'success': True}
@@ -533,13 +535,14 @@ class TransactionImpl(TransactionManager):
 
             for transaction_instance in existing_transactions:
 
-                if transaction_instance.type in [TransactionType.COMMUNITY_SUBSCRIPTION, TransactionType.PAYMENT_PAGE]:
+                if transaction_instance.type in [TransactionType.COMMUNITY_SUBSCRIPTION, TransactionType.PAYMENT_PAGE,
+                                                 TransactionType.EVENT]:
 
-                    if transaction_body.get('event') == 'payment.captured':
-                        transaction_instance.status = "captured"
+                    if transaction_body.get('event') == RazorpayWebhookEventTypes.PAYMENT_CAPTURED:
+                        transaction_instance.status = TransactionStatusType.CAPTURED
 
-                    if transaction_body.get('event') == "refund.processed":
-                        transaction_instance.status = "refund"
+                    if transaction_body.get('event') == RazorpayWebhookEventTypes.REFUND_PROCESSED:
+                        transaction_instance.status = TransactionStatusType.REFUND
 
                     transaction_instance.save()
 
@@ -657,18 +660,20 @@ class TransactionImpl(TransactionManager):
         if transaction_filter:
             transaction_instance = transaction_filter[0]
 
-            if not transaction_instance.user_id:
+            if transaction_instance.status in [TransactionStatusType.REFUND, TransactionStatusType.FAILED]:
+                return ResponseUtilities.get_error_context(False, 'Payment refunded or failed!')
+
+            elif not transaction_instance.user_id:
                 return {'success': True}
 
             if transaction_instance.user_id == NumberUtilities.get_integer_from_string(user_id):
                 return {'success': True}
 
             else:
-                return {'success': False, 'error_message': "Already used payment id"}
+                return ResponseUtilities.get_error_context(False, 'Already used payment id')
 
         else:
-
-            return {'success': False, 'error_message': "In-valid payment id"}
+            return ResponseUtilities.get_error_context(False, 'Already used payment id')
 
     def update_payment_id(self, req_body, user_id) -> dict:
 
@@ -676,18 +681,20 @@ class TransactionImpl(TransactionManager):
 
         if transaction_filter:
             transaction_instance = transaction_filter[0]
+            
+            if transaction_instance.status in [TransactionStatusType.REFUND, TransactionStatusType.FAILED]:
+                return ResponseUtilities.get_error_context(False, 'Payment refunded or failed!')
 
-            if not transaction_instance.user_id:
+            elif not transaction_instance.user_id:
                 transaction_instance.user_id = user_id
                 transaction_instance.save()
 
                 return {'success': True}
 
             else:
+                return ResponseUtilities.get_error_context(False, 'Already used payment id')
 
-                return {'success': False, 'error_message': "Already used payment id"}
-
-        return {'success': False, 'error_message': "In-valid payment id"}
+        return ResponseUtilities.get_error_context(False, 'In-valid payment id')
 
     def download_all_transaction(self, req_body, user_id) -> dict:
 
@@ -1051,13 +1058,13 @@ class TransactionHelper:
         if not transaction_instance:
             return
 
-        if transaction_instance.status == 'captured':
+        if transaction_instance.status == TransactionStatusType.CAPTURED:
             event_name = "Event payment successful (Subscription Service)"
 
-        elif transaction_instance.status == 'failed':
+        elif transaction_instance.status == TransactionStatusType.FAILED:
             event_name = "Event payment failed (Subscription Service)"
 
-        elif transaction_instance.status == 'refund':
+        elif transaction_instance.status == TransactionStatusType.REFUND:
             event_name = "Event payment refunded (Subscription Service)"
 
         else:

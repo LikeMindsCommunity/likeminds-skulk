@@ -213,9 +213,6 @@ class PlanImpl(PlanManager):
             elif free:
                 filters['is_paid'] = False
 
-            else:
-                filters['is_paid'] = True
-
         if self.get_community_id():
             filters['community_id'] = self.get_community_id()
 

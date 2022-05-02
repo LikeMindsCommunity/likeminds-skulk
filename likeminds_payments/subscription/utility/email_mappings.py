@@ -1,5 +1,5 @@
-from utility.states import email_types
-from utility.constants import EmailCategories, EmailSubCategories
+from subscription.utility.states import email_types
+from subscription.utility.constants import EmailCategories, EmailSubCategories
 
 
 class EmailMapper:

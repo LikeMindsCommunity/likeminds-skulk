@@ -536,6 +536,19 @@ class CoreServiceUtilities:
         return response
 
     @staticmethod
+    def get_user_info(fetch_info):
+
+        headers = {
+            'x-member-id': '{}'.format(fetch_info.get('member_id'))
+        }
+
+        url = USER_INFO_FETCH
+
+        response = ApiUtilities.generate_get_request(url=url, headers=headers)
+
+        return response
+
+    @staticmethod
     def send_email(user_id, email_body_object):
 
         headers = {

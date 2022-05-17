@@ -143,6 +143,9 @@ class TransactionImpl(TransactionManager):
         if 'grace_period' in order_notes:
             transaction_data['grace_period'] = order_notes['grace_period']
 
+        if transaction_data['status'] == 'refunded':
+            transaction_data['status'] = TransactionStatusType.REFUND
+
         return transaction_data
 
     @staticmethod
@@ -188,6 +191,9 @@ class TransactionImpl(TransactionManager):
 
         if 'grace_period' in order_notes:
             transaction_data['grace_period'] = order_notes['grace_period']
+
+        if transaction_data['status'] == 'refunded':
+            transaction_data['status'] = TransactionStatusType.REFUND
 
         return transaction_data
 
@@ -235,6 +241,9 @@ class TransactionImpl(TransactionManager):
 
         if 'grace_period' in order_notes:
             transaction_data['grace_period'] = order_notes['grace_period']
+
+        if transaction_data['status'] == 'refunded':
+            transaction_data['status'] = TransactionStatusType.REFUND
 
         return transaction_data
 

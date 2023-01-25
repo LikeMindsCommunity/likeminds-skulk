@@ -4,9 +4,9 @@ services:
     build:
       context: "."
     command: sh -c ". /opt/venv/bin/activate
-                    python manage.py makemigrations &&
-                    python manage.py migrate &&
-                    gunicorn wsgi --bind 0.0.0.0:8000"
+                    DJANGO_SETTINGS_MODULE=init.settings.beta python manage.py makemigrations &&
+                    DJANGO_SETTINGS_MODULE=init.settings.beta python manage.py migrate &&
+                    DJANGO_SETTINGS_MODULE=init.settings.beta gunicorn wsgi --bind 0.0.0.0:8000"
     expose:
       - "8000"
 

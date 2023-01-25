@@ -2,15 +2,14 @@
 
 FROM python:3.8-slim
 
-ENV DJANGO_SETTINGS_MODULE=init.settings.beta
-
 WORKDIR /usr/src/app
 
 COPY ./likeminds_payments/requirements.txt requirements.txt
 
-RUN python3 -m venv /opt/venv
+ENV VIRTUAL_ENV=/opt/venv
+RUN python3 -m venv $VIRTUAL_ENV
 
-RUN . /opt/venv/bin/activate && pip3 install -r requirements.txt --no-cache-dir
+RUN . $VIRTUAL_ENV/bin/activate && pip3 install -r requirements.txt --no-cache-dir
 
 ADD ./likeminds_payments $WORKDIR
 

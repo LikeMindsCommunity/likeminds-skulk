@@ -1,0 +1,18 @@
+version: "1.0"
+services:
+  skulk:
+    build:
+      context: "."
+    command: sh -c ". /opt/venv/bin/activate
+                    DJANGO_SETTINGS_MODULE=init.settings.beta python manage.py makemigrations &&
+                    DJANGO_SETTINGS_MODULE=init.settings.beta python manage.py migrate &&
+                    DJANGO_SETTINGS_MODULE=init.settings.beta gunicorn wsgi --bind 0.0.0.0:8000"
+    expose:
+      - "8000"
+
+  nginx:
+    build: "./likeminds_payments/init/nginx"
+    ports:
+      - "80:80"
+    depends_on:
+      - "skulk"

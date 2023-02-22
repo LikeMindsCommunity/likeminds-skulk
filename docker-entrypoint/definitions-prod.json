@@ -9,11 +9,11 @@
     "tags": "administrator"
   }],
   "vhosts": [{
-    "name": "skulk-celery"
+    "name": "skulk-celery-prod-vhost"
   }],
   "permissions": [{
     "user": "skulk-celery-prod-user",
-    "vhost": "skulk-celery",
+    "vhost": "skulk-celery-prod-vhost",
     "configure": ".*",
     "write": ".*",
     "read": ".*"

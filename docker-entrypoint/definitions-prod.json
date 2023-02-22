@@ -1,0 +1,21 @@
+{
+  "rabbit_version": "3.8.11",
+  "rabbitmq_version": "3.8.11",
+  "product_name": "RabbitMQ",
+  "product_version": "3.8.11",
+  "users": [{
+    "name": "skulk-celery-prod-user",
+    "password":"skulk-celery-prod-user-password",
+    "tags": "administrator"
+  }],
+  "vhosts": [{
+    "name": "skulk-celery"
+  }],
+  "permissions": [{
+    "user": "skulk-celery-prod-user",
+    "vhost": "skulk-celery",
+    "configure": ".*",
+    "write": ".*",
+    "read": ".*"
+  }]
+}

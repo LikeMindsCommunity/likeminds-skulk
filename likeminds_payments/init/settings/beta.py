@@ -25,7 +25,7 @@ URL = os.getenv("BETA_URL")
 CORE_SERVICE_URL = os.getenv("BETA_CORE_URL")
 WEB_URL = os.getenv('BETA_WEB_URL')
 
-ALLOWED_HOSTS = [os.getenv("BETA_ALLOWED_HOST_1"), os.getenv("BETA_ALLOWED_HOST_2")]
+ALLOWED_HOSTS = [os.getenv("BETA_ALLOWED_HOST_1"), os.getenv("BETA_ALLOWED_HOST_2"), os.getenv("BETA_ALLOWED_HOST_3")]
 
 RAZORPAY_KEY = os.getenv("BETA_RAZORPAY_KEY")
 RAZORPAY_SECRET = os.getenv("BETA_RAZORPAY_SECRET")

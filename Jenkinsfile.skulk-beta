@@ -1,0 +1,51 @@
+pipeline {
+    agent any
+    environment {
+        PROJECT_ID = 'likeminds-nonprod-prj-24e1'
+        CLUSTER_NAME = 'likeminds-nonprod-autopilot-cluster'
+        LOCATION = 'asia-south1'
+        CREDENTIALS_ID = 'likeminds-nonprod-prj-24e1'
+    }
+   
+    stages {
+        stage("Checkout code") {
+            steps {
+                checkout scm
+            }
+        }
+      
+        stage("Building Application Docker Image"){
+            steps{
+                script{
+                    sh 'gcloud auth configure-docker asia.gcr.io'
+                    sh 'docker build -f Dockerfile.skulk-beta -t asia.gcr.io/likeminds-nonprod-prj-24e1/github.com/nateshr/likeminds-subscription/skulk-beta:${BUILD_NUMBER} . '
+                    }
+                }
+            }
+         stage("Pushing Application Docker Image to Google Artifact Registry"){
+            steps{
+                script{
+                    sh 'gcloud auth configure-docker asia.gcr.io'
+                    sh 'docker push asia.gcr.io/likeminds-nonprod-prj-24e1/github.com/nateshr/likeminds-subscription/skulk-beta:${BUILD_NUMBER}'
+                      }
+                 }
+            }
+              
+        stage('Deploy to GKE') {
+            steps{
+                
+                sh "sed 's/skulk-beta:.*/skulk-beta:${BUILD_NUMBER}/g' deployment-skulk-beta.yaml"
+                sh "gcloud container clusters get-credentials ${env.CLUSTER_NAME} --region ${env.LOCATION} --project ${env.PROJECT_ID} --internal-ip"
+                sh 'kubectl apply -f /var/lib/jenkins/workspace/likeminds-skulk-beta/deployment-skulk-beta.yaml'
+                
+            }
+        }
+    }  
+        post { 
+        always { 
+            cleanWs()
+        }
+    }
+
+}
+

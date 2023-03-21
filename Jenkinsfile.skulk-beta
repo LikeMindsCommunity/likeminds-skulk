@@ -13,7 +13,17 @@ pipeline {
                 checkout scm
             }
         }
-      
+        stage("Executing the Script Migration step for skulk-beta") {
+            when { changeset "skulk-beta.sh"}
+            steps {
+                script{
+                    sh 'sudo cp /var/lib/jenkins/workspace/likeminds-skulk-beta/skulk-beta.sh /home/app-migration-scritps '
+                    sh 'sudo chmod +x skulk-beta.sh'
+                    sh 'sh skulk-beta.sh'
+                }
+                
+            }
+        }
         stage("Building Application Docker Image"){
           when { changeset "Dockerfile.skulk-beta"}
             steps{
@@ -51,4 +61,3 @@ pipeline {
     }
 
 }
-

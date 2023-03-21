@@ -17,8 +17,8 @@ pipeline {
             when { changeset "skulk-beta.sh"}
             steps {
                 script{
-                    sh 'sudo cp /var/lib/jenkins/workspace/likeminds-skulk-beta/skulk-beta.sh /home/app-migration-scritps '
-                    sh 'sudo chmod +x skulk-beta.sh'
+                    sh 'cp /var/lib/jenkins/workspace/likeminds-skulk-beta/skulk-beta.sh /home/app-migration-scritps '
+                    sh 'chmod +x skulk-beta.sh'
                     sh 'sh skulk-beta.sh'
                 }
                 

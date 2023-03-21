@@ -14,12 +14,12 @@ pipeline {
             }
         }
         stage("Executing the Script Migration step for skulk-beta") {
-            when { changeset "skulk-beta.sh"}
             steps {
                 script{
-                    sh 'cp /var/lib/jenkins/workspace/likeminds-skulk-beta/skulk-beta.sh /home/app-migration-scritps '
-                    sh 'chmod +x skulk-beta.sh'
-                    sh 'sh skulk-beta.sh'
+                    sh '''
+                       chmod +x /var/lib/jenkins/workspace/likeminds-skulk-beta/skulk-beta.sh
+                       sh /var/lib/jenkins/workspace/likeminds-skulk-beta/skulk-beta.sh
+                      '''
                 }
                 
             }

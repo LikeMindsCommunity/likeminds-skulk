@@ -1,0 +1,20 @@
+apiVersion: "apps/v1"
+kind: "Deployment"
+metadata:
+  name: "subscription"
+  namespace: "app-deploy"
+  labels:
+    app: "subscription"
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: "subscription"
+  template:
+    metadata:
+      labels:
+        app: "subscription"
+    spec:
+      containers:
+      - name: "github-nateshr-likeminds-subscription-skulk-1"
+        image: "asia.gcr.io/likeminds-prod-prj-5464/likeminds-subscription/skulk:v1"

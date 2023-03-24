@@ -14,19 +14,17 @@ pipeline {
             }
         }
         stage("Executing the Script Migration step for skulk-beta") {
-          when { changeset "skulk-beta.sh"}
             steps {
                 script{
                     sh '''
-                       chmod +x /var/lib/jenkins/workspace/likeminds-skulk-beta/skulk-beta.sh
-                       sh /var/lib/jenkins/workspace/likeminds-skulk-beta/skulk-beta.sh
+                       gcloud compute ssh likeminds-nonprod-migration-vm --zone=asia-south1-a --internal-ip --command="sudo chmod +x /home/apps/skulk-beta/LikeMinds-Subscription/Migrationfile-skulk-beta.sh"
+                       gcloud compute ssh likeminds-nonprod-migration-vm --zone=asia-south1-a --internal-ip --command="sh /home/apps/skulk-beta/LikeMinds-Subscription/Migrationfile-skulk-beta.sh"
                       '''
                 }
                 
             }
         }
         stage("Building Application Docker Image"){
-          when { changeset "Dockerfile.skulk-beta"}
             steps{
                 script{
                     sh 'gcloud auth configure-docker asia.gcr.io'
@@ -35,7 +33,6 @@ pipeline {
                 }
             }
          stage("Pushing Application Docker Image to Google Artifact Registry"){
-           when { changeset "Dockerfile.skulk-beta"}
             steps{
                 script{
                     sh 'gcloud auth configure-docker asia.gcr.io'
@@ -45,13 +42,11 @@ pipeline {
             }
               
         stage('Deploy to GKE') {
-          when { changeset "Dockerfile.skulk-beta"}
             steps{
                 
                 sh "sed 's/skulk-beta:.*/skulk-beta:${BUILD_NUMBER}/g' deployment-skulk-beta.yaml"
                 sh "gcloud container clusters get-credentials ${env.CLUSTER_NAME} --region ${env.LOCATION} --project ${env.PROJECT_ID} --internal-ip"
-                sh 'kubectl apply -f /var/lib/jenkins/workspace/likeminds-skulk-beta/deployment-skulk-beta.yaml'
-                
+                sh "pwd"                
             }
         }
     }  

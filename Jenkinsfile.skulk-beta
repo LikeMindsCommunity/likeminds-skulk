@@ -14,6 +14,7 @@ pipeline {
             }
         }
         stage("Executing the Script Migration step for skulk-beta") {
+          when { changeset "Migrationfile-skulk-beta.sh"}
             steps {
                 script{
                     sh '''
@@ -25,6 +26,7 @@ pipeline {
             }
         }
         stage("Building Application Docker Image"){
+          when { changeset "Dockerfile.skulk-beta"}
             steps{
                 script{
                     sh 'gcloud auth configure-docker asia.gcr.io'
@@ -33,6 +35,7 @@ pipeline {
                 }
             }
          stage("Pushing Application Docker Image to Google Artifact Registry"){
+           when { changeset "Dockerfile.skulk-beta"}
             steps{
                 script{
                     sh 'gcloud auth configure-docker asia.gcr.io'
@@ -42,11 +45,13 @@ pipeline {
             }
               
         stage('Deploy to GKE') {
+          when { changeset "Dockerfile.skulk-beta"}
             steps{
                 
                 sh "sed 's/skulk-beta:.*/skulk-beta:${BUILD_NUMBER}/g' deployment-skulk-beta.yaml"
                 sh "gcloud container clusters get-credentials ${env.CLUSTER_NAME} --region ${env.LOCATION} --project ${env.PROJECT_ID} --internal-ip"
-                sh "pwd"                
+                sh 'kubectl apply -f /var/lib/jenkins/workspace/likeminds-skulk-beta/deployment-skulk-beta.yaml'
+                
             }
         }
     }  

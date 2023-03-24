@@ -14,12 +14,11 @@ pipeline {
             }
         }
         stage("Executing the Script Migration step for skulk-beta") {
-          when { changeset "Migrationfile-skulk-beta.sh"}
             steps {
                 script{
                     sh '''
                        gcloud compute ssh likeminds-nonprod-migration-vm --zone=asia-south1-a --internal-ip --command="sudo chmod +x /home/apps/skulk-beta/LikeMinds-Subscription/Migrationfile-skulk-beta.sh"
-                       gcloud compute ssh likeminds-nonprod-migration-vm --zone=asia-south1-a --internal-ip --command="sh /home/apps/skulk-beta/LikeMinds-Subscription/Migrationfile-skulk-beta.sh"
+                       gcloud compute ssh likeminds-nonprod-migration-vm --zone=asia-south1-a --internal-ip --command=". /home/apps/skulk-beta/LikeMinds-Subscription/Migrationfile-skulk-beta.sh"
                       '''
                 }
                 

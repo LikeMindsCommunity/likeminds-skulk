@@ -14,7 +14,6 @@ pipeline {
             }
         }
         stage("Executing the Script Migration step for skulk-beta") {
-          when { changeset "Migrationfile-skulk-beta.sh"}
             steps {
                 script{
                     sh '''

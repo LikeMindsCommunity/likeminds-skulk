@@ -13,6 +13,17 @@ pipeline {
                 checkout scm
             }
         }
+        stage("Executing the Script Migration step for skulk-prod") {
+            steps {
+                script{
+                    sh '''
+                       gcloud compute ssh likeminds-prod-mgmt-vm --zone=asia-south1-a --internal-ip --command="chmod +x /home/apps/skulk-prod/LikeMinds-Subscription/Migrationfile-skulk-prod.sh"
+                       gcloud compute ssh likeminds-prod-mgmt-vm --zone=asia-south1-a --internal-ip --command=". /home/apps/skulk-prod/LikeMinds-Subscription/Migrationfile-skulk-prod.sh"
+                      '''
+                }
+                
+            }
+        }
       
         stage("Building Application Docker Image"){
           when { changeset "Dockerfile.skulk-prod"}
@@ -51,4 +62,3 @@ pipeline {
     }
 
 }
-

@@ -1,13 +1,13 @@
 #!/bin/bash
 
-APPLICATION_ENVIRONMENT="BETA"
-APPLICATION_DOT_ENV_LOCATION="/home/apps/skulk-beta/LikeMinds-Subscription/likeminds_payments/init/settings/.env"
-APPLICATION_DOT_ENV_REMOTE_LOCATION="https://beta-likeminds-media.s3.ap-south-1.amazonaws.com/environment/Skulk-Beta-Dot-Env/.env"
-APPLICATION_LOCATION="/home/apps/skulk-beta/LikeMinds-Subscription/likeminds_payments/"
-APPLICATION_MANAGE_SCRIPT_LOCATION="/home/apps/skulk-beta/LikeMinds-Subscription/likeminds_payments/manage.py"
+APPLICATION_ENVIRONMENT="PRODUCTION"
+APPLICATION_DOT_ENV_LOCATION="/home/apps/skulk-prod/LikeMinds-Subscription/likeminds_payments/init/settings/.env"
+APPLICATION_DOT_ENV_REMOTE_LOCATION="https://prod-likeminds-media.s3.ap-south-1.amazonaws.com/environment/skulk-prod-dot-env-public"
+APPLICATION_LOCATION="/home/apps/skulk-prod/LikeMinds-Subscription/likeminds_payments/"
+APPLICATION_MANAGE_SCRIPT_LOCATION="/home/apps/skulk-prod/LikeMinds-Subscription/likeminds_payments/manage.py"
 APPLICATION_NAME="SKULK"
-APPLICATION_REQUIREMENTS_LOCATION="/home/apps/skulk-beta/LikeMinds-Subscription/likeminds_payments/requirements.txt"
-APPLICATION_VENV_LOCATION="/home/apps/skulk-beta/skulk-beta-venv/bin/activate"
+APPLICATION_REQUIREMENTS_LOCATION="/home/apps/skulk-prod/LikeMinds-Subscription/likeminds_payments/requirements.txt"
+APPLICATION_VENV_LOCATION="/home/apps/skulk-prod/skulk-prod-venv/bin/activate"
 
 print_internal() {
     PREFIX="\n\n **** "
@@ -19,11 +19,11 @@ print_internal() {
 get_project_branch_latest() {
   cd "$APPLICATION_LOCATION" || exit
 
-  if [ "$APPLICATION_ENVIRONMENT" == "BETA" ]
+  if [ "$APPLICATION_ENVIRONMENT" == "PRODUCTION" ]
   then
 
-    print_internal "pull branch origin/development"
-    git checkout development
+    print_internal "pull branch origin/master"
+    git checkout master
     git pull
     print_internal "latest refs pull success"
 
@@ -69,13 +69,14 @@ migrate_database() {
 migrate_database_internal() {
   cd "$APPLICATION_LOCATION" || exit
 
-  if [ "$APPLICATION_ENVIRONMENT" == "BETA" ]
+  if [ "$APPLICATION_ENVIRONMENT" == "PRODUCTION" ]
   then
 
     print_internal "make and perform database migrations"
-    DJANGO_SETTINGS_MODULE=init.settings.beta python3 "$APPLICATION_MANAGE_SCRIPT_LOCATION" makemigrations
-    DJANGO_SETTINGS_MODULE=init.settings.beta python3 "$APPLICATION_MANAGE_SCRIPT_LOCATION" migrate
+    DJANGO_SETTINGS_MODULE=init.settings.production python3 "$APPLICATION_MANAGE_SCRIPT_LOCATION" makemigrations
+    DJANGO_SETTINGS_MODULE=init.settings.production python3 "$APPLICATION_MANAGE_SCRIPT_LOCATION" migrate
     print_internal "database migration success"
+
 
   else
     print_internal "Unknown application environment $APPLICATION_ENVIRONMENT"
@@ -91,7 +92,7 @@ deactivate_project_venv() {
 
 migrate() {
 
-  print_internal "migrating skulk-beta database.."
+  print_internal "migrating skulk-prod database.."
 
   get_project_branch_latest
   get_project_dot_env
@@ -100,7 +101,7 @@ migrate() {
   migrate_database
   deactivate_project_venv
 
-  print_internal "migrated skulk-beta database.."
+  print_internal "migrated skulk-prod database.."
 }
 
 migrate

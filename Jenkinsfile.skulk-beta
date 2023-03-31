@@ -1,11 +1,11 @@
 pipeline {
     agent any
-    environment {
-        PROJECT_ID = 'likeminds-nonprod-prj-24e1'
-        CLUSTER_NAME = 'likeminds-nonprod-autopilot-cluster'
-        LOCATION = 'asia-south1'
-        CREDENTIALS_ID = 'likeminds-nonprod-prj-24e1'
-    }
+    # environment {
+    #     PROJECT_ID = 'likeminds-nonprod-prj-24e1'
+    #     CLUSTER_NAME = 'likeminds-nonprod-autopilot-cluster'
+    #     LOCATION = 'asia-south1'
+    #     CREDENTIALS_ID = 'likeminds-nonprod-prj-24e1'
+    # }
    
     stages {
         stage("Checkout code") {
@@ -47,11 +47,11 @@ pipeline {
         stage('Deploy to GKE') {
           when { changeset "Dockerfile.skulk-beta"}
             steps{
-                
-                sh "sed 's/skulk-beta:.*/skulk-beta:${BUILD_NUMBER}/g' deployment-skulk-beta.yaml"
-                sh "gcloud container clusters get-credentials ${env.CLUSTER_NAME} --region ${env.LOCATION} --project ${env.PROJECT_ID} --internal-ip"
-                sh 'kubectl apply -f /var/lib/jenkins/workspace/likeminds-skulk-beta/deployment-skulk-beta.yaml'
-                
+                sh '''
+                sed -i 's/skulk-beta:.*/skulk-beta:'${BUILD_NUMBER}'"/g' deployment-skulk-beta.yaml
+                gcloud container clusters get-credentials ${CLUSTER_NAME} --region ${LOCATION} --project ${PROJECT_ID} --internal-ip
+                kubectl apply -f /var/lib/jenkins/workspace/likeminds-skulk-beta/deployment-skulk-beta.yaml
+                '''
             }
         }
     }  

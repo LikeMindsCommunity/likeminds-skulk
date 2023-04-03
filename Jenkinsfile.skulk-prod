@@ -1,11 +1,11 @@
 pipeline {
     agent any
-    # environment {
-    #     PROJECT_ID = 'likeminds-prod-prj-5464'
-    #     CLUSTER_NAME = 'likeminds-prod-autopilot-cluster'
-    #     LOCATION = 'asia-south1'
-    #     CREDENTIALS_ID = 'likeminds-prod-prj-5464'
-    # }
+    // environment {
+    //     PROJECT_ID = 'likeminds-prod-prj-5464'
+    //     CLUSTER_NAME = 'likeminds-prod-autopilot-cluster'
+    //     LOCATION = 'asia-south1'
+    //     CREDENTIALS_ID = 'likeminds-prod-prj-5464'
+    // }
    
     stages {
         stage("Checkout code") {

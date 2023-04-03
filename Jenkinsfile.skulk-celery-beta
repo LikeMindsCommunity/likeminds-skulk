@@ -35,9 +35,9 @@ pipeline {
         stage('Deploy to GKE') {
             steps{
                 sh '''
-                sed -i 's/skulk-celery:.*/skulk-celery:'${BUILD_NUMBER}'"/g' deployment-skulk-celery.yaml
+                sed -i 's/skulk-celery:.*/skulk-celery:'${BUILD_NUMBER}'"/g' deployment-skulk-celery-beta.yaml
                 gcloud container clusters get-credentials ${CLUSTER_NAME} --region ${LOCATION} --project ${PROJECT_ID} --internal-ip
-                kubectl apply -f /var/lib/jenkins/workspace/likeminds-skulk-celery-beta/deployment-skulk-celery.yaml
+                kubectl apply -f /var/lib/jenkins/workspace/likeminds-skulk-celery-beta/deployment-skulk-celery-beta.yaml
                 '''
             }
         }

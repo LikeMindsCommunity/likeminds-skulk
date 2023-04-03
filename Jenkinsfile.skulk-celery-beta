@@ -15,26 +15,24 @@ pipeline {
         }
       
         stage("Building Application Docker Image"){
-          when { changeset "Dockerfile.skulk-celery-beta"}
             steps{
                 script{
                     sh 'gcloud auth configure-docker asia.gcr.io'
                     sh 'docker build -f Dockerfile.skulk-celery-beta -t asia.gcr.io/likeminds-nonprod-prj-24e1/github.com/nateshr/likeminds-subscription/skulk-celery:${BUILD_NUMBER} . '
-                    }
                 }
             }
-         stage("Pushing Application Docker Image to Google Artifact Registry"){
-           when { changeset "Dockerfile.skulk-celery-beta"}
+        }
+
+        stage("Pushing Application Docker Image to Google Artifact Registry"){
             steps{
                 script{
                     sh 'gcloud auth configure-docker asia.gcr.io'
                     sh 'docker push asia.gcr.io/likeminds-nonprod-prj-24e1/github.com/nateshr/likeminds-subscription/skulk-celery:${BUILD_NUMBER}'
-                      }
-                 }
-            }
+                  }
+             }
+        }
               
         stage('Deploy to GKE') {
-          when { changeset "Dockerfile.skulk-celery-beta"}
             steps{
                 sh '''
                 sed -i 's/skulk-celery:.*/skulk-celery:'${BUILD_NUMBER}'"/g' deployment-skulk-celery.yaml
@@ -44,10 +42,10 @@ pipeline {
             }
         }
     }  
-        post { 
+
+    post {
         always { 
             cleanWs()
         }
     }
-
 }

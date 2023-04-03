@@ -13,6 +13,7 @@ pipeline {
                 checkout scm
             }
         }
+
         stage("Executing the Script Migration step for skulk-prod") {
             steps {
                 script{
@@ -27,26 +28,24 @@ pipeline {
         }
       
         stage("Building Application Docker Image"){
-          when { changeset "Dockerfile.skulk-prod"}
             steps{
                 script{
                     sh 'gcloud auth configure-docker asia.gcr.io'
                     sh 'docker build -f Dockerfile.skulk-prod -t asia.gcr.io/likeminds-prod-prj-5464/likeminds-subscription/skulk:${BUILD_NUMBER} . '
-                    }
                 }
             }
-         stage("Pushing Application Docker Image to Google Artifact Registry"){
-           when { changeset "Dockerfile.skulk-prod"}
+        }
+
+        stage("Pushing Application Docker Image to Google Artifact Registry"){
             steps{
                 script{
                     sh 'gcloud auth configure-docker asia.gcr.io'
                     sh 'docker push asia.gcr.io/likeminds-prod-prj-5464/likeminds-subscription/skulk:${BUILD_NUMBER}'
-                      }
-                 }
-            }
+                  }
+             }
+        }
               
         stage('Deploy to GKE') {
-          when { changeset "Dockerfile.skulk-prod"}
             steps{
                 sh '''
                 sed -i 's/skulk:.*/skulk:'${BUILD_NUMBER}'"/g' deployment-skulk-prod.yaml
@@ -56,10 +55,9 @@ pipeline {
             }
         }
     }  
-        post { 
+    post {
         always { 
             cleanWs()
         }
     }
-
 }

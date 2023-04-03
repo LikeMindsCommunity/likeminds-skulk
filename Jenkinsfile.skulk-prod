@@ -1,16 +1,28 @@
 pipeline {
     agent any
-    environment {
-        PROJECT_ID = 'likeminds-prod-prj-5464'
-        CLUSTER_NAME = 'likeminds-prod-autopilot-cluster'
-        LOCATION = 'asia-south1'
-        CREDENTIALS_ID = 'likeminds-prod-prj-5464'
-    }
+    # environment {
+    #     PROJECT_ID = 'likeminds-prod-prj-5464'
+    #     CLUSTER_NAME = 'likeminds-prod-autopilot-cluster'
+    #     LOCATION = 'asia-south1'
+    #     CREDENTIALS_ID = 'likeminds-prod-prj-5464'
+    # }
    
     stages {
         stage("Checkout code") {
             steps {
                 checkout scm
+            }
+        }
+        stage("Executing the Script Migration step for skulk-prod") {
+            steps {
+                script{
+                    sh '''
+                       gcloud compute ssh likeminds-prod-migration-instance --zone=asia-south1-a --internal-ip --command="sudo chown -R jenkins  /home/apps/skulk-prod/"
+                       gcloud compute ssh likeminds-prod-migration-instance --zone=asia-south1-a --internal-ip --command="chmod +x /home/apps/skulk-prod/LikeMinds-Subscription/Migrationfile-skulk-prod.sh"
+                       gcloud compute ssh likeminds-prod-migration-instance --zone=asia-south1-a --internal-ip --command=". /home/apps/skulk-prod/LikeMinds-Subscription/Migrationfile-skulk-prod.sh"
+                      '''
+                }
+                
             }
         }
       
@@ -36,11 +48,11 @@ pipeline {
         stage('Deploy to GKE') {
           when { changeset "Dockerfile.skulk-prod"}
             steps{
-                
-                sh "sed 's/skulk:.*/skulk:${BUILD_NUMBER}/g' deployment-skulk-prod.yaml"
-                sh "gcloud container clusters get-credentials ${env.CLUSTER_NAME} --region ${env.LOCATION} --project ${env.PROJECT_ID} --internal-ip"
-                sh 'kubectl apply -f /var/lib/jenkins/workspace/likeminds-skulk-prod/deployment-skulk-prod.yaml'
-                
+                sh '''
+                sed -i 's/skulk:.*/skulk:'${BUILD_NUMBER}'"/g' deployment-skulk-prod.yaml
+                gcloud container clusters get-credentials ${CLUSTER_NAME} --region ${LOCATION} --project ${PROJECT_ID} --internal-ip
+                kubectl apply -f /var/lib/jenkins/workspace/likeminds-skulk-prod/deployment-skulk-prod.yaml
+                '''
             }
         }
     }  
@@ -51,4 +63,3 @@ pipeline {
     }
 
 }
-

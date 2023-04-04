@@ -23,7 +23,7 @@ get_project_branch_latest() {
   then
 
     print_internal "pull branch origin/development"
-    git checkout development
+    git checkout LM-8090-ci-trigger
     git pull
     print_internal "latest refs pull success"
 
@@ -93,7 +93,7 @@ migrate() {
 
   print_internal "migrating skulk-beta database.."
 
-  get_project_branch_latest
+  // get_project_branch_latest
   get_project_dot_env
   activate_project_venv
   install_project_requirements

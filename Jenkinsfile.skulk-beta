@@ -21,6 +21,7 @@ pipeline {
                        gcloud compute ssh likeminds-nonprod-migration-vm --zone=asia-south1-a --internal-ip --command="sudo chown -R jenkins  /home/apps/skulk-beta/"
                        gcloud compute ssh likeminds-nonprod-migration-vm --zone=asia-south1-a --internal-ip --command="chmod +x /home/apps/skulk-beta/LikeMinds-Subscription/Migrationfile-skulk-beta.sh"
                        gcloud compute ssh likeminds-nonprod-migration-vm --zone=asia-south1-a --internal-ip --command=". /home/apps/skulk-beta/LikeMinds-Subscription/Migrationfile-skulk-beta.sh"
+                       gcloud compute ssh likeminds-nonprod-migration-vm --zone=asia-south1-a --internal-ip --command="git checkout ."
                       '''
                 }
                 

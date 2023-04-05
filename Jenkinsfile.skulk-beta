@@ -25,7 +25,6 @@ pipeline {
                        gcloud compute ssh likeminds-nonprod-migration-vm --zone=asia-south1-a --internal-ip --command="cd /home/apps/skulk-beta/LikeMinds-Subscription && git checkout ."
                       '''
                 }
-                
             }
         }
 
@@ -56,7 +55,8 @@ pipeline {
                 '''
             }
         }
-    }  
+    }
+
     post {
         always { 
             cleanWs()

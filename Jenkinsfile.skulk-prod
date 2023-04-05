@@ -25,7 +25,6 @@ pipeline {
                        gcloud compute ssh likeminds-prod-migration-instance --zone=asia-south1-a --internal-ip --command="cd /home/apps/skulk-prod/LikeMinds-Subscription && git checkout ."
                       '''
                 }
-                
             }
         }
       
@@ -43,8 +42,8 @@ pipeline {
                 script{
                     sh 'gcloud auth configure-docker asia.gcr.io'
                     sh 'docker push asia.gcr.io/likeminds-prod-prj-5464/likeminds-subscription/skulk:${BUILD_NUMBER}'
-                  }
-             }
+                }
+            }
         }
               
         stage('Deploy to GKE') {
@@ -56,7 +55,8 @@ pipeline {
                 '''
             }
         }
-    }  
+    }
+
     post {
         always { 
             cleanWs()

@@ -28,8 +28,8 @@ pipeline {
                 script{
                     sh 'gcloud auth configure-docker asia.gcr.io'
                     sh 'docker push asia.gcr.io/likeminds-nonprod-prj-24e1/github.com/nateshr/likeminds-subscription/skulk-celery:${BUILD_NUMBER}'
-                  }
-             }
+                }
+            }
         }
               
         stage('Deploy to GKE') {

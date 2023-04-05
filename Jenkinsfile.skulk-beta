@@ -13,39 +13,40 @@ pipeline {
                 checkout scm
             }
         }
+
         stage("Executing the Script Migration step for skulk-beta") {
             steps {
                 script{
                     sh '''
-                       gcloud compute ssh likeminds-nonprod-migration-vm --zone=asia-south1-a --internal-ip --command="sudo chown -R jenkins  /home/apps/skulk-beta/"
+                       gcloud compute ssh likeminds-nonprod-migration-vm --zone=asia-south1-a --internal-ip --command="sudo chown -R jenkins /home/apps/skulk-beta/"
+                       gcloud compute ssh likeminds-nonprod-migration-vm --zone=asia-south1-a --internal-ip --command="cd /home/apps/skulk-beta/LikeMinds-Subscription && git checkout development && git pull"
                        gcloud compute ssh likeminds-nonprod-migration-vm --zone=asia-south1-a --internal-ip --command="chmod +x /home/apps/skulk-beta/LikeMinds-Subscription/Migrationfile-skulk-beta.sh"
                        gcloud compute ssh likeminds-nonprod-migration-vm --zone=asia-south1-a --internal-ip --command=". /home/apps/skulk-beta/LikeMinds-Subscription/Migrationfile-skulk-beta.sh"
+                       gcloud compute ssh likeminds-nonprod-migration-vm --zone=asia-south1-a --internal-ip --command="cd /home/apps/skulk-beta/LikeMinds-Subscription && git checkout ."
                       '''
                 }
-                
             }
         }
+
         stage("Building Application Docker Image"){
-          when { changeset "Dockerfile.skulk-beta"}
             steps{
                 script{
                     sh 'gcloud auth configure-docker asia.gcr.io'
                     sh 'docker build -f Dockerfile.skulk-beta -t asia.gcr.io/likeminds-nonprod-prj-24e1/github.com/nateshr/likeminds-subscription/skulk-beta:${BUILD_NUMBER} . '
-                    }
                 }
             }
-         stage("Pushing Application Docker Image to Google Artifact Registry"){
-           when { changeset "Dockerfile.skulk-beta"}
+        }
+
+        stage("Pushing Application Docker Image to Google Artifact Registry"){
             steps{
                 script{
                     sh 'gcloud auth configure-docker asia.gcr.io'
                     sh 'docker push asia.gcr.io/likeminds-nonprod-prj-24e1/github.com/nateshr/likeminds-subscription/skulk-beta:${BUILD_NUMBER}'
-                      }
-                 }
-            }
+                  }
+             }
+        }
               
         stage('Deploy to GKE') {
-          when { changeset "Dockerfile.skulk-beta"}
             steps{
                 sh '''
                 sed -i 's/skulk-beta:.*/skulk-beta:'${BUILD_NUMBER}'"/g' deployment-skulk-beta.yaml
@@ -54,11 +55,11 @@ pipeline {
                 '''
             }
         }
-    }  
-        post { 
+    }
+
+    post {
         always { 
             cleanWs()
         }
     }
-
 }

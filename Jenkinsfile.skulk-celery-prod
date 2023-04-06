@@ -1,0 +1,51 @@
+pipeline {
+    agent any
+    // environment {
+    //     PROJECT_ID = 'likeminds-prod-prj-5464'
+    //     CLUSTER_NAME = 'likeminds-prod-autopilot-cluster'
+    //     LOCATION = 'asia-south1'
+    //     CREDENTIALS_ID = 'likeminds-prod-prj-5464'
+    // }
+   
+    stages {
+        stage("Checkout code") {
+            steps {
+                checkout scm
+            }
+        }
+      
+        stage("Building Application Docker Image"){
+            steps{
+                script{
+                    sh 'gcloud auth configure-docker asia.gcr.io'
+                    sh 'docker build -f Dockerfile.skulk-celery-prod -t asia.gcr.io/likeminds-prod-prj-5464/likeminds-subscription/skulk-celery-prod:${BUILD_NUMBER} . '
+                }
+            }
+        }
+
+        stage("Pushing Application Docker Image to Google Artifact Registry"){
+            steps{
+                script{
+                    sh 'gcloud auth configure-docker asia.gcr.io'
+                    sh 'docker push asia.gcr.io/likeminds-prod-prj-5464/likeminds-subscription/skulk-celery-prod:${BUILD_NUMBER}'
+                }
+            }
+        }
+              
+        stage('Deploy to GKE') {
+            steps{
+                sh '''
+                sed -i 's/skulk-celery-prod:.*/skulk-celery-prod:'${BUILD_NUMBER}'"/g' deployment-skulk-celery-prod.yaml
+                gcloud container clusters get-credentials ${CLUSTER_NAME} --region ${LOCATION} --project ${PROJECT_ID} --internal-ip
+                kubectl apply -f /var/lib/jenkins/workspace/likeminds-skulk-celery-prod/deployment-skulk-celery-prod.yaml
+                '''
+            }
+        }
+    }  
+
+    post {
+        always { 
+            cleanWs()
+        }
+    }
+}

@@ -1,0 +1,63 @@
+apiVersion: "apps/v1"
+kind: "Deployment"
+metadata:
+  name: "skulk-celery"
+  namespace: "app-deploy"
+  labels:
+    app: "skulk-celery"
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: "skulk-celery"
+  minReadySeconds: 5
+    strategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxSurge: 1
+        maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app: "skulk-celery"
+    spec:
+      containers:
+      - name: "likeminds-skulk-celery-1"
+        image: "asia.gcr.io/likeminds-prod-prj-5464/likeminds-subscription/skulk-celery-prod:v2"
+        resources:
+          requests:
+            memory: "1000Mi"
+            cpu: "2000m"
+          limits:
+            memory: "3000Mi"
+            cpu: "2500m"
+        env:
+        - name: CELERY_BROKER_URL
+          valueFrom:
+            secretKeyRef:
+              name: celery-secret
+              key: CELERY_BROKER_URL          
+
+---
+
+apiVersion: "autoscaling/v2"
+kind: "HorizontalPodAutoscaler"
+metadata:
+  name: "skulk-celery"
+  namespace: "app-deploy"
+  labels:
+    app: "skulk-celery"
+spec:
+  scaleTargetRef:
+    kind: "Deployment"
+    name: "skulk-celery"
+    apiVersion: "apps/v1"
+  minReplicas: 2
+  maxReplicas: 6
+  metrics:
+  - type: "Resource"
+    resource:
+      name: "cpu"
+      target:
+        type: "Utilization"
+        averageUtilization: 75

@@ -2,7 +2,7 @@
 
 APPLICATION_ENVIRONMENT="BETA"
 APPLICATION_DOT_ENV_LOCATION="/home/apps/skulk-beta/LikeMinds-Subscription/likeminds_payments/init/settings/.env"
-APPLICATION_DOT_ENV_REMOTE_LOCATION="https://beta-likeminds-media.s3.ap-south-1.amazonaws.com/environment/Skulk-Beta-Dot-Env/.env"
+APPLICATION_DOT_ENV_REMOTE_LOCATION="https://likeminds-configs-beta.s3.ap-south-1.amazonaws.com/application-dot-envs-beta/skulk-beta/skulk-beta-dot-env-public"
 APPLICATION_LOCATION="/home/apps/skulk-beta/LikeMinds-Subscription/likeminds_payments/"
 APPLICATION_MANAGE_SCRIPT_LOCATION="/home/apps/skulk-beta/LikeMinds-Subscription/likeminds_payments/manage.py"
 APPLICATION_NAME="SKULK"

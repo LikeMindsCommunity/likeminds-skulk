@@ -6,6 +6,19 @@ pipeline {
                 checkout scm
             }
          }
+
+         stage("Executing the Script Migration step for skulk-beta") {
+            steps {
+                script{
+                    sh """ssh -tt -i "/var/lib/jenkins/.ssh/id_rsa" root@10.51.141.50 << EOF 
+                    cd /home/apps/skulk-beta/LikeMinds-Subscription && git checkout development && git pull
+                    chmod +x /home/apps/skulk-beta/LikeMinds-Subscription/Migrationfile-skulk-beta.sh
+                    . /home/apps/skulk-beta/LikeMinds-Subscription/Migrationfile-skulk-beta.sh
+                    exit
+                    EOF"""
+                }
+            }
+        }
         
         stage ('Build Image') {
             steps {

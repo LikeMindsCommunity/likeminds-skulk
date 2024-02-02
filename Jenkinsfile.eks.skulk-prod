@@ -7,7 +7,7 @@ pipeline {
             }
          }
 
-        stage("Executing the Script Migration step for skulk-beta") {
+        stage("Executing the Script Migration step for skulk-prod") {
             steps {
                 script{
                     sh """ssh -tt -i "/var/lib/jenkins/.ssh/prod_ssh_keys" root@$migration_server_IP << EOF

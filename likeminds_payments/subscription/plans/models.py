@@ -1,5 +1,7 @@
 from django.db import models
 import uuid
+
+from subscription.plans.constants import TIER_LIMIT_TYPE, TIER_TYPE_CHOICES
 from ..utility.time_utilities import TimeUtilities
 
 
@@ -183,3 +185,28 @@ class SamplePlan(models.Model):
         self.updated_at = current_time
 
         super(SamplePlan, self).save(*args, **kwargs)
+
+class BillingPlan(models.Model):
+    community_id = models.IntegerField()
+    tier_type = models.IntegerField(default=0)
+    created_at = models.BigIntegerField(default=0)
+    updated_at = models.BigIntegerField(default=0)
+
+    def save(self, *args, **kwargs):
+        current_time = TimeUtilities.current_time_in_milliseconds()
+
+        if self.created_at == 0:
+            self.created_at = current_time
+
+        self.updated_at = current_time
+
+        super(BillingPlan, self).save(*args, **kwargs)
+
+
+class TierPlan(models.Model):
+    tier_type = models.IntegerField(choices=TIER_TYPE_CHOICES,default=0)   
+    tier_value_type = models.IntegerField(choices=TIER_LIMIT_TYPE)
+    max_request_limit_value = models.IntegerField()
+    ttl = models.IntegerField()
+    rate_limit_key_name = models.CharField(max_length=255)
+    error_message = models.TextField()

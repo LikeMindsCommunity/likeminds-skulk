@@ -3,7 +3,7 @@ class ModelUtilities:
 
     @staticmethod
     def model_update(model, filter_dict, update_dict):
-        update_status = model.objects.filter(*filter_dict).update(*update_dict)
+        update_status = model.objects.filter(**filter_dict).update(**update_dict)
 
         return update_status
 

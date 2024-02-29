@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import EventCohortPlan
+from .models import BillingPlan, EventCohortPlan, TierPlan
 from .plan_helper import PlanHelper
 from ..external_services.logging.logging_wrapper import LoggingWrapper
 from ..utility.number_utilities import NumberUtilities
@@ -147,3 +147,17 @@ class SamplePlanSerializers(serializers.ModelSerializer):
                 del data[field.field_name]
 
         return data
+
+ # Serialiser for billing plan
+
+class BillingPlanSerializers(serializers.ModelSerializer):
+    class Meta:
+        model = BillingPlan
+        fields = ['tier_type']
+
+class TierPlanSerializers(serializers.ModelSerializer):
+    class Meta:
+        model = TierPlan
+        fields = '__all__'
+
+ 

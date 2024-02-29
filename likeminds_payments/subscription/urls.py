@@ -61,5 +61,6 @@ urlpatterns = [
          name='fetch_event_plan_with_cohort'),
     path('kyc/', include('subscription.kyc.urls')),
     path('transaction/', include('subscription.transactions.urls')),
-    path('settlement/', include('subscription.settlements.urls'))
+    path('settlement/', include('subscription.settlements.urls')),
+    path('plan/',include('subscription.plans.urls')) #api/subscription/plan
 ]

@@ -342,16 +342,14 @@ class PlanImpl(PlanManager):
         return {'event_plans': event_plans_with_cohort}
     
     def fetch_community_billing_plan(self,community_id=None) -> dict:
-
         community_billing_filter = ModelUtilities.get_model_filter(BillingPlan, {'community_id':community_id}).first()
     
-        
         if not community_billing_filter:
             return ResponseUtilities.get_error_context(success=False,error_message="Invalid Community ID")
         
         community_billing_response = BillingPlanSerializers(community_billing_filter).data
         return community_billing_response
-        
+    
     def create_community_billing_plan(self, community_id=None, tier_type=0) -> dict:
         community_billing_plan = ModelUtilities.get_model_filter(BillingPlan, {'community_id':community_id}).first()
 
@@ -375,6 +373,7 @@ class PlanImpl(PlanManager):
             return ResponseUtilities.get_impl_error_context('Invalid tier_type!',status_codes.HTTP_400_BAD_REQUEST)
 
         community_billing_plan = ModelUtilities.model_update(BillingPlan, {'community_id':community_id}, {'tier_type':tier_type})
+        
         if not community_billing_plan:
             return ResponseUtilities.get_impl_error_context('No billing record exists for the given community ID', status_codes.HTTP_400_BAD_REQUEST)
         
@@ -386,8 +385,10 @@ class PlanImpl(PlanManager):
         
         if tier_type:
             tier_plan = ModelUtilities.get_model_filter(TierPlan, {'tier_type': tier_type})
+       
         else:
             tier_plan = ModelUtilities.get_model_filter(TierPlan,{}).order_by('id')
+        
         if not tier_plan:
             return ResponseUtilities.get_error_context(success=False, error_message="Invalid Tier type")
 

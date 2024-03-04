@@ -210,3 +210,15 @@ class TierPlan(models.Model):
     ttl = models.IntegerField()
     rate_limit_key_name = models.CharField(max_length=255)
     error_message = models.TextField()
+    created_at = models.BigIntegerField(default=0)
+    updated_at = models.BigIntegerField(default=0)
+
+    def save(self, *args, **kwargs):
+        current_time = TimeUtilities.current_time_in_milliseconds()
+        
+        if self.created_at == 0:
+            self.created_at = current_time
+        
+        self.updated_at = current_time
+
+        super(TierPlan, self).save(*args, **kwargs)

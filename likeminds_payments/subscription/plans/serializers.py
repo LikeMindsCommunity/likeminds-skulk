@@ -160,5 +160,3 @@ class TierPlanSerializers(serializers.ModelSerializer):
         model = TierPlan
         fields = '__all__'
 
-
- 

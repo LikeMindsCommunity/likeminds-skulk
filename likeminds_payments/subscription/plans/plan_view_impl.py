@@ -326,7 +326,7 @@ class BillingPlanView(APIView):
             return JsonResponse(**ResponseUtilities.get_view_impl_error_context(response_data['error_message'],status_codes.HTTP_400_BAD_REQUEST)) 
         
         return JsonResponse(
-            {'success': True, 'billing_data':response_data},
+            response_data,
             status = status_codes.HTTP_200_OK
         )
     
@@ -342,9 +342,9 @@ class BillingPlanView(APIView):
             return JsonResponse(**ResponseUtilities.get_view_impl_error_context(response_data['error_message'],status_codes.HTTP_400_BAD_REQUEST))
         
         return JsonResponse(
-            {'success':True},
+            response_data,
             status = status_codes.HTTP_200_OK
-        )
+            )
         
     def patch(self, request,community_id):
         request_body = RequestUtilities.load_request_body(request)
@@ -355,9 +355,7 @@ class BillingPlanView(APIView):
         if 'error_message' in response_data:
             return JsonResponse(**ResponseUtilities.get_view_impl_error_context(response_data['error_message'],status_codes.HTTP_400_BAD_REQUEST))
         
-        return JsonResponse(
-            {'success':True}, status=status_codes.HTTP_200_OK
-        )
+        return JsonResponse(response_data, status=status_codes.HTTP_200_OK)
 
 
 
@@ -372,5 +370,5 @@ class TierPlanView(APIView):
         if 'error_message' in tier_data:
             return JsonResponse(**ResponseUtilities.get_view_impl_error_context(error_message=tier_data['error_message'],status_code=status_codes.HTTP_400_BAD_REQUEST))
         
-        return JsonResponse({'success':True,'data':tier_data},status = status_codes.HTTP_200_OK)       
+        return JsonResponse(tier_data,status=status_codes.HTTP_200_OK)       
 

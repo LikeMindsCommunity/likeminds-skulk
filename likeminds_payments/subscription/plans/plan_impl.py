@@ -348,7 +348,7 @@ class PlanImpl(PlanManager):
             return ResponseUtilities.get_error_context(success=False,error_message="Invalid Community ID")
         
         community_billing_response = BillingPlanSerializers(community_billing_filter).data
-        return community_billing_response
+        return {'success':True,'billing_data':community_billing_response}
     
     def create_community_billing_plan(self, community_id=None, tier_type=0) -> dict:
         community_billing_plan = ModelUtilities.get_model_filter(BillingPlan, {'community_id':community_id}).first()
@@ -393,6 +393,6 @@ class PlanImpl(PlanManager):
             return ResponseUtilities.get_error_context(success=False, error_message="Invalid Tier type")
 
         tier_plan_response = TierPlanSerializers(tier_plan, many=True).data
-        return tier_plan_response
+        return {'success':True,'data':tier_plan_response}
 
 

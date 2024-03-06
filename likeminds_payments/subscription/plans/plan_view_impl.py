@@ -8,7 +8,6 @@ from .plan_helper import PlanHelper
 from .serializers import PlanSerializer
 from ..mixins import TransactionMixin
 from ..search.sync import ElasticSearchSync
-from ..utility.json_utilities import JsonUtilities
 from ..utility.request_utilities import RequestUtilities
 from ..utility.response_utilities import ResponseUtilities
 from ..plans.plan_impl import PlanImpl
@@ -315,19 +314,21 @@ class FetchEventPlanWithCohortPlanView(APIView):
             status=status_codes.HTTP_200_OK
         )
 
+
 class BillingPlanView(APIView):
 
-    def get(self,request,community_id):
+    def get(self, request, community_id):
         
         plan_manager = PlanImpl()
         response_data = plan_manager.fetch_community_billing_plan(community_id)
 
         if 'error_message' in response_data:
-            return JsonResponse(**ResponseUtilities.get_view_impl_error_context(response_data.get('error_message'),response_data.get('status'))) 
+            return JsonResponse(**ResponseUtilities.get_view_impl_error_context(response_data.get('error_message'),
+                                                                                response_data.get('status')))
         
         return JsonResponse(response_data)
     
-    def post(self, request,community_id):
+    def post(self, request, community_id):
 
         request_body = RequestUtilities.load_request_body(request)
         tier_type = request_body.get('tier_type', 0)
@@ -336,33 +337,33 @@ class BillingPlanView(APIView):
         response_data = plan_manager.create_community_billing_plan(community_id, tier_type)
         
         if 'error_message' in response_data:
-            return JsonResponse(**ResponseUtilities.get_view_impl_error_context(response_data.get('error_message'),response_data.get('status')))
+            return JsonResponse(**ResponseUtilities.get_view_impl_error_context(response_data.get('error_message'),
+                                                                                response_data.get('status')))
         
         return JsonResponse(response_data)
         
-    def patch(self, request,community_id):
+    def patch(self, request, community_id):
         request_body = RequestUtilities.load_request_body(request)
         tier_type = request_body.get('tier_type', 0)
         plan_manager = PlanImpl()
-        response_data = plan_manager.update_community_billing_plan(community_id,tier_type)
+        response_data = plan_manager.update_community_billing_plan(community_id, tier_type)
 
         if 'error_message' in response_data:
-            return JsonResponse(**ResponseUtilities.get_view_impl_error_context(response_data.get('error_message'),response_data.get('status')))
+            return JsonResponse(**ResponseUtilities.get_view_impl_error_context(response_data.get('error_message'),
+                                                                                response_data.get('status')))
         
         return JsonResponse(response_data)
-
 
 
 class TierPlanView(APIView):
     
-    def get(self,request):
+    def get(self, request):
         tier_type = request.query_params.get('tier_type')
         plan_manager = PlanImpl()
-       
-    
+
         tier_data = plan_manager.fetch_tier_plan(tier_type)
         if 'error_message' in tier_data:
-            return JsonResponse(**ResponseUtilities.get_view_impl_error_context(tier_data.get('error_message'),tier_data.get('status')))
+            return JsonResponse(**ResponseUtilities.get_view_impl_error_context(tier_data.get('error_message'),
+                                                                                tier_data.get('status')))
         
         return JsonResponse(tier_data)       
-

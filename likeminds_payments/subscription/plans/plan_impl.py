@@ -5,9 +5,11 @@ from .constants import EVENT_PAYMENT_LINK
 from .plan_helper import PlanHelper
 from ..external_services.logging.logging_wrapper import LoggingWrapper
 from ..plans.plan_manager import PlanManager
-from .models import SubscriptionPlan, SubscriptionEventPlan, SamplePlanCategory, SamplePlan, EventCohortPlan , BillingPlan , TierPlan
-from .serializers import TierPlanSerializers,BillingPlanSerializers, PlanSerializer, EventPlanSerializer, SamplePlanCategorySerializers, SamplePlanSerializers, \
-    EventCohortPlanSerializer
+from .models import (SubscriptionPlan, SubscriptionEventPlan, SamplePlanCategory, SamplePlan, EventCohortPlan,
+                     BillingPlan, TierPlan)
+from .serializers import (TierPlanSerializers, BillingPlanSerializers, PlanSerializer, EventPlanSerializer,
+                          SamplePlanCategorySerializers, SamplePlanSerializers,
+                          EventCohortPlanSerializer)
 from ..subscriptions.constants import LIFETIME_PAYMENT
 from ..utility.async_tasks import update_event_in_webflow_service
 from ..utility.core_service_utilities import CoreServiceUtilities
@@ -340,21 +342,22 @@ class PlanImpl(PlanManager):
         event_plans_with_cohort = self._serialize_event_plan_list(filters, user_id, with_cohorts=True)
 
         return {'event_plans': event_plans_with_cohort}
-    
-    def fetch_community_billing_plan(self,community_id=None) -> dict:
-        community_billing_filter = ModelUtilities.get_model_filter(BillingPlan, {'community_id':community_id}).first()
-    
+
+    def fetch_community_billing_plan(self, community_id=None) -> dict:
+        community_billing_filter = ModelUtilities.get_model_filter(BillingPlan, {'community_id': community_id}).first()
+
         if not community_billing_filter:
             return ResponseUtilities.get_impl_error_context("Invalid Community ID", status_codes.HTTP_400_BAD_REQUEST)
-        
+
         community_billing_response = BillingPlanSerializers(community_billing_filter).data
-        return {'success':True,'billing_data':community_billing_response}
-    
+        return {'success': True, 'billing_data': community_billing_response}
+
     def create_community_billing_plan(self, community_id=None, tier_type=0) -> dict:
-        community_billing_plan = ModelUtilities.get_model_filter(BillingPlan, {'community_id':community_id}).first()
+        community_billing_plan = ModelUtilities.get_model_filter(BillingPlan, {'community_id': community_id}).first()
 
         if community_billing_plan:
-            return ResponseUtilities.get_impl_error_context('Billing Record Already Exists!', status_codes.HTTP_400_BAD_REQUEST)
+            return ResponseUtilities.get_impl_error_context('Billing Record Already Exists!',
+                                                            status_codes.HTTP_400_BAD_REQUEST)
 
         tier_type_filter = ModelUtilities.get_model_filter(TierPlan, {'tier_type': tier_type})
 
@@ -364,35 +367,34 @@ class PlanImpl(PlanManager):
         billing_plan_instance = BillingPlan(community_id=community_id, tier_type=tier_type)
         billing_plan_instance.save()
 
-        return {'success':True}
+        return {'success': True}
     
-    def update_community_billing_plan(self,community_id=None,tier_type=0) -> dict:
-        tier_records = ModelUtilities.get_model_filter(TierPlan,{'tier_type':tier_type}).first()
+    def update_community_billing_plan(self, community_id=None, tier_type=0) -> dict:
+        tier_records = ModelUtilities.get_model_filter(TierPlan, {'tier_type': tier_type}).first()
 
         if not tier_records:
             return ResponseUtilities.get_impl_error_context('Invalid tier_type!', status_codes.HTTP_400_BAD_REQUEST)
 
-        community_billing_plan = ModelUtilities.model_update(BillingPlan, {'community_id':community_id}, {'tier_type':tier_type})
+        community_billing_plan = ModelUtilities.model_update(BillingPlan, {'community_id': community_id},
+                                                             {'tier_type': tier_type})
         
         if not community_billing_plan:
-            return ResponseUtilities.get_impl_error_context('No billing record exists for the given community ID', status_codes.HTTP_400_BAD_REQUEST)
+            return ResponseUtilities.get_impl_error_context('No billing record exists for the given community ID',
+                                                            status_codes.HTTP_400_BAD_REQUEST)
         
-        return {'success':True}
+        return {'success': True}
 
-
-    
     def fetch_tier_plan(self, tier_type=None) -> dict:
         
         if tier_type:
             tier_plan = ModelUtilities.get_model_filter(TierPlan, {'tier_type': tier_type})
        
         else:
-            tier_plan = ModelUtilities.get_model_filter(TierPlan,{}).order_by('id')
+            tier_plan = ModelUtilities.get_model_filter(TierPlan,
+                                                        {}).order_by('id')
         
         if not tier_plan:
-            return ResponseUtilities.get_impl_error_context("Invalid Tier type",status_codes.HTTP_400_BAD_REQUEST)
+            return ResponseUtilities.get_impl_error_context("Invalid Tier type", status_codes.HTTP_400_BAD_REQUEST)
 
         tier_plan_response = TierPlanSerializers(tier_plan, many=True).data
-        return {'success':True,'data':tier_plan_response}
-
-
+        return {'success': True, 'data': tier_plan_response}

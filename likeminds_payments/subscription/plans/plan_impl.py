@@ -345,7 +345,7 @@ class PlanImpl(PlanManager):
         community_billing_filter = ModelUtilities.get_model_filter(BillingPlan, {'community_id':community_id}).first()
     
         if not community_billing_filter:
-            return ResponseUtilities.get_error_context(success=False,error_message="Invalid Community ID")
+            return ResponseUtilities.get_impl_error_context("Invalid Community ID", status_codes.HTTP_400_BAD_REQUEST)
         
         community_billing_response = BillingPlanSerializers(community_billing_filter).data
         return {'success':True,'billing_data':community_billing_response}
@@ -370,7 +370,7 @@ class PlanImpl(PlanManager):
         tier_records = ModelUtilities.get_model_filter(TierPlan,{'tier_type':tier_type}).first()
 
         if not tier_records:
-            return ResponseUtilities.get_impl_error_context('Invalid tier_type!',status_codes.HTTP_400_BAD_REQUEST)
+            return ResponseUtilities.get_impl_error_context('Invalid tier_type!', status_codes.HTTP_400_BAD_REQUEST)
 
         community_billing_plan = ModelUtilities.model_update(BillingPlan, {'community_id':community_id}, {'tier_type':tier_type})
         
@@ -390,7 +390,7 @@ class PlanImpl(PlanManager):
             tier_plan = ModelUtilities.get_model_filter(TierPlan,{}).order_by('id')
         
         if not tier_plan:
-            return ResponseUtilities.get_error_context(success=False, error_message="Invalid Tier type")
+            return ResponseUtilities.get_impl_error_context("Invalid Tier type",status_codes.HTTP_400_BAD_REQUEST)
 
         tier_plan_response = TierPlanSerializers(tier_plan, many=True).data
         return {'success':True,'data':tier_plan_response}

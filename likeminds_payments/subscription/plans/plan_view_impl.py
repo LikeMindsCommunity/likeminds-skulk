@@ -323,12 +323,9 @@ class BillingPlanView(APIView):
         response_data = plan_manager.fetch_community_billing_plan(community_id)
 
         if 'error_message' in response_data:
-            return JsonResponse(**ResponseUtilities.get_view_impl_error_context(response_data['error_message'],status_codes.HTTP_400_BAD_REQUEST)) 
+            return JsonResponse(**ResponseUtilities.get_view_impl_error_context(response_data.get('error_message'),response_data.get('status'))) 
         
-        return JsonResponse(
-            response_data,
-            status = status_codes.HTTP_200_OK
-        )
+        return JsonResponse(response_data)
     
     def post(self, request,community_id):
 
@@ -339,12 +336,9 @@ class BillingPlanView(APIView):
         response_data = plan_manager.create_community_billing_plan(community_id, tier_type)
         
         if 'error_message' in response_data:
-            return JsonResponse(**ResponseUtilities.get_view_impl_error_context(response_data['error_message'],status_codes.HTTP_400_BAD_REQUEST))
+            return JsonResponse(**ResponseUtilities.get_view_impl_error_context(response_data.get('error_message'),response_data.get('status')))
         
-        return JsonResponse(
-            response_data,
-            status = status_codes.HTTP_200_OK
-            )
+        return JsonResponse(response_data)
         
     def patch(self, request,community_id):
         request_body = RequestUtilities.load_request_body(request)
@@ -353,9 +347,9 @@ class BillingPlanView(APIView):
         response_data = plan_manager.update_community_billing_plan(community_id,tier_type)
 
         if 'error_message' in response_data:
-            return JsonResponse(**ResponseUtilities.get_view_impl_error_context(response_data['error_message'],status_codes.HTTP_400_BAD_REQUEST))
+            return JsonResponse(**ResponseUtilities.get_view_impl_error_context(response_data.get('error_message'),response_data.get('status')))
         
-        return JsonResponse(response_data, status=status_codes.HTTP_200_OK)
+        return JsonResponse(response_data)
 
 
 
@@ -368,7 +362,7 @@ class TierPlanView(APIView):
     
         tier_data = plan_manager.fetch_tier_plan(tier_type)
         if 'error_message' in tier_data:
-            return JsonResponse(**ResponseUtilities.get_view_impl_error_context(error_message=tier_data['error_message'],status_code=status_codes.HTTP_400_BAD_REQUEST))
+            return JsonResponse(**ResponseUtilities.get_view_impl_error_context(tier_data.get('error_message'),tier_data.get('status')))
         
-        return JsonResponse(tier_data,status=status_codes.HTTP_200_OK)       
+        return JsonResponse(tier_data)       
 

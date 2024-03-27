@@ -1,7 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 
 from ..utility.response_utilities import ResponseUtilities
-from .constants import EVENT_PAYMENT_LINK
+from .constants import EVENT_PAYMENT_LINK, TIER_TYPE_CHOICES
 from .plan_helper import PlanHelper
 from ..external_services.logging.logging_wrapper import LoggingWrapper
 from ..plans.plan_manager import PlanManager
@@ -352,28 +352,28 @@ class PlanImpl(PlanManager):
         community_billing_response = BillingPlanSerializers(community_billing_filter).data
         return {'success': True, 'billing_data': community_billing_response}
 
-    def create_community_billing_plan(self, community_id=None, tier_type=0) -> dict:
+    def create_community_billing_plan(self, community_id=None, tier_type=TIER_TYPE_CHOICES[0][0]) -> dict:
         community_billing_plan = ModelUtilities.get_model_filter(BillingPlan, {'community_id': community_id}).first()
 
         if community_billing_plan:
-            return ResponseUtilities.get_impl_error_context('Billing Record Already Exists!',
+            return ResponseUtilities.get_impl_error_context('Billing record already exists',
                                                             status_codes.HTTP_400_BAD_REQUEST)
 
         tier_type_filter = ModelUtilities.get_model_filter(TierPlan, {'tier_type': tier_type})
 
         if not tier_type_filter:
-            return ResponseUtilities.get_impl_error_context('Invalid tier_type!', status_codes.HTTP_400_BAD_REQUEST)
+            return ResponseUtilities.get_impl_error_context('Invalid tier_type', status_codes.HTTP_400_BAD_REQUEST)
         
         billing_plan_instance = BillingPlan(community_id=community_id, tier_type=tier_type)
         billing_plan_instance.save()
 
         return {'success': True}
     
-    def update_community_billing_plan(self, community_id=None, tier_type=0) -> dict:
+    def update_community_billing_plan(self, community_id=None, tier_type=TIER_TYPE_CHOICES[0][0]) -> dict:
         tier_records = ModelUtilities.get_model_filter(TierPlan, {'tier_type': tier_type}).first()
 
         if not tier_records:
-            return ResponseUtilities.get_impl_error_context('Invalid tier_type!', status_codes.HTTP_400_BAD_REQUEST)
+            return ResponseUtilities.get_impl_error_context('Invalid tier_type', status_codes.HTTP_400_BAD_REQUEST)
 
         community_billing_plan = ModelUtilities.model_update(BillingPlan, {'community_id': community_id},
                                                              {'tier_type': tier_type})

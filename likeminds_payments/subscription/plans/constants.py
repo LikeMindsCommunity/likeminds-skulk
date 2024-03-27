@@ -82,7 +82,7 @@ SEGMENT_FREE_PLAN_TITLE = "free"
 SEGMENT_FREE_TRIAL_TITLE = "free_trial"
 
 TIER_TYPE_CHOICES=(
-    (0,"Free"),
+    (0, "Free"),
     (1, "Pro"),
     (2, "Enterprise")
 )

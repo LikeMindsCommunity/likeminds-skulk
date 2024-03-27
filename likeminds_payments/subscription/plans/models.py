@@ -188,7 +188,7 @@ class SamplePlan(models.Model):
 
 class BillingPlan(models.Model):
     community_id = models.IntegerField()
-    tier_type = models.IntegerField(default=0)
+    tier_type = models.IntegerField(choices=TIER_TYPE_CHOICES,default=0)
     created_at = models.BigIntegerField(default=0)
     updated_at = models.BigIntegerField(default=0)
 

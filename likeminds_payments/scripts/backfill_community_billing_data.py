@@ -2,7 +2,7 @@ import time
 
 import pandas as pd
 
-from subscription.plans.constants import TIER_TYPE_CHOICES
+from subscription.utility.states import TierTypes
 from subscription.plans.models import BillingPlan
 from subscription.utility.model_utilities import ModelUtilities
 
@@ -25,14 +25,14 @@ def get_all_communities():
 
 def create_billing_plan_for_community_id():
     community_list = get_all_communities()
-    for community_id in community_list:
 
+    for community_id in community_list:
         community_billing_plan = ModelUtilities.get_model_filter(BillingPlan, {'community_id': community_id}).first()
 
         if community_billing_plan:
             continue
         
-        billing_plan_instance = BillingPlan(community_id=community_id, tier_type=TIER_TYPE_CHOICES[0][0])
+        billing_plan_instance = BillingPlan(community_id=community_id, tier_type=TierTypes.FREE)
         billing_plan_instance.save()
 
         print("Success | Community Billing Plan Added", community_id)

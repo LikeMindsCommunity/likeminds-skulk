@@ -1,7 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 
 from ..utility.response_utilities import ResponseUtilities
-from .constants import EVENT_PAYMENT_LINK, TIER_TYPE_CHOICES
+from .constants import EVENT_PAYMENT_LINK
 from .plan_helper import PlanHelper
 from ..external_services.logging.logging_wrapper import LoggingWrapper
 from ..plans.plan_manager import PlanManager
@@ -17,9 +17,10 @@ from ..utility.model_utilities import ModelUtilities
 from ..utility.number_utilities import NumberUtilities
 
 from ..utility.plan_utilities import PlanUtilities
-from ..utility.states import EventDiscountType
+from ..utility.states import EventDiscountType, TierTypes
 from django.conf import settings
 from rest_framework import status as status_codes
+
 
 error_logger = LoggingWrapper.get_instance()
 
@@ -352,7 +353,7 @@ class PlanImpl(PlanManager):
         community_billing_response = BillingPlanSerializers(community_billing_filter).data
         return {'success': True, 'billing_data': community_billing_response}
 
-    def create_community_billing_plan(self, community_id=None, tier_type=TIER_TYPE_CHOICES[0][0]) -> dict:
+    def create_community_billing_plan(self, community_id=None, tier_type=TierTypes.FREE) -> dict:
         community_billing_plan = ModelUtilities.get_model_filter(BillingPlan, {'community_id': community_id}).first()
 
         if community_billing_plan:
@@ -369,7 +370,7 @@ class PlanImpl(PlanManager):
 
         return {'success': True}
     
-    def update_community_billing_plan(self, community_id=None, tier_type=TIER_TYPE_CHOICES[0][0]) -> dict:
+    def update_community_billing_plan(self, community_id=None, tier_type=TierTypes.FREE) -> dict:
         tier_records = ModelUtilities.get_model_filter(TierPlan, {'tier_type': tier_type}).first()
 
         if not tier_records:

@@ -21,7 +21,6 @@ from ..utility.states import EventDiscountType, TierTypes
 from django.conf import settings
 from rest_framework import status as status_codes
 
-
 error_logger = LoggingWrapper.get_instance()
 
 
@@ -353,7 +352,7 @@ class PlanImpl(PlanManager):
         community_billing_response = BillingPlanSerializers(community_billing_filter).data
         return {'success': True, 'billing_data': community_billing_response}
 
-    def create_community_billing_plan(self, community_id=None, tier_type=TierTypes.FREE) -> dict:
+    def create_community_billing_plan(self, community_id=None, tier_type=TierTypes.FREE.value) -> dict:
         community_billing_plan = ModelUtilities.get_model_filter(BillingPlan, {'community_id': community_id}).first()
 
         if community_billing_plan:
@@ -370,7 +369,7 @@ class PlanImpl(PlanManager):
 
         return {'success': True}
     
-    def update_community_billing_plan(self, community_id=None, tier_type=TierTypes.FREE) -> dict:
+    def update_community_billing_plan(self, community_id=None, tier_type=TierTypes.FREE.value) -> dict:
         tier_records = ModelUtilities.get_model_filter(TierPlan, {'tier_type': tier_type}).first()
 
         if not tier_records:

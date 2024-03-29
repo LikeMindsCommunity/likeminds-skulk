@@ -32,7 +32,7 @@ def create_billing_plan_for_community_id():
         if community_billing_plan:
             continue
         
-        billing_plan_instance = BillingPlan(community_id=community_id, tier_type=TierTypes.FREE)
+        billing_plan_instance = BillingPlan(community_id=community_id, tier_type=TierTypes.FREE.value)
         billing_plan_instance.save()
 
         print("Success | Community Billing Plan Added", community_id)

@@ -1,3 +1,6 @@
+import enum
+
+
 class EventDiscountType:
     PERCENTAGE = 0
     FLAT = 1
@@ -78,3 +81,9 @@ class RazorpayWebhookEventTypes:
     PAYMENT_CAPTURED = 'payment.captured'
     PAYMENT_FAILED = 'payment.failed'
     REFUND_PROCESSED = 'refund.processed'
+
+
+class TierTypes(enum.Enum):
+    FREE = 0
+    PRO = 1
+    ENTERPRISE = 2

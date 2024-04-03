@@ -28,4 +28,5 @@ class KettleServiceUtilities:
                                 | response = %s", str(response))
             return {'error_message': 'error deleting cache ' + response['error_message']}
         
+        error_logger.info("successfully deleted cache | response = %s", str(response))
         return response

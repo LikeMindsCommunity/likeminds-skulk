@@ -36,6 +36,23 @@ class ApiUtilities:
         validated_response = ApiUtilities.validate_response(response)
 
         return validated_response
+    
+    @staticmethod
+    def generate_delete_request(url, headers=None, data=None):
+
+        if data is None:
+            data = {}
+        if headers is None:
+            headers = {}
+
+        if not url:
+            return {'error_message': 'send url'}
+
+        response = requests.delete(url=url, json=data, headers=headers)
+        
+        validated_response = ApiUtilities.validate_response(response)
+
+        return validated_response
 
     @staticmethod
     def validate_response(response):

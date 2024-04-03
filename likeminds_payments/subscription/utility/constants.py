@@ -29,7 +29,7 @@ COMMUNITY_FEED_CM_ONBOARDING_BRANCH_URL = "{}/api/community/fetch_feed_url_cm_on
     settings.CORE_SERVICE_URL)
 CMS_USER_NAME = 'teamGrowth'
 CMS_PASSWORD = 'TheLMGrowth@1001'
-
+DELETE_KETTLE_CACHE_API = "{}/cache".format(settings.KETTLE_SERVICE_URL)
 TRIGGER_EVENT_CREATION_MAIL = '{}/api/notifications/send_event_creation_mail'.format(settings.CORE_SERVICE_URL)
 FETCH_CHATROOM_URL = "{}/api/chatroom/fetch".format(settings.CORE_SERVICE_URL)
 
@@ -44,7 +44,7 @@ PAYMENT_SUCCESS_EMAIL_TO_MEMBER = {
     "subject": "Registration complete ✅"
 }
 
-
+SKULK_SERVICE_PLATFORM_TYPE = "skulk-service"
 class EmailCategories:
     CREATE_COMMUNITY = "Create community"
 
@@ -77,3 +77,6 @@ class EmailSubCategories:
     PAYMENT_SUCCESSFUL_AND_MEMBER_JOINED = "Payment successful + Member joined"
 
     SETTLEMENT_WEBHOOK_ERROR = "Razorpayxwh"
+
+# KETTLE CACHE KEYS
+COMMUNITY_BILLING_PLAN_KETTLE_CACHE_KEY = "{}_community_billing_data"

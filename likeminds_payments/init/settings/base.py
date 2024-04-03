@@ -210,3 +210,5 @@ ELASTICSEARCH_INDEX_NAMES = {
     'subscription.search.subscription_plan_index': 'subscription_plan',
     'subscription.search.subscription_history_index': 'subscription_history'
 }
+
+APP_VERSION = "1.1.0"

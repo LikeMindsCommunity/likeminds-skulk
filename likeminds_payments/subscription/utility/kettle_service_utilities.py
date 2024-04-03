@@ -1,6 +1,9 @@
 
 from .constants import *
 from ..utility.api_utilities import ApiUtilities
+from ..external_services.logging.logging_wrapper import LoggingWrapper
+
+error_logger = LoggingWrapper.get_instance()
 
 
 class KettleServiceUtilities:
@@ -21,6 +24,8 @@ class KettleServiceUtilities:
         response = ApiUtilities.generate_delete_request(url=url, headers=headers, data=payload)
 
         if 'error_message' in response:
-            return {'error_message': 'error deleting cache' + response['error_message']}
+            error_logger.error("got error in response while sending delete to /cache \
+                                | response = %s", str(response))
+            return {'error_message': 'error deleting cache ' + response['error_message']}
         
         return response

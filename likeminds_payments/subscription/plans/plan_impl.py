@@ -1,10 +1,17 @@
 from __future__ import absolute_import, unicode_literals
 
+from subscription.utility.kettle_service_utilities import KettleServiceUtilities
+
 from ..utility.response_utilities import ResponseUtilities
 from .constants import EVENT_PAYMENT_LINK
 from .plan_helper import PlanHelper
 from ..external_services.logging.logging_wrapper import LoggingWrapper
 from ..plans.plan_manager import PlanManager
+from .models import (SubscriptionPlan, SubscriptionEventPlan, SamplePlanCategory, SamplePlan, EventCohortPlan,
+                     BillingPlan, TierPlan)
+from .serializers import (TierPlanSerializers, BillingPlanSerializers, PlanSerializer, EventPlanSerializer,
+                          SamplePlanCategorySerializers, SamplePlanSerializers,
+                          EventCohortPlanSerializer)
 from .models import (SubscriptionPlan, SubscriptionEventPlan, SamplePlanCategory, SamplePlan, EventCohortPlan,
                      BillingPlan, TierPlan)
 from .serializers import (TierPlanSerializers, BillingPlanSerializers, PlanSerializer, EventPlanSerializer,
@@ -18,8 +25,10 @@ from ..utility.number_utilities import NumberUtilities
 
 from ..utility.plan_utilities import PlanUtilities
 from ..utility.states import EventDiscountType, TierTypes
+from ..utility.states import EventDiscountType, TierTypes
 from django.conf import settings
 from rest_framework import status as status_codes
+from ..utility.constants import COMMUNITY_BILLING_PLAN_KETTLE_CACHE_KEY
 
 error_logger = LoggingWrapper.get_instance()
 
@@ -382,6 +391,12 @@ class PlanImpl(PlanManager):
             return ResponseUtilities.get_impl_error_context('No billing record exists for the given community ID',
                                                             status_codes.HTTP_400_BAD_REQUEST)
         
+        resp = KettleServiceUtilities.delete_cache(key_patterns=COMMUNITY_BILLING_PLAN_KETTLE_CACHE_KEY.format(community_id))
+
+        if 'error_message' in resp:
+            return ResponseUtilities.get_impl_error_context(resp.get('error_message'), 
+                                                            status_codes.HTTP_400_BAD_REQUEST)
+
         return {'success': True}
 
     def fetch_tier_plan(self, tier_type=None) -> dict:

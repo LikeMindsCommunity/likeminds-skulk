@@ -1,3 +1,7 @@
+# Deployment spec file for GCP GKE skulk-beta deployment
+# We have moved service to container based deployment with docker and AWS EKS
+# File is deprecated and moved to deployment-deprecated directory
+
 apiVersion: "apps/v1"
 kind: "Deployment"
 metadata:
@@ -6,7 +10,7 @@ metadata:
   labels:
     app: "subscription"
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
       app: "subscription"
@@ -23,15 +27,15 @@ spec:
     spec:
       containers:
       - name: "github-nateshr-likeminds-subscription-skulk-1"
-        image: "asia.gcr.io/likeminds-prod-prj-5464/likeminds-subscription/skulk:v1"
+        image: "asia.gcr.io/likeminds-nonprod-prj-24e1/github.com/nateshr/likeminds-subscription/skulk-beta:v3"
         resources:
           requests:
             memory: "1000Mi"
-            cpu: "2000m"
+            cpu: "500m"
           limits:
-            memory: "3000Mi"
-            cpu: "2500m"
-
+            memory: "1500Mi"
+            cpu: "1000m"
+  
 ---
 
 apiVersion: "autoscaling/v2"
@@ -46,8 +50,8 @@ spec:
     kind: "Deployment"
     name: "subscription"
     apiVersion: "apps/v1"
-  minReplicas: 2
-  maxReplicas: 6
+  minReplicas: 1
+  maxReplicas: 3
   metrics:
   - type: "Resource"
     resource:

@@ -1,3 +1,7 @@
+# Deployment spec file for GCP GKE skulk-celery-prod deployment
+# We have moved service to container based deployment with docker and AWS EKS
+# File is deprecated and moved to deployment-deprecated directory
+
 apiVersion: "apps/v1"
 kind: "Deployment"
 metadata:
@@ -6,7 +10,7 @@ metadata:
   labels:
     app: "skulk-celery"
 spec:
-  replicas: 1
+  replicas: 3
   selector:
     matchLabels:
       app: "skulk-celery"
@@ -23,21 +27,21 @@ spec:
     spec:
       containers:
       - name: "likeminds-skulk-celery-1"
-        image: "asia.gcr.io/likeminds-nonprod-prj-24e1/github.com/nateshr/likeminds-subscription/skulk-celery:v3"
+        image: "asia.gcr.io/likeminds-prod-prj-5464/likeminds-subscription/skulk-celery-prod:v2"
         resources:
           requests:
             memory: "1000Mi"
-            cpu: "500m"
+            cpu: "2000m"
           limits:
-            memory: "1500Mi"
-            cpu: "1000m"
+            memory: "3000Mi"
+            cpu: "2500m"
         env:
         - name: CELERY_BROKER_URL
           valueFrom:
             secretKeyRef:
               name: celery-secret
-              key: CELERY_BROKER_URL 
-  
+              key: CELERY_BROKER_URL          
+
 ---
 
 apiVersion: "autoscaling/v2"
@@ -52,8 +56,8 @@ spec:
     kind: "Deployment"
     name: "skulk-celery"
     apiVersion: "apps/v1"
-  minReplicas: 1
-  maxReplicas: 3
+  minReplicas: 2
+  maxReplicas: 6
   metrics:
   - type: "Resource"
     resource:

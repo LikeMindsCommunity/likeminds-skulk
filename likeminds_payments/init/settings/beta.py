@@ -11,7 +11,7 @@ DATABASES = {
         'USER': os.getenv('BETA_DB_USER'),
         'PASSWORD': os.getenv('BETA_DB_PASSWORD'),
         'HOST': os.getenv('BETA_DB_HOST'),
-        'PORT': '5432',
+        'PORT': os.getenv('BETA_DB_PORT'),
         'CONN_MAX_AGE': 600
     }
 }

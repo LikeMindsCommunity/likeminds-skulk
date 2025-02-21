@@ -1,0 +1,113 @@
+services:
+  skulk_postgres:
+    image: postgres:latest
+    container_name: skulk_postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: skulk-local
+    ports:
+      - 5431:5432
+    restart: unless-stopped
+    networks:
+      - likeminds-network
+    volumes:
+      - skulk_postgres_data:/var/lib/postgresql/data
+
+  skulk_rabbitmq:
+    image: rabbitmq:latest
+    container_name: skulk_rabbitmq
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    ports:
+      - 5671:5672
+      - 15671:15672
+    networks:
+      - likeminds-network
+
+  skulk:
+    container_name: skulk
+    hostname: skulk
+    build:
+      dockerfile: ./Dockerfile.skulk-local
+    ports:
+      - 8081:8081
+    environment:
+      - BROKER_URL=amqp://guest:guest@skulk_rabbitmq:5672
+      - DEVELOPMENT_DB_HOST=skulk_postgres
+      - DEVELOPMENT_DB_NAME=skulk-local
+      - DEVELOPMENT_DB_USER=postgres
+      - DEVELOPMENT_DB_PASSWORD=postgres
+      - DEVELOPMENT_CORE_URL=http://caravan:8000
+      - DEVELOPMENT_KETTLE_URL=http://auth:8080
+      - ELASTIC_SEARCH_HOST=caravan_elasticsearch
+      - DEVELOPMENT_URL="http://skulk:8081"
+      - DEVELOPMENT_WEB_URL=""
+      - DEVELOPMENT_ALLOWED_HOST_1='*'
+      - DEVELOPMENT_ALLOWED_HOST_2='skulk'
+      - DEVELOPMENT_RAZORPAY_KEY="rzp_test_IcrgIMeJ6HuAYm"
+      - DEVELOPMENT_RAZORPAY_SECRET="y58zFiqjKRCQreSS6ZQrYEXm"
+      - DEVELOPMENT_RAZORPAY_WEBHOOK_SECRET="thisisrazorpaysecret"
+      - DEVELOPMENT_RAZORPAY_X_KEY="rzp_test_IcrgIMeJ6HuAYm"
+      - DEVELOPMENT_RAZORPAY_X_SECRET="y58zFiqjKRCQreSS6ZQrYEXm"
+      - DEVELOPMENT_RAZORPAY_X_ACCOUNT_NUMBER="2323230055141317"
+      - DEVELOPMENT_RAZORPAY_X_WEBHOOK_SECRET="thisisrazorpayxsecret"
+      - DEVELOPMENT_SEGMENT_KEY="iSTiBGSvaz9MR6KT4quqauFLckC8Cob9"
+      - DEVELOPMENT_FB_ACCESS_TOKEN="EAAMmtSlgFjoBAHZA3XgJ1Y1PKMH4kGZBGCp54e1nFlfAhJLGDZCf5LBgrhtAyYPD5WBZAcmF5w4HDTqsOklpOOiLEXyptWpxnr6rtiWps98eBKayhA7C5zBZAXwBqXKtUwCXGthZC5I27ou9wIcQYjcW88loBpyCiwdQn783jgAPLbEu8oWRag5AoJ5aG2WYMZD"
+      - DEVELOPMENT_FB_PIXEL_ID="EAAMmtSlgFjoBAHZA3XgJ1Y1PKMH4kGZBGCp54e1nFlfAhJLGDZCf5LBgrhtAyYPD5WBZAcmF5w4HDTqsOklpOOiLEXyptWpxnr6rtiWps98eBKayhA7C5zBZAXwBqXKtUwCXGthZC5I27ou9wIcQYjcW88loBpyCiwdQn783jgAPLbEu8oWRag5AoJ5aG2WYMZD""475926833611471"
+      - DEVELOPMENT_CORALOGIX_LOGGER_PRIVATE_API_KEY="546fce97-bd5c-bc35-9952-704ab4db8720"
+      - DEVELOPMENT_AWS_S3_ACCESS_KEY='AKIA3HMTDICCYBBYGI6J'
+      - DEVELOPMENT_AWS_S3_SECRET_KEY='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'
+    restart: unless-stopped
+    networks:
+      - likeminds-network
+    depends_on:
+      - skulk_postgres
+      - skulk_rabbitmq
+      - caravan_elasticsearch
+
+  skulk_celery:
+    container_name: skulk_celery
+    build: ./Dockerfile.skulk_celery-local
+    environment:
+      - BROKER_URL=amqp://guest:guest@skulk_rabbitmq:5672
+      - DEVELOPMENT_DB_HOST=skulk_postgres
+      - DEVELOPMENT_DB_NAME=skulk-local
+      - DEVELOPMENT_DB_USER=postgres
+      - DEVELOPMENT_DB_PASSWORD=postgres
+      - DEVELOPMENT_CORE_URL=http://caravan:8000
+      - DEVELOPMENT_KETTLE_URL=http://auth:8080
+      - ELASTIC_SEARCH_HOST=caravan_elasticsearch
+      - DEVELOPMENT_URL="http://skulk:8081"
+      - DEVELOPMENT_WEB_URL=""
+      - DEVELOPMENT_ALLOWED_HOST_1='*'
+      - DEVELOPMENT_ALLOWED_HOST_2='skulk'
+      - DEVELOPMENT_RAZORPAY_KEY="rzp_test_IcrgIMeJ6HuAYm"
+      - DEVELOPMENT_RAZORPAY_SECRET="y58zFiqjKRCQreSS6ZQrYEXm"
+      - DEVELOPMENT_RAZORPAY_WEBHOOK_SECRET="thisisrazorpaysecret"
+      - DEVELOPMENT_RAZORPAY_X_KEY="rzp_test_IcrgIMeJ6HuAYm"
+      - DEVELOPMENT_RAZORPAY_X_SECRET="y58zFiqjKRCQreSS6ZQrYEXm"
+      - DEVELOPMENT_RAZORPAY_X_ACCOUNT_NUMBER="2323230055141317"
+      - DEVELOPMENT_RAZORPAY_X_WEBHOOK_SECRET="thisisrazorpayxsecret"
+      - DEVELOPMENT_SEGMENT_KEY="iSTiBGSvaz9MR6KT4quqauFLckC8Cob9"
+      - DEVELOPMENT_FB_ACCESS_TOKEN="EAAMmtSlgFjoBAHZA3XgJ1Y1PKMH4kGZBGCp54e1nFlfAhJLGDZCf5LBgrhtAyYPD5WBZAcmF5w4HDTqsOklpOOiLEXyptWpxnr6rtiWps98eBKayhA7C5zBZAXwBqXKtUwCXGthZC5I27ou9wIcQYjcW88loBpyCiwdQn783jgAPLbEu8oWRag5AoJ5aG2WYMZD"
+      - DEVELOPMENT_FB_PIXEL_ID="EAAMmtSlgFjoBAHZA3XgJ1Y1PKMH4kGZBGCp54e1nFlfAhJLGDZCf5LBgrhtAyYPD5WBZAcmF5w4HDTqsOklpOOiLEXyptWpxnr6rtiWps98eBKayhA7C5zBZAXwBqXKtUwCXGthZC5I27ou9wIcQYjcW88loBpyCiwdQn783jgAPLbEu8oWRag5AoJ5aG2WYMZD""475926833611471"
+      - DEVELOPMENT_CORALOGIX_LOGGER_PRIVATE_API_KEY="546fce97-bd5c-bc35-9952-704ab4db8720"
+      - DEVELOPMENT_AWS_S3_ACCESS_KEY='AKIA3HMTDICCYBBYGI6J'
+      - DEVELOPMENT_AWS_S3_SECRET_KEY='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'
+    restart: unless-stopped
+    networks:
+      - likeminds-network
+    depends_on:
+      - skulk_postgres
+      - skulk_rabbitmq
+      - caravan_elasticsearch
+
+networks:
+  likeminds-network:
+    external: true
+
+volumes:
+  skulk_postgres_data:
+    driver: local

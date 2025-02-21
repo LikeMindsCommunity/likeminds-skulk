@@ -1,0 +1,20 @@
+# syntax=docker/dockerfile:1
+
+FROM python:3.8-slim
+
+WORKDIR /usr/src/app
+
+COPY ./likeminds_payments/requirements.txt requirements.txt
+
+ENV VIRTUAL_ENV=/opt/venv
+RUN python3 -m venv $VIRTUAL_ENV
+
+RUN . $VIRTUAL_ENV/bin/activate && pip3 install -r requirements.txt --no-cache-dir
+
+ADD . $WORKDIR
+
+RUN mkdir /usr/src/app/likeminds_payments/logs && touch /usr/src/app/likeminds_payments/logs/subscription.log
+
+RUN chmod +x ./docker-entrypoint/entry-skulk-local.sh
+
+CMD ["/bin/bash", "./docker-entrypoint/entry-skulk-local.sh"]

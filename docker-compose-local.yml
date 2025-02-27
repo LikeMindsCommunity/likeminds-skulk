@@ -44,7 +44,7 @@ services:
     build:
       dockerfile: ./Dockerfile.skulk-local
     ports:
-      - 8081:8081
+      - 8083:8081
     restart: unless-stopped
     networks:
       - likeminds-network

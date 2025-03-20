@@ -1,0 +1,74 @@
+services:
+  skulk_postgres:
+    image: postgres:latest
+    container_name: skulk_postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: skulk-local
+    ports:
+      - 5431:5432
+    restart: unless-stopped
+    networks:
+      - likeminds-network
+    volumes:
+      - skulk_postgres_data:/var/lib/postgresql/data
+
+  skulk_rabbitmq:
+    image: rabbitmq:latest
+    container_name: skulk_rabbitmq
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    ports:
+      - 5671:5672
+      - 15671:15672
+    networks:
+      - likeminds-network
+
+  skulk_elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.13.0
+    container_name: skulk_elasticsearch
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - 9202:9200
+    restart: unless-stopped
+    networks:
+      - likeminds-network
+
+  skulk:
+    container_name: skulk
+    hostname: skulk
+    build:
+      dockerfile: ./Dockerfile.skulk-local
+    ports:
+      - 8083:8081
+    restart: unless-stopped
+    networks:
+      - likeminds-network
+    depends_on:
+      - skulk_postgres
+      - skulk_rabbitmq
+      - skulk_elasticsearch
+
+  skulk_celery:
+    container_name: skulk_celery
+    build: 
+      dockerfile: ./Dockerfile.skulk-celery-local
+    restart: unless-stopped
+    networks:
+      - likeminds-network
+    depends_on:
+      - skulk_postgres
+      - skulk_rabbitmq
+      - skulk_elasticsearch
+
+networks:
+  likeminds-network:
+    external: true
+
+volumes:
+  skulk_postgres_data:
+    driver: local

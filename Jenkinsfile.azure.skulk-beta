@@ -64,7 +64,7 @@ pipeline {
         stage ('Build Image') {
             steps {
                 sh '''
-                    docker build -f Dockerfile.skulk-celery-beta -t $ACR_LOGIN_SERVER/likeminds-subscription-celery/skulk-celery-staging:skulk-celery-V$BUILD_NUMBER .
+                    docker build -f Dockerfile.skulk-beta -t $ACR_LOGIN_SERVER/likeminds-subscription/skulk-staging:skulk-V$BUILD_NUMBER .
                 '''
             }
         }
@@ -74,14 +74,14 @@ pipeline {
             steps {
                 sh '''
                     az acr login --name $ACR_NAME
-                    docker push $ACR_LOGIN_SERVER/likeminds-subscription-celery/skulk-celery-staging:skulk-celery-V$BUILD_NUMBER
+                    docker push $ACR_LOGIN_SERVER/likeminds-subscription/skulk-staging:skulk-V$BUILD_NUMBER
                 '''
             }
         }
 
         stage ('Remove Image from jenkins') {
             steps {
-                sh "docker rmi $ACR_LOGIN_SERVER/likeminds-subscription-celery/skulk-celery-staging:skulk-celery-V$BUILD_NUMBER"
+                sh "docker rmi $ACR_LOGIN_SERVER/likeminds-subscription/skulk-staging:skulk-V$BUILD_NUMBER"
             }
         }
 

@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 import os
+import sys
 from dotenv import load_dotenv
 from corsheaders.defaults import default_headers
 from pathlib import Path

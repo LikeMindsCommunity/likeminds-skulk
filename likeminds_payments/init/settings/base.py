@@ -95,7 +95,7 @@ LOGGING = {
             'level': 'INFO',
             'class': 'logging.StreamHandler',
             'stream': sys.stdout,
-            'formatter': 'json'
+            'formatter': 'large'
         },
         'mail_admins': {
             'level': 'ERROR',

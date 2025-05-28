@@ -90,6 +90,12 @@ LOGGING = {
             'backupCount': 5,
             'formatter': 'tiny',
         },
+        'stream_info_handler': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'stream': sys.stdout,
+            'formatter': 'json'
+        },
         'mail_admins': {
             'level': 'ERROR',
             'class': 'django.utils.log.AdminEmailHandler',
@@ -97,13 +103,18 @@ LOGGING = {
         },
     },
     'loggers': {
+        'stream_info_logger': {
+            'handlers': ['stream_info_handler'],
+            'level': 'INFO',
+            'propagate': False,
+        },
         'file_logger': {
-            'handlers': ['console', 'file_handler'],
+            'handlers': ['stream_info_logger', 'file_handler'],
             'level': 'INFO',
             'propagate': False,
         },
         'django': {
-            'handlers': ['console'],
+            'handlers': ['stream_info_logger', 'console'],
             'level': os.getenv('DJANGO_LOG_LEVEL', 'INFO'),
         },
     },

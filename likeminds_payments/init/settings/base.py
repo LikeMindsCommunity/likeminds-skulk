@@ -115,7 +115,7 @@ LOGGING = {
             'propagate': False,
         },
         'django': {
-            'handlers': ['stream_info_logger', 'console'],
+            'handlers': ['stream_info_handler', 'console'],
             'level': os.getenv('DJANGO_LOG_LEVEL', 'INFO'),
         },
     },

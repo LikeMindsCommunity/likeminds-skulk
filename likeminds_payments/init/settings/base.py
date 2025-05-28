@@ -110,7 +110,7 @@ LOGGING = {
             'propagate': False,
         },
         'file_logger': {
-            'handlers': ['stream_info_logger', 'file_handler'],
+            'handlers': ['stream_info_handler', 'file_handler'],
             'level': 'INFO',
             'propagate': False,
         },

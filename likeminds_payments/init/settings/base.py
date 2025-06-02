@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 import os
+import sys
 from dotenv import load_dotenv
 from corsheaders.defaults import default_headers
 from pathlib import Path
@@ -90,6 +91,12 @@ LOGGING = {
             'backupCount': 5,
             'formatter': 'tiny',
         },
+        'stream_info_handler': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'stream': sys.stdout,
+            'formatter': 'large'
+        },
         'mail_admins': {
             'level': 'ERROR',
             'class': 'django.utils.log.AdminEmailHandler',
@@ -97,13 +104,18 @@ LOGGING = {
         },
     },
     'loggers': {
+        'stream_info_logger': {
+            'handlers': ['stream_info_handler'],
+            'level': 'INFO',
+            'propagate': False,
+        },
         'file_logger': {
-            'handlers': ['file_handler'],
+            'handlers': ['stream_info_handler', 'file_handler'],
             'level': 'INFO',
             'propagate': False,
         },
         'django': {
-            'handlers': ['console'],
+            'handlers': ['stream_info_handler', 'console'],
             'level': os.getenv('DJANGO_LOG_LEVEL', 'INFO'),
         },
     },
@@ -211,4 +223,4 @@ ELASTICSEARCH_INDEX_NAMES = {
     'subscription.search.subscription_history_index': 'subscription_history'
 }
 
-APP_VERSION = "1.1.2"
+APP_VERSION = "1.1.3"

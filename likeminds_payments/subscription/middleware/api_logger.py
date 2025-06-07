@@ -5,7 +5,6 @@ from multiprocessing.context import Process
 from django.conf import settings
 from django.utils.deprecation import MiddlewareMixin
 
-from ..external_services.logging.coralogix_api_client import CoralogixApiClient
 from ..external_services.logging.logging_wrapper import LoggingWrapper
 from .constants import API_500_ERROR_MESSAGE
 
@@ -101,20 +100,7 @@ class ApiLogger(MiddlewareMixin):
         return log_object_dict
 
     def _send_to_logger(self, log_object_dict: dict) -> None:
-        if getattr(settings, 'USE_INTERNAL_FILE_LOGGER', False):
-            self._send_to_internal_logger(log_object_dict)
-        else:
-            """
-            for coralogix logger we need to disable
-            full text response for 200 OK status 
-            """
-            if getattr(settings, 'OMIT_200_OK_FULL_RESPONSE', False) and \
-                    log_object_dict['response']['http_response_code'] == 200:
-                log_object_dict['response']['content'] = dict()
-
-            api_client = CoralogixApiClient()
-            logger_process = Process(target=api_client.call_logging_api, name="logger_process", args=(log_object_dict, ))
-            logger_process.start()
+        self._send_to_internal_logger(log_object_dict)
 
     def _send_to_internal_logger(self, log_object_dict: dict):
         if log_object_dict['response']['http_response_code'] == 200:

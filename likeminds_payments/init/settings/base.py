@@ -81,6 +81,12 @@ LOGGING = {
             'stream': sys.stdout,
             'formatter': 'large'
         },
+        'stream_error_handler': {
+            'level': 'ERROR',
+            'class': 'logging.StreamHandler',
+            'stream': sys.stderr,
+            'formatter': 'large'
+        },
         'mail_admins': {
             'level': 'ERROR',
             'class': 'django.utils.log.AdminEmailHandler',
@@ -93,8 +99,13 @@ LOGGING = {
             'level': 'INFO',
             'propagate': False,
         },
+        'stream_error_logger': {
+            'handlers': ['stream_error_handler'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
         'django': {
-            'handlers': ['stream_info_handler'],
+            'handlers': ['stream_info_handler', 'stream_error_handler'],
             'level': os.getenv('DJANGO_LOG_LEVEL', 'INFO'),
         },
     },

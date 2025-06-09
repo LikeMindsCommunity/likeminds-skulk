@@ -75,22 +75,6 @@ LOGGING = {
         }
     },
     'handlers': {
-        'file_handler': {
-            'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'maxBytes': 1024 * 10 * 10,  # 10 MB
-            'backupCount': 5,
-            'filename': 'logs/custom.log',
-            'formatter': 'large',
-        },
-        'console': {
-            'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': 'logs/subscription.log',
-            'maxBytes': 1024 * 10 * 10,  # 10 MB
-            'backupCount': 5,
-            'formatter': 'tiny',
-        },
         'stream_info_handler': {
             'level': 'INFO',
             'class': 'logging.StreamHandler',
@@ -109,13 +93,8 @@ LOGGING = {
             'level': 'INFO',
             'propagate': False,
         },
-        'file_logger': {
-            'handlers': ['stream_info_handler', 'file_handler'],
-            'level': 'INFO',
-            'propagate': False,
-        },
         'django': {
-            'handlers': ['stream_info_handler', 'console'],
+            'handlers': ['stream_info_handler'],
             'level': os.getenv('DJANGO_LOG_LEVEL', 'INFO'),
         },
     },

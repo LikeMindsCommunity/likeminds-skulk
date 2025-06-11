@@ -2,6 +2,8 @@ import logging
 
 from django.conf import settings
 
+from .stream_logger import StreamLoggerImpl
+
 from .file_logger import FileLoggerImpl
 from .logger_manager import LoggerManager
 
@@ -12,7 +14,12 @@ class LoggingWrapper(LoggerManager):
 
     def __init__(self) -> None:
 
-        logger = FileLoggerImpl.get_instance()
+        if getattr(settings, 'USE_INTERNAL_FILE_LOGGER', False):
+            logger = FileLoggerImpl.get_instance()
+
+        else:
+            logger = StreamLoggerImpl.get_instance()
+
         logger.setLevel(logging.INFO)
         LoggingWrapper.__instance__ = logger
 

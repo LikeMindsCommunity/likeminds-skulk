@@ -67,11 +67,8 @@ LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
-        'large': {
-            'format': '%(asctime)s  %(levelname)s  %(filename)s  %(funcName)s  %(lineno)d  %(message)s  '
-        },
-        'tiny': {
-            'format': '%(asctime)s  %(levelname)s %(message)s  '
+        'json': {
+            '()': 'subscription.external_services.logging.json_formatter.JsonFormatter',
         }
     },
     'handlers': {
@@ -81,7 +78,7 @@ LOGGING = {
             'maxBytes': 1024 * 10 * 10,  # 10 MB
             'backupCount': 5,
             'filename': 'logs/custom.log',
-            'formatter': 'large',
+            'formatter': 'json',
         },
         'console': {
             'level': 'INFO',
@@ -89,13 +86,19 @@ LOGGING = {
             'filename': 'logs/subscription.log',
             'maxBytes': 1024 * 10 * 10,  # 10 MB
             'backupCount': 5,
-            'formatter': 'tiny',
+            'formatter': 'json',
         },
         'stream_info_handler': {
             'level': 'INFO',
             'class': 'logging.StreamHandler',
             'stream': sys.stdout,
-            'formatter': 'large'
+            'formatter': 'json'
+        },
+        'stream_error_handler': {
+            'level': 'ERROR',
+            'class': 'logging.StreamHandler',
+            'stream': sys.stderr,
+            'formatter': 'json'
         },
         'mail_admins': {
             'level': 'ERROR',
@@ -104,19 +107,26 @@ LOGGING = {
         },
     },
     'loggers': {
+        'file_logger': {
+            'handlers': ['file_handler'],
+            'level': 'INFO',
+            'propagate': False,
+        },
         'stream_info_logger': {
             'handlers': ['stream_info_handler'],
             'level': 'INFO',
             'propagate': False,
         },
-        'file_logger': {
-            'handlers': ['stream_info_handler', 'file_handler'],
-            'level': 'INFO',
+        'stream_error_logger': {
+            'handlers': ['stream_error_handler'],
+            'level': 'ERROR',
             'propagate': False,
         },
         'django': {
-            'handlers': ['stream_info_handler', 'console'],
+            'handlers': ['console', 'stream_info_handler','mail_admins'],
             'level': os.getenv('DJANGO_LOG_LEVEL', 'INFO'),
+            'propagate': False,
+            
         },
     },
 }

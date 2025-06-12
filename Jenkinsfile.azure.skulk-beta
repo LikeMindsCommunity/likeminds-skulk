@@ -13,6 +13,11 @@ pipeline {
         ACR_LOGIN_SERVER = 'likemindsstagingregistry.azurecr.io'
     }
 
+    parameters {
+        booleanParam(name: 'run_migrations', defaultValue: false, description: 'Run migrations on the migration instance')
+        string(name: 'migration_server_IP', defaultValue: '10.51.143.85', description: 'Migration instance server IP')
+    }
+
     stages {
         stage("Checkout code") {
             steps {

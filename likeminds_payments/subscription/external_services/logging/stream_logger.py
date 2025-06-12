@@ -27,4 +27,4 @@ class StreamLoggerImpl(LoggerManager):
             StreamLoggerImpl()
 
         return StreamLoggerImpl.__instance__
-    
+        

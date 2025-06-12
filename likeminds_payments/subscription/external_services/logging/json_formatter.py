@@ -1,5 +1,6 @@
 import json
 import logging
+import sys
 import traceback
 from datetime import datetime, timezone, timedelta
 
@@ -56,8 +57,8 @@ class JsonFormatter(logging.Formatter):
                         'status_code': status_code,
                         'response_time': response_time
                     })
-            except (IndexError, ValueError):
-                pass
+            except (IndexError, ValueError) as e:
+                print(f"JsonFormatter parsing error: {e}", file=sys.stderr)
 
         # Add any extra attributes from the record
         if hasattr(record, 'props'):

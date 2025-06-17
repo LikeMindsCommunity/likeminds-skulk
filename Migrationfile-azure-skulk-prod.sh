@@ -7,9 +7,9 @@ APPLICATION_MANAGE_SCRIPT_LOCATION="/home/apps/skulk-prod/LikeMinds-Subscription
 APPLICATION_NAME="SKULK"
 APPLICATION_REQUIREMENTS_LOCATION="/home/apps/skulk-prod/LikeMinds-Subscription/likeminds_payments/requirements.txt"
 APPLICATION_VENV_LOCATION="/home/apps/skulk-prod/skulk-prod-venv/bin/activate"
-APPICATION_ACCOUNT_NAME="likemindsstagingstorage"
-APPLICATION_CONTAINER_NAME="likeminds-staging-configs"
-APPLICATION_DOT_ENV_BLOB_NAME="skulk-beta/skulk-beta-dot-env-private"
+APPICATION_ACCOUNT_NAME="likemindsprodstorage"
+APPLICATION_CONTAINER_NAME="likeminds-production-configs"
+APPLICATION_DOT_ENV_BLOB_NAME="skulk-prod/skulk-prod-dot-env-private"
 
 print_internal() {
     PREFIX="\n\n **** "

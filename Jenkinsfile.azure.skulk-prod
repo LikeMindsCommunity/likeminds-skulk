@@ -46,7 +46,8 @@ pipeline {
                                 chmod +x /home/apps/skulk-prod/LikeMinds-Subscription/Migrationfile-azure-skulk-prod.sh
                                 . /home/apps/skulk-prod/LikeMinds-Subscription/Migrationfile-azure-skulk-prod.sh
                                 cd /home/apps/skulk-prod/LikeMinds-Subscription
-                                git checkout /home/apps/skulk-prod/LikeMinds-Subscription/Migrationfile-azure-skulk-prod.sh
+                                git checkout -- /home/apps/skulk-prod/LikeMinds-Subscription/Migrationfile-azure-skulk-prod.sh
+                                -prod.sh
                             '"
                         """
                     }

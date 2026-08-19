@@ -36,7 +36,7 @@ pipeline {
             steps{
                 script{
                     sh 'gcloud auth configure-docker asia.gcr.io'
-                    sh 'docker build -f Dockerfile.skulk-beta -t asia.gcr.io/likeminds-nonprod-prj-24e1/github.com/nateshr/likeminds-subscription/skulk-beta:${BUILD_NUMBER} . '
+                    sh 'docker build -f Dockerfile.skulk-beta -t asia.gcr.io/likeminds-nonprod-prj-24e1/github.com/LikeMindsCommunity/likeminds-skulk/skulk-beta:${BUILD_NUMBER} . '
                 }
             }
         }
@@ -45,7 +45,7 @@ pipeline {
             steps{
                 script{
                     sh 'gcloud auth configure-docker asia.gcr.io'
-                    sh 'docker push asia.gcr.io/likeminds-nonprod-prj-24e1/github.com/nateshr/likeminds-subscription/skulk-beta:${BUILD_NUMBER}'
+                    sh 'docker push asia.gcr.io/likeminds-nonprod-prj-24e1/github.com/LikeMindsCommunity/likeminds-skulk/skulk-beta:${BUILD_NUMBER}'
                   }
              }
         }

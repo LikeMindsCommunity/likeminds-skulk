@@ -27,7 +27,7 @@ spec:
     spec:
       containers:
       - name: "github-nateshr-likeminds-subscription-skulk-1"
-        image: "asia.gcr.io/likeminds-nonprod-prj-24e1/github.com/nateshr/likeminds-subscription/skulk-beta:v3"
+        image: "asia.gcr.io/likeminds-nonprod-prj-24e1/github.com/LikeMindsCommunity/likeminds-skulk/skulk-beta:v3"
         resources:
           requests:
             memory: "1000Mi"

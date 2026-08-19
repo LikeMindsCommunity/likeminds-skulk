@@ -1,12 +1,12 @@
 #!/bin/bash
 
 APPLICATION_ENVIRONMENT="BETA"
-APPLICATION_DOT_ENV_LOCATION="/home/apps/skulk-beta/LikeMinds-Subscription/likeminds_payments/init/settings/.env"
+APPLICATION_DOT_ENV_LOCATION="/home/apps/skulk-beta/likeminds-skulk/likeminds_payments/init/settings/.env"
 APPLICATION_DOT_ENV_REMOTE_LOCATION="s3://likeminds-configs-beta/application-dot-envs-beta/skulk-beta/skulk-beta-dot-env-private"
-APPLICATION_LOCATION="/home/apps/skulk-beta/LikeMinds-Subscription/likeminds_payments/"
-APPLICATION_MANAGE_SCRIPT_LOCATION="/home/apps/skulk-beta/LikeMinds-Subscription/likeminds_payments/manage.py"
+APPLICATION_LOCATION="/home/apps/skulk-beta/likeminds-skulk/likeminds_payments/"
+APPLICATION_MANAGE_SCRIPT_LOCATION="/home/apps/skulk-beta/likeminds-skulk/likeminds_payments/manage.py"
 APPLICATION_NAME="SKULK"
-APPLICATION_REQUIREMENTS_LOCATION="/home/apps/skulk-beta/LikeMinds-Subscription/likeminds_payments/requirements.txt"
+APPLICATION_REQUIREMENTS_LOCATION="/home/apps/skulk-beta/likeminds-skulk/likeminds_payments/requirements.txt"
 APPLICATION_VENV_LOCATION="/home/apps/skulk-beta/skulk-beta-venv/bin/activate"
 
 print_internal() {

@@ -1,11 +1,11 @@
 #!/bin/bash
 
 APPLICATION_ENVIRONMENT="BETA"
-APPLICATION_DOT_ENV_LOCATION="/home/apps/skulk-beta/LikeMinds-Subscription/likeminds_payments/init/settings/.env"
-APPLICATION_LOCATION="/home/apps/skulk-beta/LikeMinds-Subscription/likeminds_payments/"
-APPLICATION_MANAGE_SCRIPT_LOCATION="/home/apps/skulk-beta/LikeMinds-Subscription/likeminds_payments/manage.py"
+APPLICATION_DOT_ENV_LOCATION="/home/apps/skulk-beta/likeminds-skulk/likeminds_payments/init/settings/.env"
+APPLICATION_LOCATION="/home/apps/skulk-beta/likeminds-skulk/likeminds_payments/"
+APPLICATION_MANAGE_SCRIPT_LOCATION="/home/apps/skulk-beta/likeminds-skulk/likeminds_payments/manage.py"
 APPLICATION_NAME="SKULK"
-APPLICATION_REQUIREMENTS_LOCATION="/home/apps/skulk-beta/LikeMinds-Subscription/likeminds_payments/requirements.txt"
+APPLICATION_REQUIREMENTS_LOCATION="/home/apps/skulk-beta/likeminds-skulk/likeminds_payments/requirements.txt"
 APPLICATION_VENV_LOCATION="/home/apps/skulk-beta/skulk-beta-venv/bin/activate"
 APPICATION_ACCOUNT_NAME="likemindsstagingstorage"
 APPLICATION_CONTAINER_NAME="likeminds-staging-configs"

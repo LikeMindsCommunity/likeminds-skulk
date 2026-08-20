@@ -52,10 +52,10 @@ pipeline {
                                 export CLIENT_SECRET=\"\$(jq -r .clientSecret azure_credentials.json)\"
                                 export TENANT_ID=\"\$(jq -r .tenantId azure_credentials.json)\"
 
-                                cd /home/apps/skulk-prod/LikeMinds-Subscription && git checkout master && git pull
+                                cd /home/apps/skulk-prod/likeminds-skulk && git checkout master && git pull
                                 chmod +x /home/apps/skulk-prod/likeminds-skulk/Migrationfile-azure-skulk-prod.sh
                                 . /home/apps/skulk-prod/likeminds-skulk/Migrationfile-azure-skulk-prod.sh
-                                cd /home/apps/skulk-prod/LikeMinds-Subscription
+                                cd /home/apps/skulk-prod/likeminds-skulk
                                 git checkout -- /home/apps/skulk-prod/likeminds-skulk/Migrationfile-azure-skulk-prod.sh
                             '"
                         """

@@ -23,10 +23,10 @@ pipeline {
                 script{
                     sh '''
                        gcloud compute ssh likeminds-prod-migration-instance --zone=asia-south1-a --internal-ip --command="sudo chown -R jenkins /home/apps/skulk-prod/"
-                       gcloud compute ssh likeminds-prod-migration-instance --zone=asia-south1-a --internal-ip --command="cd /home/apps/skulk-prod/LikeMinds-Subscription && git checkout master && git pull"
+                       gcloud compute ssh likeminds-prod-migration-instance --zone=asia-south1-a --internal-ip --command="cd /home/apps/skulk-prod/likeminds-skulk && git checkout master && git pull"
                        gcloud compute ssh likeminds-prod-migration-instance --zone=asia-south1-a --internal-ip --command="chmod +x /home/apps/skulk-prod/likeminds-skulk/Migrationfile-skulk-prod.sh"
                        gcloud compute ssh likeminds-prod-migration-instance --zone=asia-south1-a --internal-ip --command=". /home/apps/skulk-prod/likeminds-skulk/Migrationfile-skulk-prod.sh"
-                       gcloud compute ssh likeminds-prod-migration-instance --zone=asia-south1-a --internal-ip --command="cd /home/apps/skulk-prod/LikeMinds-Subscription && git checkout ."
+                       gcloud compute ssh likeminds-prod-migration-instance --zone=asia-south1-a --internal-ip --command="cd /home/apps/skulk-prod/likeminds-skulk && git checkout ."
                       '''
                 }
             }
